@@ -40,7 +40,8 @@ const calculateLuxuryPrestigeBonus = (ownedLuxuryItems: Record<string, boolean> 
 };
 
 function App() {
-  const { state, updateState, resetGame: originalResetGame } = useGameState();
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const { state, updateState, resetGame: originalResetGame } = useGameState(settingsOpen);
   const resetGame = (prestigeToEarn: number, destination: 'nrf' | 'austria' | 'usa' | 'kanada' | 'australia' | null, startSpeedrun: boolean = false) => {
     setActiveQueue(null);
     setQueueProgress(0);
@@ -113,7 +114,6 @@ function App() {
   });
   const [realTime, setRealTime] = useState(new Date());
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
-  const [settingsOpen, setSettingsOpen] = useState(false);
   
   const toggleSound = () => {
     const newState = !soundOn;
@@ -130,6 +130,7 @@ function App() {
   }, []);
 
   useEffect(() => {
+    if (settingsOpen) return;
     const interval = setInterval(() => {
       setWholesalePrices(prev => {
         const next = { ...prev };
@@ -149,7 +150,7 @@ function App() {
       });
     }, 15000);
     return () => clearInterval(interval);
-  }, []);
+  }, [settingsOpen]);
   
   interface GameModal {
     title: string;
