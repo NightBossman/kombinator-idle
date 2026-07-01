@@ -1014,3 +1014,62 @@ export const CURRENCY_OPTION_PRESETS: CurrencyOptionPreset[] = [
   { id: 'call_speculate', name: 'Opcja CALL (Spekulacja CHF)', desc: 'Zarabiasz gdy frank drożeje. Kurs wykonania: 3.00 PLN.', type: 'call', strikeRate: 3.00, premiumPln: 250000, amountChf: 1500000, durationSec: 90 },
   { id: 'toxic_asymmetric', name: 'Toksyczna Opcja Asymetryczna', desc: 'Brak kosztu wstępnego. Zyski przy niskim franku, podwójna kara powyżej 4.20!', type: 'toxic', strikeRate: 4.20, premiumPln: 0, amountChf: 3000000, durationSec: 120 }
 ];
+
+// Faza U: Polityka 2.0
+export interface LobbyBill {
+  id: string;
+  name: string;
+  desc: string;
+  bribeCostPerSec: number;
+  corruptionPerSec: number;
+  effectDesc: string;
+}
+
+export const LOBBY_BILLS: LobbyBill[] = [
+  { id: 'ustawa_liniowa', name: 'Ustawa Liniowa (19%)', desc: 'Przepchnij jednolitą stawkę podatkową dla przedsiębiorstw.', bribeCostPerSec: 50000, corruptionPerSec: 0.2, effectDesc: '+50% zysków z fabryk NFI' },
+  { id: 'zamowienia_publiczne', name: 'Ustawa o Zamówieniach Publicznych', desc: 'Ustaw przetargi pod swoje systemy informatyczne.', bribeCostPerSec: 100000, corruptionPerSec: 0.4, effectDesc: '+100% zysków z portali Dot-com' },
+  { id: 'ustawa_hazardowa', name: 'Nowa Ustawa Hazardowa', desc: 'Zdejmij podatki i restrykcje z automatów do gier.', bribeCostPerSec: 150000, corruptionPerSec: 0.6, effectDesc: '+200% zysków ze Zmywaka i Klubów' }
+];
+
+export interface CommissionQuestion {
+  id: string;
+  question: string;
+  options: {
+    id: string;
+    text: string;
+    aggressionChange: number;
+    evidenceChange: number;
+    toastTitle: string;
+    toastDesc: string;
+  }[];
+}
+
+export const COMMISSION_QUESTIONS: CommissionQuestion[] = [
+  {
+    id: 'q1',
+    question: 'Wysoka Komisjo, skąd świadek miał gotówkę na zakup pierwszych akcji NFI za 20 mln PLN?',
+    options: [
+      { id: 'o1_1', text: 'Zaoszczędziłem stojąc w kolejkach w PRL.', aggressionChange: 15, evidenceChange: 5, toastTitle: 'Śledczy kpią', toastDesc: '„Z handlu mydłem i kawą dorobił się pan milionów?”' },
+      { id: 'o1_2', text: 'Zasłaniam się tajemnicą handlową.', aggressionChange: -5, evidenceChange: 15, toastTitle: 'Komisja notuje', toastDesc: 'Śledczy podejrzewają ukrywanie nielegalnego kapitału.' },
+      { id: 'o1_3', text: 'Wziąłem pożyczkę od cinkciarzy na słowo honoru.', aggressionChange: 20, evidenceChange: -10, toastTitle: 'Oburzenie w Sejmie', toastDesc: '„Świadek przyznaje się do konszachtów z półświatkiem!”' }
+    ]
+  },
+  {
+    id: 'q2',
+    question: 'Dlaczego w ministerstwie finansów znaleziono notatki z logo pana firmy deweloperskiej?',
+    options: [
+      { id: 'o2_1', text: 'To prowokacja opozycji i mediów.', aggressionChange: -10, evidenceChange: 15, toastTitle: 'Polityczna linia obrony', toastDesc: 'Zmniejszasz presję przesłuchujących, lecz dowody leżą na stole.' },
+      { id: 'o2_2', text: 'Nie pamiętam takiego spotkania ani żadnych notatek.', aggressionChange: 10, evidenceChange: 5, toastTitle: 'Śledczy naciskają', toastDesc: '„Pana pamięć jest bardzo wybiórcza...”' },
+      { id: 'o2_3', text: 'To były niezobowiązujące konsultacje społeczne.', aggressionChange: 5, evidenceChange: 10, toastTitle: 'Komisja powątpiewa', toastDesc: 'Śledczy badają księgi wejść do ministerstwa.' }
+    ]
+  },
+  {
+    id: 'q3',
+    question: 'Świadek lobbował za ustawą hazardową. Czy spotkał się pan z ministrem na cmentarzu w nocy?',
+    options: [
+      { id: 'o3_1', text: 'Zasłaniam się prawem do odmowy odpowiedzi.', aggressionChange: -15, evidenceChange: 20, toastTitle: 'Milczenie kombinatora', toastDesc: 'Presja spada, ale dowody obciążające rosną.' },
+      { id: 'o3_2', text: 'Odwiedzałem groby przodków. Minister był tam przypadkiem.', aggressionChange: 25, evidenceChange: 5, toastTitle: 'Śmiech na sali', toastDesc: 'Nikt nie uwierzył w tę bajkę. Agresja komisji rośnie.' },
+      { id: 'o3_3', text: 'Rozmawialiśmy o sporcie i rekreacji ruchowej.', aggressionChange: 15, evidenceChange: 15, toastTitle: 'Protokół spisany', toastDesc: 'Śledczy wytykają absurdalność zeznań.' }
+    ]
+  }
+];

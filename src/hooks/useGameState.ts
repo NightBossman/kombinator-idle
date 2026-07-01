@@ -293,6 +293,16 @@ export interface GameState {
   crisisRealEstateOwned: Record<string, number>;
   bankAdvisors: number;
   devStateBackup: any | null;
+  
+  // Faza U: Polityka 2.0
+  lobbyActiveBills: Record<string, boolean>;
+  lobbyCorruption: number;
+  commissionActive: boolean;
+  commissionAggression: number;
+  commissionEvidence: number;
+  commissionQuestionIndex: number;
+  teczkiCount: number;
+  prisonSentenceRemaining: number;
 }
 
 export const INITIAL_STATE: GameState = {
@@ -553,7 +563,17 @@ export const INITIAL_STATE: GameState = {
   currencyOptions: [],
   crisisRealEstateOwned: {},
   bankAdvisors: 0,
-  devStateBackup: null
+  devStateBackup: null,
+  
+  // Faza U: Polityka 2.0
+  lobbyActiveBills: {},
+  lobbyCorruption: 0,
+  commissionActive: false,
+  commissionAggression: 0,
+  commissionEvidence: 0,
+  commissionQuestionIndex: 0,
+  teczkiCount: 0,
+  prisonSentenceRemaining: 0
 };
 
 export function useGameState(isPaused: boolean = false) {
@@ -583,6 +603,16 @@ export function useGameState(isPaused: boolean = false) {
           crisisRealEstateOwned: parsed.crisisRealEstateOwned || {},
           bankAdvisors: parsed.bankAdvisors !== undefined ? parsed.bankAdvisors : 0,
           devStateBackup: parsed.devStateBackup !== undefined ? parsed.devStateBackup : null,
+          
+          // Faza U backward compat
+          lobbyActiveBills: parsed.lobbyActiveBills || {},
+          lobbyCorruption: parsed.lobbyCorruption !== undefined ? parsed.lobbyCorruption : 0,
+          commissionActive: parsed.commissionActive !== undefined ? parsed.commissionActive : false,
+          commissionAggression: parsed.commissionAggression !== undefined ? parsed.commissionAggression : 0,
+          commissionEvidence: parsed.commissionEvidence !== undefined ? parsed.commissionEvidence : 0,
+          commissionQuestionIndex: parsed.commissionQuestionIndex !== undefined ? parsed.commissionQuestionIndex : 0,
+          teczkiCount: parsed.teczkiCount !== undefined ? parsed.teczkiCount : 0,
+          prisonSentenceRemaining: parsed.prisonSentenceRemaining !== undefined ? parsed.prisonSentenceRemaining : 0,
           // Faza E backward compat
           solidarnos: parsed.solidarnos !== undefined ? parsed.solidarnos : 0,
           okraglyStolKartki: parsed.okraglyStolKartki !== undefined ? parsed.okraglyStolKartki : 0,

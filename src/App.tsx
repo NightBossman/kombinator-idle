@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useGameState, generateBlackMarketOffers } from './hooks/useGameState';
-import { QUEUE_ITEMS, HELPERS, PEWEX_ITEMS, PARTY_RANKS, PLN_UPGRADES, BUSINESSES, SMUGGLING_ROUTES, HISTORY_EVENTS, ACHIEVEMENTS, SOLIDARITY_LEVELS, PRODUCED_ITEMS, LUXURY_ITEMS, SEA_SMUGGLING_ROUTES, BALTONA_ITEMS, GPW_STOCKS, GPW_EVENTS, NOMENKLATURA_COMPANIES, OFFSHORE_DEPOSITS, COCOM_ITEMS, EXPORT_CONTACTS, SYNDICATE_UPGRADES, GEOPOLITICAL_EVENTS, ELECTION_REGIONS, CAMPAIGN_MATERIALS, CAMPAIGN_LEADERS, DEBATE_OPTIONS, ELECTION_UPGRADES, COCOM_SMUGGLING_ROUTES, COCOM_VEHICLES, COCOM_PERSONNEL, BAZAR_ITEMS, NFI_COMPANIES, MAFIA_PROTECTIONS, WARSAW_DISTRICTS, GANGSTER_UNITS, BLACK_MARKET_WEAPONS, BAZAR_LOGISTICS_ROUTES, WAREHOUSE_UPGRADES, MEDIA_STATIONS, MEDIA_PROGRAMS, MEDIA_ANTENNA_REGIONS , EU_PROJECTS, DOTCOM_UPGRADES, REAL_ESTATE_PROJECTS, CRISIS_REAL_ESTATE, CURRENCY_OPTION_PRESETS } from './game/items';
+import { QUEUE_ITEMS, HELPERS, PEWEX_ITEMS, PARTY_RANKS, PLN_UPGRADES, BUSINESSES, SMUGGLING_ROUTES, HISTORY_EVENTS, ACHIEVEMENTS, SOLIDARITY_LEVELS, PRODUCED_ITEMS, LUXURY_ITEMS, SEA_SMUGGLING_ROUTES, BALTONA_ITEMS, GPW_STOCKS, GPW_EVENTS, NOMENKLATURA_COMPANIES, OFFSHORE_DEPOSITS, COCOM_ITEMS, EXPORT_CONTACTS, SYNDICATE_UPGRADES, GEOPOLITICAL_EVENTS, ELECTION_REGIONS, CAMPAIGN_MATERIALS, CAMPAIGN_LEADERS, DEBATE_OPTIONS, ELECTION_UPGRADES, COCOM_SMUGGLING_ROUTES, COCOM_VEHICLES, COCOM_PERSONNEL, BAZAR_ITEMS, NFI_COMPANIES, MAFIA_PROTECTIONS, WARSAW_DISTRICTS, GANGSTER_UNITS, BLACK_MARKET_WEAPONS, BAZAR_LOGISTICS_ROUTES, WAREHOUSE_UPGRADES, MEDIA_STATIONS, MEDIA_PROGRAMS, MEDIA_ANTENNA_REGIONS , EU_PROJECTS, DOTCOM_UPGRADES, REAL_ESTATE_PROJECTS, CRISIS_REAL_ESTATE, CURRENCY_OPTION_PRESETS, LOBBY_BILLS, COMMISSION_QUESTIONS } from './game/items';
 import { playClick, playSuccess, playError, playAlert, isSoundEnabled, setSoundEnabled } from './utils/audio';
 void DEBATE_OPTIONS; void ELECTION_UPGRADES; // Used in Phase K UI tab (added later)
 
@@ -97,7 +97,7 @@ function App() {
   
   const [currentTab, setCurrentTab] = useState<TabId>('praca');
   const [lata90SubTab, setLata90SubTab] = useState<'bazar' | 'nfi' | 'media' | 'mafia'>('bazar');
-  const [lata2000SubTab, setLata2000SubTab] = useState<'ue' | 'dotcom' | 'deweloperka' | 'zmywak'>('ue');
+  const [lata2000SubTab, setLata2000SubTab] = useState<'ue' | 'dotcom' | 'deweloperka' | 'zmywak' | 'polityka'>('ue');
   const [selectedStockId, setSelectedStockId] = useState<string>('kghm');
   const [toasts, setToasts] = useState<{ id: string; title: string; desc: string }[]>([]);
   const [casioMode, setCasioMode] = useState<'bilans' | 'statystyki' | 'szczegoly'>('bilans');
@@ -296,6 +296,54 @@ function App() {
           if (decayMult > 0 && decayMult < 1) {
             nextState.pln = Math.max(0, nextState.pln * decayMult);
           }
+        }
+
+        // Faza U: Polityka 2.0 (Lobbying i Komisja Śledcza)
+        if (s.prisonSentenceRemaining > 0) {
+          nextState.prisonSentenceRemaining = Math.max(0, s.prisonSentenceRemaining - deltaSec);
+        }
+
+        let activeBribes = 0;
+        let corruptionGain = 0;
+        if (s.fazaSUnlocked) {
+          LOBBY_BILLS.forEach(bill => {
+            if (s.lobbyActiveBills?.[bill.id]) {
+              activeBribes += bill.bribeCostPerSec;
+              corruptionGain += bill.corruptionPerSec;
+            }
+          });
+          
+          if (activeBribes > 0) {
+            const cost = Math.floor(activeBribes * deltaSec);
+            if (nextState.pln >= cost) {
+              nextState.pln -= cost;
+            } else {
+              nextState.lobbyActiveBills = {};
+              if (settingsOpen) { /* do not spam toasts in pause */ } else {
+                setTimeout(() => {
+                  addToast("BRAK ŚRODKÓW", "Lobbing wstrzymany - zabrakło gotówki na łapówki!");
+                  playError();
+                }, 50);
+              }
+            }
+          }
+          
+          if (corruptionGain > 0 && !s.commissionActive && s.prisonSentenceRemaining <= 0) {
+            nextState.lobbyCorruption = Math.min(100, (s.lobbyCorruption || 0) + corruptionGain * deltaSec);
+          }
+        }
+
+        // Aktywacja Komisji Śledczej
+        if (nextState.lobbyCorruption >= 100 && !s.commissionActive && s.prisonSentenceRemaining <= 0) {
+          nextState.commissionActive = true;
+          nextState.commissionAggression = 50;
+          nextState.commissionEvidence = 20;
+          nextState.commissionQuestionIndex = 0;
+          
+          setTimeout(() => {
+            playAlert();
+            showAlert("Sejm powołał Nadzwyczajną Komisję Śledczą do zbadania wpływów lobbingowych w sektorze dewelopersko-finansowym! Zostajesz wezwany na przesłuchanie.", "🚨 SEJMOWA KOMISJA ŚLEDCZA", "raid");
+          }, 100);
         }
 
         // Książeczka mieszkaniowa poparcie Solidarności
@@ -2361,6 +2409,11 @@ function App() {
   }, [state.activeSeaSmuggle, state.baltonaUpgrades, state.solidarnos, state.pewexItems, state.unlockedAchievements, updateState, settingsOpen]);
 
   const startQueue = (id: string, cost: number, kartkiCost: number = 0) => {
+    if (state.prisonSentenceRemaining > 0) {
+      playError();
+      addToast("BLOKADA AKCJI", "Odbywasz karę więzienia!");
+      return;
+    }
     const hasDoubleQueue = !!state.pewexItems['podwojna_kolejka'];
     let targetSlot = 0;
     if (!activeQueue) {
@@ -2479,6 +2532,10 @@ function App() {
   };
 
   const pracuj = () => {
+    if (state.prisonSentenceRemaining > 0) {
+      playError();
+      return;
+    }
      playClick();
      updateState(s => {
         const kartkiGained = Math.random() < 0.1 ? 1 : 0;
@@ -4327,6 +4384,114 @@ function App() {
     setSettingsOpen(false);
   };
 
+  const toggleLobbyBill = (id: string) => {
+    if (state.prisonSentenceRemaining > 0) {
+      playError();
+      return;
+    }
+    updateState(s => {
+      const active = { ...s.lobbyActiveBills };
+      active[id] = !active[id];
+      playClick();
+      return { ...s, lobbyActiveBills: active };
+    });
+  };
+
+  const buyTeczkaIPN = () => {
+    if (state.prisonSentenceRemaining > 0) {
+      playError();
+      return;
+    }
+    if (state.dollars < 50000) {
+      playError();
+      addToast("BRAK ŚRODKÓW", "Potrzebujesz 50 000 USD, aby kupić teczkę IPN.");
+      return;
+    }
+    updateState(s => {
+      playSuccess();
+      addToast("KUPIONO TECZKĘ", "Zakupiono tajne akta kompromitujące polityków.");
+      return {
+        ...s,
+        dollars: s.dollars - 50000,
+        teczkiCount: (s.teczkiCount || 0) + 1
+      };
+    });
+  };
+
+  const answerCommissionQuestion = (questionId: string, optionId: string) => {
+    const question = COMMISSION_QUESTIONS.find(q => q.id === questionId);
+    if (!question) return;
+    const option = question.options.find(o => o.id === optionId);
+    if (!option) return;
+
+    updateState(s => {
+      let newAggression = Math.max(0, Math.min(100, s.commissionAggression + option.aggressionChange));
+      let newEvidence = Math.max(0, Math.min(100, s.commissionEvidence + option.evidenceChange));
+      let newQuestionIndex = s.commissionQuestionIndex + 1;
+      
+      let commissionActive = s.commissionActive;
+      let prisonSentenceRemaining = s.prisonSentenceRemaining;
+      let pln = s.pln;
+      let lobbyCorruption = s.lobbyCorruption;
+      let lobbyActiveBills = { ...s.lobbyActiveBills };
+
+      setTimeout(() => {
+        playClick();
+        addToast(option.toastTitle.toUpperCase(), option.toastDesc);
+      }, 50);
+
+      // Sprawdzenie czy przesłuchanie się skończyło
+      if (newQuestionIndex >= COMMISSION_QUESTIONS.length) {
+        commissionActive = false;
+        lobbyCorruption = 0;
+        // Skazanie
+        if (newEvidence >= 70 || newAggression >= 70) {
+          prisonSentenceRemaining = 60; // 60s więzienia
+          pln = Math.floor(pln * 0.5); // strata 50% kasy
+          lobbyActiveBills = {}; // wyłączenie lobbingu
+          setTimeout(() => {
+            playAlert();
+            showAlert("Komisja Śledcza uznała Cię za winnego korupcji! Zostałeś skazany na 1 minutę więzienia oraz ukarany grzywną w wysokości 50% gotówki.", "🚨 SKAZANY!", "error");
+          }, 200);
+        } else {
+          setTimeout(() => {
+            playSuccess();
+            showAlert("Dzięki sprytnym zeznaniom komisja nie znalazła wystarczających dowodów. Zostałeś oczyszczony z zarzutów!", "⚖️ UNIEWINNIONY", "success");
+          }, 200);
+        }
+      }
+
+      return {
+        ...s,
+        commissionAggression: newAggression,
+        commissionEvidence: newEvidence,
+        commissionQuestionIndex: newQuestionIndex,
+        commissionActive,
+        prisonSentenceRemaining,
+        pln,
+        lobbyCorruption,
+        lobbyActiveBills
+      };
+    });
+  };
+
+  const useTeczkaInCommission = () => {
+    if (state.teczkiCount <= 0) {
+      playError();
+      addToast("BRAK TECZEK", "Nie posiadasz żadnych teczek IPN do szantażu.");
+      return;
+    }
+    updateState(s => {
+      playSuccess();
+      addToast("SZANTAŻ UDANY", "Użyłeś tajnych akt SB. Śledczy nagle złagodnieli!");
+      return {
+        ...s,
+        teczkiCount: s.teczkiCount - 1,
+        commissionAggression: Math.max(0, s.commissionAggression - 30)
+      };
+    });
+  };
+
   const hardReset = () => {
     playAlert();
     const finalConfirm = window.prompt("🚨 OSTRZEŻENIE OSTATECZNE! 🚨\n\nTa operacja całkowicie wyczyści Twój zapis gry, cofając wszystkie postępy, pieniądze i odblokowane ery.\n\nAby potwierdzić, wpisz drukowanymi literami słowo:\n\nRESETUJ");
@@ -5475,6 +5640,9 @@ function App() {
     let adRevenuePerUser = 0.5;
     if (state.dotcomUpgrades['agresywne_seo']) adRevenuePerUser = 0.8;
     dotcomPlnRate = Math.floor(state.dotcomUsers * adRevenuePerUser);
+    if (state.lobbyActiveBills?.['zamowienia_publiczne']) {
+      dotcomPlnRate = Math.floor(dotcomPlnRate * 2.0);
+    }
   }
 
   let zmywakPlnRate = 0;
@@ -5482,6 +5650,9 @@ function App() {
     const gbpPerSec = state.zmywakWorkers * 5;
     const commissionGbp = gbpPerSec * 0.15;
     zmywakPlnRate = Math.floor(commissionGbp * 6);
+    if (state.lobbyActiveBills?.['ustawa_hazardowa']) {
+      zmywakPlnRate = Math.floor(zmywakPlnRate * 3.0);
+    }
   }
 
   let nfiPlnRate = 0;
@@ -5511,6 +5682,9 @@ function App() {
         }
       }
     });
+    if (state.lobbyActiveBills?.['ustawa_liniowa']) {
+      nfiPlnRate = Math.floor(nfiPlnRate * 1.5);
+    }
   }
 
   let gpwPlnRate = 0;
@@ -5548,7 +5722,16 @@ function App() {
   }
 
   const totalPassiveIncome = businessPlnRate + mediaPlnRate + dotcomPlnRate + zmywakPlnRate + nfiPlnRate + gpwPlnRate;
-  const totalPassiveExpenses = Math.abs(cinkciarzPlnRate) + gangPlnCost + chfPlnCost;
+  let lobbyBribeCost = 0;
+  if (state.fazaSUnlocked) {
+    LOBBY_BILLS.forEach(bill => {
+      if (state.lobbyActiveBills?.[bill.id]) {
+        lobbyBribeCost += bill.bribeCostPerSec;
+      }
+    });
+  }
+
+  const totalPassiveExpenses = Math.abs(cinkciarzPlnRate) + gangPlnCost + chfPlnCost + lobbyBribeCost;
   const plnRate = totalPassiveIncome - totalPassiveExpenses;
   const dollarsRate = businessUsdRate + cinkciarzUsdRate + widmoUsdRate;
 
@@ -5674,6 +5857,31 @@ function App() {
                   }}
                 >
                   🔧 DEV: ZERUJ DŁUG CHF
+                </button>
+                <button 
+                  onClick={() => {
+                    updateState(s => ({
+                      ...s,
+                      lobbyCorruption: 100
+                    }));
+                    setSettingsOpen(false);
+                    setTimeout(() => addToast("DEV CHEAT", "Ustawiono korupcję na 100% - Komisja Śledcza zostanie wywołana!"), 50);
+                  }}
+                  style={{
+                    width: '100%',
+                    background: 'rgba(155, 89, 182, 0.2)',
+                    border: '1px solid #9b59b6',
+                    color: '#9b59b6',
+                    padding: '6px',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    fontWeight: 'bold',
+                    boxShadow: '0 0 3px #9b59b6',
+                    marginTop: '4px'
+                  }}
+                >
+                  🔧 DEV: WYWOŁAJ KOMISJĘ
                 </button>
               </div>
 
@@ -5888,6 +6096,9 @@ function App() {
                  {state.fazaSUnlocked && chfPlnCost > 0 && (
                    <div style={{color: '#ff6666'}}>Spłata kredytów CHF: <span>-{chfPlnCost.toFixed(2)} zł/s</span></div>
                  )}
+                 {state.fazaSUnlocked && lobbyBribeCost > 0 && (
+                   <div style={{color: '#ff6666'}}>Koszty lobbingu rządowego: <span>-{lobbyBribeCost.toFixed(2)} zł/s</span></div>
+                 )}
                  <div style={{borderTop: '1px dashed var(--prl-red)', marginTop: '8px', paddingTop: '5px', color: 'var(--prl-red)'}}>Suma Kosztów: <strong>-{totalPassiveExpenses.toFixed(2)} zł/s</strong></div>
                </div>
                <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', borderLeft: '1px dashed var(--prl-yellow)', paddingLeft: '15px'}}>
@@ -6002,6 +6213,9 @@ function App() {
                 </button>
                 <button onClick={() => { playClick(); setLata2000SubTab('zmywak'); }} style={{ flex: 1, padding: '10px', fontWeight: 'bold', border: 'none', borderRadius: '4px', cursor: 'pointer', backgroundColor: lata2000SubTab === 'zmywak' ? '#3498db' : '#2c3e50', color: lata2000SubTab === 'zmywak' ? '#fff' : '#bdc3c7' }}>
                   ✈️ EMIGRACJA (ZMYWAK)
+                </button>
+                <button onClick={() => { playClick(); setLata2000SubTab('polityka'); }} style={{ flex: 1, padding: '10px', fontWeight: 'bold', border: 'none', borderRadius: '4px', cursor: 'pointer', backgroundColor: lata2000SubTab === 'polityka' ? '#9b59b6' : '#2c3e50', color: lata2000SubTab === 'polityka' ? '#fff' : '#bdc3c7' }}>
+                  ⚖️ POLITYKA 2.0
                 </button>
               </div>
 
@@ -6312,6 +6526,93 @@ function App() {
                     <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
                       <button onClick={() => sendWorkerToZmywak(1)} disabled={state.pln < 2000} style={{ padding: '10px 20px', backgroundColor: '#3498db', color: '#fff', border: 'none', borderRadius: '4px', cursor: state.pln >= 2000 ? 'pointer' : 'not-allowed', fontWeight: 'bold' }}>Wyslij 1 osobę (2 000 PLN)</button>
                       <button onClick={() => sendWorkerToZmywak(100)} disabled={state.pln < 200000} style={{ padding: '10px 20px', backgroundColor: '#2980b9', color: '#fff', border: 'none', borderRadius: '4px', cursor: state.pln >= 200000 ? 'pointer' : 'not-allowed', fontWeight: 'bold' }}>Wyślij 100 osób (200 tys. PLN)</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {lata2000SubTab === 'polityka' && (
+                <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', width: '100%' }}>
+                  {/* Left Column: Lobbying Bills */}
+                  <div style={{ flex: 1.5, minWidth: '320px', backgroundColor: '#34495e', padding: '20px', border: '1px solid #7f8c8d', borderRadius: '6px' }}>
+                    <h3 style={{ margin: '0 0 15px 0', borderBottom: '2px solid #9b59b6', paddingBottom: '5px', color: '#9b59b6' }}>Lobbing Rządowy (Korupcja Ustawodawcza)</h3>
+                    <div style={{ display: 'grid', gap: '15px' }}>
+                      {LOBBY_BILLS.map(bill => {
+                        const isActive = !!state.lobbyActiveBills?.[bill.id];
+                        return (
+                          <div key={bill.id} style={{ backgroundColor: '#2c3e50', padding: '15px', borderRadius: '6px', border: isActive ? '2px solid #9b59b6' : '1px solid #465c71', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ flex: 1, marginRight: '15px' }}>
+                              <strong style={{ color: '#fff', fontSize: '1.05em' }}>{bill.name}</strong>
+                              <p style={{ margin: '5px 0', fontSize: '0.85em', color: '#bdc3c7' }}>{bill.desc}</p>
+                              <div style={{ fontSize: '0.8em', color: '#2ecc71', fontWeight: 'bold' }}>
+                                Efekt: {bill.effectDesc}
+                              </div>
+                              <div style={{ fontSize: '0.8em', color: '#e74c3c', marginTop: '2px' }}>
+                                Koszt: -{bill.bribeCostPerSec.toLocaleString()} PLN/s | Korupcja: +{bill.corruptionPerSec}%/s
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => toggleLobbyBill(bill.id)}
+                              style={{
+                                padding: '10px 15px',
+                                backgroundColor: isActive ? '#e74c3c' : '#2ecc71',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontWeight: 'bold',
+                                minWidth: '100px'
+                              }}
+                            >
+                              {isActive ? 'WYŁĄCZ' : 'AKTYWUJ'}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Right Column: Corruption and Archivist */}
+                  <div style={{ flex: 1, minWidth: '300px', backgroundColor: '#34495e', padding: '20px', border: '1px solid #7f8c8d', borderRadius: '6px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    {/* Corruption Monitor */}
+                    <div style={{ backgroundColor: '#2c3e50', padding: '15px', borderRadius: '6px', border: '1px solid #465c71' }}>
+                      <h4 style={{ margin: '0 0 10px 0', color: '#e67e22' }}>Monitor Śledztwa Sejmowego</h4>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9em', marginBottom: '5px' }}>
+                        <span>Wskaźnik Korupcji:</span>
+                        <strong style={{ color: state.lobbyCorruption >= 80 ? '#e74c3c' : '#e67e22' }}>{Math.floor(state.lobbyCorruption)}%</strong>
+                      </div>
+                      <div style={{ width: '100%', height: '15px', backgroundColor: '#34495e', borderRadius: '4px', overflow: 'hidden', border: '1px solid #465c71' }}>
+                        <div style={{ width: `${state.lobbyCorruption}%`, height: '100%', backgroundColor: state.lobbyCorruption >= 80 ? '#e74c3c' : '#e67e22', transition: 'width 0.3s ease' }}></div>
+                      </div>
+                      <p style={{ margin: '8px 0 0 0', fontSize: '0.75em', color: '#bdc3c7', lineHeight: '1.3' }}>
+                        Ostrzeżenie: Gdy pasek korupcji osiągnie 100%, Sejm powoła Nadzwyczajną Komisję Śledczą, a gra zostanie zablokowana do czasu zakończenia przesłuchania!
+                      </p>
+                    </div>
+
+                    {/* SB Archivist */}
+                    <div style={{ backgroundColor: '#2c3e50', padding: '15px', borderRadius: '6px', border: '1px solid #465c71', textAlign: 'center' }}>
+                      <h4 style={{ margin: '0 0 10px 0', color: '#f1c40f' }}>Archiwum MSW / IPN</h4>
+                      <p style={{ margin: '0 0 15px 0', fontSize: '0.85em', color: '#bdc3c7' }}>
+                        Kupuj tajne akta od emerytowanych oficerów SB, by szantażować śledczych w razie wezwania przed komisję.
+                      </p>
+                      <div style={{ fontSize: '1.1em', marginBottom: '15px', color: '#fff' }}>
+                        Posiadane teczki IPN: <strong style={{ color: '#f1c40f', fontSize: '1.3em' }}>{state.teczkiCount || 0} szt.</strong>
+                      </div>
+                      <button
+                        onClick={buyTeczkaIPN}
+                        style={{
+                          width: '100%',
+                          padding: '10px',
+                          backgroundColor: '#f1c40f',
+                          color: '#000',
+                          border: 'none',
+                          borderRadius: '4px',
+                          fontWeight: 'bold',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        KUP TECZKĘ (50 000 USD)
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -10491,6 +10792,161 @@ function App() {
                 {activeModal.confirmText || 'OK'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sejm Commission Modal */}
+      {state.commissionActive && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: 'rgba(0, 0, 0, 0.85)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 10000,
+          fontFamily: 'monospace'
+        }}>
+          <div style={{
+            width: '480px',
+            backgroundColor: '#150000',
+            border: '3px solid #ff3333',
+            borderRadius: '10px',
+            padding: '25px',
+            boxShadow: '0 0 35px rgba(255, 0, 0, 0.6)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '15px',
+            color: '#ff6666'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #ff3333', paddingBottom: '10px' }}>
+              <strong style={{ fontSize: '1.3em', color: '#ff3333', textShadow: '0 0 5px #ff3333' }}>🚨 SEJMOWA KOMISJA ŚLEDCZA (NA ŻYWO)</strong>
+            </div>
+
+            <div style={{ backgroundColor: '#000000', border: '1px solid #440000', padding: '10px', borderRadius: '6px', fontSize: '0.9em', color: '#ffcc00' }}>
+              <span style={{ color: '#ff3333', fontWeight: 'bold' }}>[TVP INFO]</span> Przesłuchanie znanego biznesmena w sprawie afery lobbingowej w Sejmie...
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', backgroundColor: '#0a0000', padding: '12px', borderRadius: '6px', border: '1px dashed #440000' }}>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85em', marginBottom: '4px' }}>
+                  <span>AGRESJA ŚLEDCZYCH:</span>
+                  <strong>{state.commissionAggression}%</strong>
+                </div>
+                <div style={{ width: '100%', height: '12px', backgroundColor: '#220000', borderRadius: '4px', overflow: 'hidden', border: '1px solid #ff3333' }}>
+                  <div style={{ width: `${state.commissionAggression}%`, height: '100%', backgroundColor: '#ff3333', transition: 'width 0.3s ease' }}></div>
+                </div>
+              </div>
+
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85em', marginBottom: '4px' }}>
+                  <span>DOWODY WINY:</span>
+                  <strong>{state.commissionEvidence}%</strong>
+                </div>
+                <div style={{ width: '100%', height: '12px', backgroundColor: '#220000', borderRadius: '4px', overflow: 'hidden', border: '1px solid #ffaa00' }}>
+                  <div style={{ width: `${state.commissionEvidence}%`, height: '100%', backgroundColor: '#ffaa00', transition: 'width 0.3s ease' }}></div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85em', marginTop: '4px' }}>
+                <span>POSIADANE TECZKI IPN:</span>
+                <strong style={{ color: '#fff' }}>{state.teczkiCount || 0} szt.</strong>
+              </div>
+            </div>
+
+            {state.commissionQuestionIndex < COMMISSION_QUESTIONS.length ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                <div style={{ backgroundColor: '#220505', borderLeft: '4px solid #ff3333', padding: '12px', borderRadius: '4px', color: '#ffdddd', fontSize: '1.05em', lineHeight: '1.4' }}>
+                  <strong>Pytanie {state.commissionQuestionIndex + 1}/{COMMISSION_QUESTIONS.length}:</strong><br/>
+                  {COMMISSION_QUESTIONS[state.commissionQuestionIndex].question}
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {COMMISSION_QUESTIONS[state.commissionQuestionIndex].options.map(opt => (
+                    <button
+                      key={opt.id}
+                      onClick={() => answerCommissionQuestion(COMMISSION_QUESTIONS[state.commissionQuestionIndex].id, opt.id)}
+                      style={{
+                        textAlign: 'left',
+                        padding: '10px 15px',
+                        backgroundColor: '#2a0a0a',
+                        border: '1px solid #ff4444',
+                        borderRadius: '6px',
+                        color: '#ffcccc',
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                        fontSize: '0.9em',
+                        transition: 'all 0.2s ease',
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#4a0a0a'; e.currentTarget.style.color = '#fff'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#2a0a0a'; e.currentTarget.style.color = '#ffcccc'; }}
+                    >
+                      {opt.text}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  onClick={useTeczkaInCommission}
+                  disabled={!state.teczkiCount || state.teczkiCount <= 0}
+                  style={{
+                    padding: '8px',
+                    backgroundColor: state.teczkiCount > 0 ? '#ffcc00' : '#444400',
+                    color: state.teczkiCount > 0 ? '#000000' : '#888',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontWeight: 'bold',
+                    cursor: state.teczkiCount > 0 ? 'pointer' : 'not-allowed',
+                    fontFamily: 'inherit',
+                    fontSize: '0.85em',
+                    boxShadow: state.teczkiCount > 0 ? '0 0 5px #ffcc00' : 'none'
+                  }}
+                >
+                  📂 SZANTAŻUJ POSŁA TECZKĄ IPN (-1 teczka, -30% agresji)
+                </button>
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '10px', color: '#ffdddd' }}>
+                Podsumowanie przesłuchania...
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Prison Overlay */}
+      {state.prisonSentenceRemaining > 0 && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: '#050505',
+          color: '#ff3333',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 10001,
+          fontFamily: 'monospace',
+          textAlign: 'center',
+          padding: '20px'
+        }}>
+          <h1 style={{ fontSize: '3rem', margin: '0 0 20px 0', textShadow: '0 0 10px #ff3333' }}>🚨 ZAKŁAD KARNY 🚨</h1>
+          <div style={{ fontSize: '1.2rem', marginBottom: '20px', border: '2px solid #ff3333', padding: '15px', borderRadius: '8px', maxWidth: '500px', backgroundColor: '#1a0505' }}>
+            Zostałeś skazany na karę pozbawienia wolności za nielegalny lobbing i korupcję polityczną. Twoje konta bankowe zostały zamrożone, a biznesy toczą się w tle bez Twojej kontroli.
+          </div>
+          <div style={{ fontSize: '2rem', fontWeight: 'bold', margin: '20px 0' }}>
+            Pozostały czas kary: <span style={{ color: '#ffffff' }}>{Math.ceil(state.prisonSentenceRemaining)} s</span>
+          </div>
+          <div style={{ fontSize: '0.9rem', color: '#666' }}>
+            Zarabiasz pasywnie, ale nie możesz klikać ani budować niczego do czasu wyjścia.
           </div>
         </div>
       )}
