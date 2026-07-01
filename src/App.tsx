@@ -253,6 +253,10 @@ function App() {
       lastTickRef.current = now;
       const deltaSec = deltaMs / 1000;
       
+      if (settingsOpen) {
+        return; // Pauza
+      }
+      
       updateState(s => {
         const nextState = { 
           ...s, 
@@ -1975,11 +1979,11 @@ function App() {
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [updateState, activeQueue]);
+  }, [updateState, activeQueue, settingsOpen]);
 
   // Queue Progression
   useEffect(() => {
-    if (!activeQueue) return;
+    if (!activeQueue || settingsOpen) return;
     const item = QUEUE_ITEMS.find(i => i.id === activeQueue);
     if (!item) return;
 
@@ -2041,11 +2045,11 @@ function App() {
     }, tickMs);
     
     return () => clearInterval(interval);
-  }, [activeQueue, state.pewexItems, state.plnUpgrades, state.activeEvent, state.unlockedAchievements, state.activeDestination, state.solidarnos, updateState]);
+  }, [activeQueue, state.pewexItems, state.plnUpgrades, state.activeEvent, state.unlockedAchievements, state.activeDestination, state.solidarnos, updateState, settingsOpen]);
 
   // Queue Progression 2 (Double queue upgrade)
   useEffect(() => {
-    if (!activeQueue2) return;
+    if (!activeQueue2 || settingsOpen) return;
     const item = QUEUE_ITEMS.find(i => i.id === activeQueue2);
     if (!item) return;
 
@@ -2106,11 +2110,11 @@ function App() {
     }, tickMs);
     
     return () => clearInterval(interval);
-  }, [activeQueue2, state.pewexItems, state.plnUpgrades, state.activeEvent, state.unlockedAchievements, state.activeDestination, state.solidarnos, updateState]);
+  }, [activeQueue2, state.pewexItems, state.plnUpgrades, state.activeEvent, state.unlockedAchievements, state.activeDestination, state.solidarnos, updateState, settingsOpen]);
 
   // Smuggling Progression
   useEffect(() => {
-    if (!activeSmuggle) return;
+    if (!activeSmuggle || settingsOpen) return;
     const route = SMUGGLING_ROUTES.find(r => r.id === activeSmuggle);
     if (!route) return;
 
@@ -2196,11 +2200,11 @@ function App() {
     }, tickMs);
     
     return () => clearInterval(interval);
-  }, [activeSmuggle, state.solidarnos, state.baltonaUpgrades, updateState]);
+  }, [activeSmuggle, state.solidarnos, state.baltonaUpgrades, updateState, settingsOpen]);
 
   // Printing Progression
   useEffect(() => {
-    if (!state.isPrinting) return;
+    if (!state.isPrinting || settingsOpen) return;
     const printTimeMs = 5000; // 5 seconds
     const tickMs = 50;
     const interval = setInterval(() => {
@@ -2237,11 +2241,11 @@ function App() {
       });
     }, tickMs);
     return () => clearInterval(interval);
-  }, [state.isPrinting, updateState]);
+  }, [state.isPrinting, updateState, settingsOpen]);
 
   // Sea Smuggling Progression
   useEffect(() => {
-    if (!state.activeSeaSmuggle) return;
+    if (!state.activeSeaSmuggle || settingsOpen) return;
     const route = SEA_SMUGGLING_ROUTES.find(r => r.id === state.activeSeaSmuggle);
     if (!route) return;
 
@@ -2353,7 +2357,7 @@ function App() {
     }, tickMs);
 
     return () => clearInterval(interval);
-  }, [state.activeSeaSmuggle, state.baltonaUpgrades, state.solidarnos, state.pewexItems, state.unlockedAchievements, updateState]);
+  }, [state.activeSeaSmuggle, state.baltonaUpgrades, state.solidarnos, state.pewexItems, state.unlockedAchievements, updateState, settingsOpen]);
 
   const startQueue = (id: string, cost: number, kartkiCost: number = 0) => {
     const hasDoubleQueue = !!state.pewexItems['podwojna_kolejka'];
@@ -4323,9 +4327,13 @@ function App() {
   };
 
   const hardReset = () => {
-    if (window.confirm("Czy na pewno chcesz usunąć CAŁY zapis gry i zacząć od nowa? Ta operacja jest nieodwracalna!")) {
+    playAlert();
+    const finalConfirm = window.prompt("🚨 OSTRZEŻENIE OSTATECZNE! 🚨\n\nTa operacja całkowicie wyczyści Twój zapis gry, cofając wszystkie postępy, pieniądze i odblokowane ery.\n\nAby potwierdzić, wpisz drukowanymi literami słowo:\n\nRESETUJ");
+    if (finalConfirm === "RESETUJ") {
       localStorage.removeItem('kombinator-save');
       window.location.reload();
+    } else {
+      addToast("RESET ODWOŁANY", "Nie wpisałeś poprawnego hasła potwierdzającego.");
     }
   };
 
@@ -5570,105 +5578,124 @@ function App() {
 
         {settingsOpen && (
           <div style={{
-            position: 'absolute',
-            top: '40px',
-            right: '0px',
-            width: '280px',
-            backgroundColor: '#111111',
-            border: '2px solid var(--crt-text)',
-            borderRadius: '4px',
-            padding: '15px',
-            boxShadow: '0 0 15px rgba(0, 255, 0, 0.4)',
-            zIndex: 1000,
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            backdropFilter: 'blur(6px)',
             display: 'flex',
-            flexDirection: 'column',
-            gap: '12px',
-            fontFamily: 'monospace',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 9999,
+            cursor: 'default',
             textShadow: 'none'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--crt-text)', paddingBottom: '5px', marginBottom: '5px' }}>
-              <strong style={{ color: 'var(--crt-text)' }}>⚙️ USTAWIENIA GRY</strong>
-              <button onClick={() => { playClick(); setSettingsOpen(false); }} style={{ background: 'transparent', border: 'none', color: '#ff3333', cursor: 'pointer', fontWeight: 'bold', fontSize: '1.1rem' }}>×</button>
-            </div>
+          }} onClick={() => setSettingsOpen(false)}>
+            <div style={{
+              width: '320px',
+              backgroundColor: '#111111',
+              border: '3px solid var(--crt-text)',
+              borderRadius: '8px',
+              padding: '20px',
+              boxShadow: '0 0 25px rgba(0, 255, 0, 0.5)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '15px',
+              fontFamily: 'monospace',
+              color: 'var(--crt-text)'
+            }} onClick={(e) => e.stopPropagation()}>
+              
+              {/* Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid var(--crt-text)', paddingBottom: '8px', marginBottom: '5px' }}>
+                <strong style={{ fontSize: '1.2em' }}>⚙️ USTAWIENIA</strong>
+                <button onClick={() => { playClick(); setSettingsOpen(false); }} style={{ background: 'transparent', border: 'none', color: '#ff3333', cursor: 'pointer', fontWeight: 'bold', fontSize: '1.4rem', lineHeight: '1' }}>×</button>
+              </div>
 
-            {/* Dźwięk */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: '#ccc', fontSize: '0.85rem' }}>Dźwięk systemowy:</span>
-              <button 
-                onClick={toggleSound}
-                style={{
-                  background: 'transparent',
-                  border: '1px solid var(--crt-text)',
-                  color: 'var(--crt-text)',
-                  padding: '2px 8px',
-                  fontSize: '0.8rem',
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                  boxShadow: '0 0 3px var(--crt-text)'
-                }}
-              >
-                {soundOn ? '🔊 WŁĄCZONY' : '🔇 WYŁĄCZONY'}
-              </button>
-            </div>
+              {/* Status: Gra Zapauzowana */}
+              <div style={{ textAlign: 'center', color: '#e74c3c', fontWeight: 'bold', fontSize: '0.9em', border: '1px dashed #e74c3c', padding: '5px', borderRadius: '4px', letterSpacing: '1px', textShadow: '0 0 3px #e74c3c' }}>
+                ⏸️ GRA ZAPAUZOWANA
+              </div>
 
-            {/* Dev Opcje */}
-            <div style={{ borderTop: '1px dashed #444', paddingTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <span style={{ color: 'var(--prl-yellow)', fontSize: '0.8rem', fontWeight: 'bold' }}>Narzędzia Deweloperskie:</span>
-              <button 
-                onClick={devUnlockEverything}
-                style={{
-                  width: '100%',
-                  background: state.devStateBackup ? 'rgba(46, 204, 113, 0.2)' : 'rgba(231, 76, 60, 0.2)',
-                  border: state.devStateBackup ? '1px solid #2ecc71' : '1px solid #e74c3c',
-                  color: state.devStateBackup ? '#2ecc71' : '#e74c3c',
-                  padding: '6px',
-                  fontSize: '0.75rem',
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                  fontWeight: 'bold',
-                  boxShadow: state.devStateBackup ? '0 0 3px #2ecc71' : '0 0 3px #e74c3c'
-                }}
-              >
-                {state.devStateBackup ? '🔧 DEV: ZABLOKUJ GRĘ' : '🔧 DEV: ODBLOKUJ GRĘ'}
-              </button>
-              <button 
-                onClick={devClearDebt}
-                style={{
-                  width: '100%',
-                  background: 'rgba(52, 152, 219, 0.2)',
-                  border: '1px solid #3498db',
-                  color: '#3498db',
-                  padding: '6px',
-                  fontSize: '0.75rem',
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                  fontWeight: 'bold',
-                  boxShadow: '0 0 3px #3498db'
-                }}
-              >
-                🔧 DEV: ZERUJ DŁUG CHF
-              </button>
-            </div>
+              {/* Dźwięk */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.9rem' }}>Dźwięk systemowy:</span>
+                <button 
+                  onClick={toggleSound}
+                  style={{
+                    background: 'transparent',
+                    border: '1px solid var(--crt-text)',
+                    color: 'var(--crt-text)',
+                    padding: '4px 12px',
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    boxShadow: '0 0 3px var(--crt-text)'
+                  }}
+                >
+                  {soundOn ? '🔊 WŁĄCZONY' : '🔇 WYŁĄCZONY'}
+                </button>
+              </div>
 
-            {/* Hard Reset */}
-            <div style={{ borderTop: '1px dashed #444', paddingTop: '10px' }}>
-              <button 
-                onClick={hardReset}
-                style={{
-                  width: '100%',
-                  background: 'rgba(255, 0, 0, 0.3)',
-                  border: '1px solid #ff3333',
-                  color: '#ff3333',
-                  padding: '6px',
-                  fontSize: '0.8rem',
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                  fontWeight: 'bold',
-                  boxShadow: '0 0 4px #ff3333'
-                }}
-              >
-                🚨 USUŃ ZAPIS (HARD RESET)
-              </button>
+              {/* Dev Opcje */}
+              <div style={{ borderTop: '1px dashed #444', paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <span style={{ color: 'var(--prl-yellow)', fontSize: '0.85rem', fontWeight: 'bold' }}>Narzędzia Deweloperskie:</span>
+                <button 
+                  onClick={devUnlockEverything}
+                  style={{
+                    width: '100%',
+                    background: state.devStateBackup ? 'rgba(46, 204, 113, 0.2)' : 'rgba(231, 76, 60, 0.2)',
+                    border: state.devStateBackup ? '1px solid #2ecc71' : '1px solid #e74c3c',
+                    color: state.devStateBackup ? '#2ecc71' : '#e74c3c',
+                    padding: '8px',
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    fontWeight: 'bold',
+                    boxShadow: state.devStateBackup ? '0 0 3px #2ecc71' : '0 0 3px #e74c3c'
+                  }}
+                >
+                  {state.devStateBackup ? '🔧 DEV: ZABLOKUJ GRĘ' : '🔧 DEV: ODBLOKUJ GRĘ'}
+                </button>
+                <button 
+                  onClick={devClearDebt}
+                  style={{
+                    width: '100%',
+                    background: 'rgba(52, 152, 219, 0.2)',
+                    border: '1px solid #3498db',
+                    color: '#3498db',
+                    padding: '8px',
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    fontWeight: 'bold',
+                    boxShadow: '0 0 3px #3498db'
+                  }}
+                >
+                  🔧 DEV: ZERUJ DŁUG CHF
+                </button>
+              </div>
+
+              {/* Hard Reset */}
+              <div style={{ borderTop: '1px dashed #444', paddingTop: '12px' }}>
+                <button 
+                  onClick={hardReset}
+                  style={{
+                    width: '100%',
+                    background: 'rgba(255, 0, 0, 0.3)',
+                    border: '1px solid #ff3333',
+                    color: '#ff3333',
+                    padding: '8px',
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    fontWeight: 'bold',
+                    boxShadow: '0 0 4px #ff3333'
+                  }}
+                >
+                  🚨 USUŃ ZAPIS (HARD RESET)
+                </button>
+              </div>
             </div>
           </div>
         )}
