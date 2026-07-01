@@ -4932,8 +4932,8 @@ function App() {
         updateState(s => ({
           ...s,
           electionFundsPln: s.electionFundsPln - mat.costPln,
-          paperStocks: s.paperStocks - mat.paperCost,
-          inkStocks: s.inkStocks - mat.inkCost,
+          paperStocks: Math.round((s.paperStocks - mat.paperCost) * 100) / 100,
+          inkStocks: Math.round((s.inkStocks - mat.inkCost) * 100) / 100,
           suspicion: Math.min(100, (s.suspicion || 0) + 5)
         }));
         playError();
@@ -4945,8 +4945,8 @@ function App() {
     updateState(s => ({
       ...s,
       electionFundsPln: s.electionFundsPln - mat.costPln,
-      paperStocks: s.paperStocks - mat.paperCost,
-      inkStocks: s.inkStocks - mat.inkCost,
+      paperStocks: Math.round((s.paperStocks - mat.paperCost) * 100) / 100,
+      inkStocks: Math.round((s.inkStocks - mat.inkCost) * 100) / 100,
       campaignMaterials: { ...s.campaignMaterials, [materialId]: (s.campaignMaterials[materialId] || 0) + (1 * printMult) }
     }));
     playSuccess();
@@ -10204,14 +10204,14 @@ function App() {
                     <h4 style={{ margin: '0 0 5px 0', fontSize: '0.9em' }}>Drukarnia Centralna</h4>
                     <div style={{ display: 'flex', gap: '10px', fontSize: '0.9em' }}>
                       <div style={{ flex: 1, padding: '5px', border: '1px solid #dcdde1', textAlign: 'center' }}>
-                        Papier: <strong>{state.paperStocks}</strong> ryz
+                        Papier: <strong>{typeof state.paperStocks === 'number' ? Number(state.paperStocks.toFixed(2)) : state.paperStocks}</strong> ryz
                         <div style={{ display: 'flex', gap: '2px', marginTop: '5px' }}>
                           <button onClick={() => buyPrintingSupplies('paper', 'pln')} style={{ flex: 1, fontSize: '0.8em' }}>Kup (5k zł)</button>
                           <button onClick={() => buyPrintingSupplies('paper', 'usd')} style={{ flex: 1, fontSize: '0.8em' }}>Kup ($50)</button>
                         </div>
                       </div>
                       <div style={{ flex: 1, padding: '5px', border: '1px solid #dcdde1', textAlign: 'center' }}>
-                        Tusz: <strong>{state.inkStocks}</strong> l.
+                        Tusz: <strong>{typeof state.inkStocks === 'number' ? Number(state.inkStocks.toFixed(2)) : state.inkStocks}</strong> l.
                         <div style={{ display: 'flex', gap: '2px', marginTop: '5px' }}>
                           <button onClick={() => buyPrintingSupplies('ink', 'pln')} style={{ flex: 1, fontSize: '0.8em' }}>Kup (8k zł)</button>
                           <button onClick={() => buyPrintingSupplies('ink', 'usd')} style={{ flex: 1, fontSize: '0.8em' }}>Kup ($80)</button>
