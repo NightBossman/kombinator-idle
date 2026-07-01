@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useGameState, generateBlackMarketOffers } from './hooks/useGameState';
-import { QUEUE_ITEMS, HELPERS, PEWEX_ITEMS, PARTY_RANKS, PLN_UPGRADES, BUSINESSES, SMUGGLING_ROUTES, HISTORY_EVENTS, ACHIEVEMENTS, SOLIDARITY_LEVELS, PRODUCED_ITEMS, LUXURY_ITEMS, SEA_SMUGGLING_ROUTES, BALTONA_ITEMS, GPW_STOCKS, GPW_EVENTS, NOMENKLATURA_COMPANIES, OFFSHORE_DEPOSITS, COCOM_ITEMS, EXPORT_CONTACTS, SYNDICATE_UPGRADES, GEOPOLITICAL_EVENTS, ELECTION_REGIONS, CAMPAIGN_MATERIALS, CAMPAIGN_LEADERS, DEBATE_OPTIONS, ELECTION_UPGRADES, COCOM_SMUGGLING_ROUTES, COCOM_VEHICLES, COCOM_PERSONNEL, BAZAR_ITEMS, NFI_COMPANIES, MAFIA_PROTECTIONS, WARSAW_DISTRICTS, GANGSTER_UNITS, BLACK_MARKET_WEAPONS, BAZAR_LOGISTICS_ROUTES, WAREHOUSE_UPGRADES, MEDIA_STATIONS, MEDIA_PROGRAMS, MEDIA_ANTENNA_REGIONS , EU_PROJECTS, DOTCOM_UPGRADES, REAL_ESTATE_PROJECTS, CRISIS_REAL_ESTATE, CURRENCY_OPTION_PRESETS, LOBBY_BILLS, COMMISSION_QUESTIONS } from './game/items';
+import { QUEUE_ITEMS, HELPERS, PEWEX_ITEMS, PARTY_RANKS, PLN_UPGRADES, BUSINESSES, SMUGGLING_ROUTES, HISTORY_EVENTS, ACHIEVEMENTS, SOLIDARITY_LEVELS, PRODUCED_ITEMS, LUXURY_ITEMS, SEA_SMUGGLING_ROUTES, BALTONA_ITEMS, GPW_STOCKS, GPW_EVENTS, NOMENKLATURA_COMPANIES, OFFSHORE_DEPOSITS, COCOM_ITEMS, EXPORT_CONTACTS, SYNDICATE_UPGRADES, GEOPOLITICAL_EVENTS, ELECTION_REGIONS, CAMPAIGN_MATERIALS, CAMPAIGN_LEADERS, DEBATE_OPTIONS, ELECTION_UPGRADES, COCOM_SMUGGLING_ROUTES, COCOM_VEHICLES, COCOM_PERSONNEL, BAZAR_ITEMS, NFI_COMPANIES, MAFIA_PROTECTIONS, WARSAW_DISTRICTS, GANGSTER_UNITS, BLACK_MARKET_WEAPONS, BAZAR_LOGISTICS_ROUTES, WAREHOUSE_UPGRADES, MEDIA_STATIONS, MEDIA_PROGRAMS, MEDIA_ANTENNA_REGIONS , EU_PROJECTS, DOTCOM_UPGRADES, REAL_ESTATE_PROJECTS, CRISIS_REAL_ESTATE, CURRENCY_OPTION_PRESETS, LOBBY_BILLS, COMMISSION_QUESTIONS, VAT_GOODS, VAT_UPGRADES } from './game/items';
 import { playClick, playSuccess, playError, playAlert, isSoundEnabled, setSoundEnabled } from './utils/audio';
 void DEBATE_OPTIONS; void ELECTION_UPGRADES; // Used in Phase K UI tab (added later)
 
@@ -97,8 +97,11 @@ function App() {
   
   const [currentTab, setCurrentTab] = useState<TabId>('praca');
   const [lata90SubTab, setLata90SubTab] = useState<'bazar' | 'nfi' | 'media' | 'mafia'>('bazar');
-  const [lata2000SubTab, setLata2000SubTab] = useState<'ue' | 'dotcom' | 'deweloperka' | 'zmywak' | 'polityka'>('ue');
+  const [lata2000SubTab, setLata2000SubTab] = useState<'ue' | 'dotcom' | 'deweloperka' | 'zmywak' | 'polityka' | 'raje'>('ue');
   const [selectedStockId, setSelectedStockId] = useState<string>('kghm');
+  const [newCompanyName, setNewCompanyName] = useState<string>('');
+  const [newCompanyGoods, setNewCompanyGoods] = useState<'electronics' | 'steel' | 'fuel'>('steel');
+  const [vatOffshoreAmountInput, setVatOffshoreAmountInput] = useState<string>('100000');
   const [toasts, setToasts] = useState<{ id: string; title: string; desc: string }[]>([]);
   const [casioMode, setCasioMode] = useState<'bilans' | 'statystyki' | 'szczegoly'>('bilans');
   const [speedrunChecked, setSpeedrunChecked] = useState(false);
@@ -330,6 +333,93 @@ function App() {
           
           if (corruptionGain > 0 && !s.commissionActive && s.prisonSentenceRemaining <= 0) {
             nextState.lobbyCorruption = Math.min(100, (s.lobbyCorruption || 0) + corruptionGain * deltaSec);
+          }
+
+          // Faza V: Karuzela VAT
+          if (s.vatCarouselActive && s.prisonSentenceRemaining <= 0) {
+            let totalTurnover = 0;
+            let totalRisk = 0;
+            (s.vatCompanies || []).forEach(comp => {
+              if (comp.isActive && comp.status === 'trading') {
+                const goods = VAT_GOODS.find(g => g.type === comp.goodsType);
+                if (goods) {
+                  totalTurnover += comp.capital * goods.turnoverMult;
+                  totalRisk += goods.riskPerSec;
+                }
+              }
+            });
+
+            if (totalTurnover > 0) {
+              const gainedRefund = totalTurnover * 0.22 * deltaSec;
+              nextState.vatRefundClaimed = (s.vatRefundClaimed || 0) + gainedRefund;
+              
+              // Apply upgrade risk reductions
+              let riskMult = 1.0;
+              if (s.vatUpgrades?.['slup_podlasie']) riskMult *= 0.7;
+              if (s.vatUpgrades?.['naczelnik_us']) riskMult *= 0.7;
+              
+              const riskGain = totalRisk * riskMult * deltaSec;
+              nextState.vatAuditRisk = Math.min(100, (s.vatAuditRisk || 0) + riskGain);
+            }
+          } else {
+            // Pasywny spadek ryzyka gdy karuzela jest wyłączona
+            nextState.vatAuditRisk = Math.max(0, (s.vatAuditRisk || 0) - 2 * deltaSec);
+          }
+
+          // 2. Weryfikacja VAT-7 i kontrola skarbowa
+          if (s.vatRefundStatus === 'pending') {
+            nextState.vatRefundTimer = (s.vatRefundTimer || 0) - deltaSec;
+            if (nextState.vatRefundTimer <= 0) {
+              // Rozstrzygnięcie kontroli skarbowej
+              const roll = Math.random() * 100;
+              if (roll < s.vatAuditRisk) {
+                // Wpadka - Kontrola wykryła karuzelę!
+                nextState.vatRefundStatus = 'rejected';
+                
+                // Znajdź pierwszą aktywną i nie-zamrożoną spółkę i ją zamroź
+                const companiesCopy = [...(s.vatCompanies || [])];
+                const targetIndex = companiesCopy.findIndex(c => c.isActive && c.status === 'trading');
+                let targetName = "Spółka krzak";
+                if (targetIndex !== -1) {
+                  companiesCopy[targetIndex] = {
+                    ...companiesCopy[targetIndex],
+                    status: 'inspected',
+                    capital: 0 // tracimy kapitał
+                  };
+                  targetName = companiesCopy[targetIndex].name;
+                }
+                nextState.vatCompanies = companiesCopy;
+                nextState.vatCarouselActive = false; // wyłącz karuzelę
+
+                // Kara: 150% żądanej kwoty (lub 75% jeśli z doradcą)
+                const penaltyMult = s.vatUpgrades?.['doradca_vat'] ? 0.75 : 1.5;
+                const penalty = Math.floor(s.vatRefundPendingAmount * penaltyMult);
+                nextState.pln = Math.max(0, nextState.pln - penalty);
+                nextState.vatRefundPendingAmount = 0;
+
+                setTimeout(() => {
+                  playAlert();
+                  showAlert(`KONTROLA SKARBOWA! Urząd Skarbowy wykrył nieprawidłowości w spółce "${targetName}". Kapitał obrotowy został zajęty, a na Twoją firmę nałożono karę w wysokości ${penalty.toLocaleString()} PLN.`, "🚨 URZĄD SKARBOWY", "error");
+                }, 100);
+              } else {
+                // Sukces - Zwrot zaakceptowany
+                nextState.vatRefundStatus = 'approved';
+                nextState.pln += s.vatRefundPendingAmount;
+                nextState.vatRefundPendingAmount = 0;
+                // Spadek ryzyka o 30% po udanym zwrocie
+                nextState.vatAuditRisk = Math.max(0, s.vatAuditRisk - 30);
+                setTimeout(() => {
+                  playSuccess();
+                  addToast("VAT ZWRÓCONY", `Zatwierdzono deklarację VAT-7. Otrzymałeś ${s.vatRefundPendingAmount.toLocaleString()} PLN zwrotu!`);
+                }, 100);
+              }
+            }
+          }
+
+          // 3. Pasywne odsetki na Cyprze
+          if (s.offshoreCyprusBalance > 0) {
+            const interest = s.offshoreCyprusBalance * (0.005 / 60) * deltaSec;
+            nextState.offshoreCyprusBalance = s.offshoreCyprusBalance + interest;
           }
         }
 
@@ -4492,6 +4582,253 @@ function App() {
     });
   };
 
+  // --- FAZA V: AKCJE KARUZELI VAT I OFFSHORE ---
+
+  const registerShellCompany = (name: string, goodsType: 'electronics' | 'steel' | 'fuel') => {
+    if (state.prisonSentenceRemaining > 0) {
+      playError();
+      return;
+    }
+    if ((state.vatCompanies || []).length >= 5) {
+      playError();
+      addToast("LIMIT SPÓŁEK", "Możesz mieć maksymalnie 5 zarejestrowanych spółek.");
+      return;
+    }
+    if (state.pln < 100000) {
+      playError();
+      addToast("BRAK ŚRODKÓW", "Potrzebujesz 100 000 PLN, aby opłacić rejestrację spółki z o.o.");
+      return;
+    }
+
+    updateState(s => {
+      playSuccess();
+      const newCompany = {
+        id: 'comp_' + Date.now(),
+        name: name.trim() || 'Firma Krzak S.A.',
+        goodsType,
+        capital: 0,
+        isActive: true,
+        status: 'idle' as const
+      };
+      return {
+        ...s,
+        pln: s.pln - 100000,
+        vatCompanies: [...(s.vatCompanies || []), newCompany]
+      };
+    });
+    addToast("REJESTRACJA", `Zarejestrowano nową spółkę: ${name}`);
+  };
+
+  const addCompanyCapital = (companyId: string, amount: number) => {
+    if (state.prisonSentenceRemaining > 0) {
+      playError();
+      return;
+    }
+    if (state.pln < amount) {
+      playError();
+      addToast("BRAK ŚRODKÓW", "Nie posiadasz wystarczającej gotówki PLN.");
+      return;
+    }
+
+    updateState(s => {
+      const updated = (s.vatCompanies || []).map(c => {
+        if (c.id === companyId) {
+          if (c.status === 'inspected') return c; // block capital if inspected
+          return { ...c, capital: c.capital + amount, status: 'trading' as const };
+        }
+        return c;
+      });
+      playSuccess();
+      return {
+        ...s,
+        pln: s.pln - amount,
+        vatCompanies: updated
+      };
+    });
+    addToast("KAPITAŁ ZASILONY", `Zasilono kapitał spółki kwotą ${amount.toLocaleString()} PLN`);
+  };
+
+  const toggleCompanyActive = (companyId: string) => {
+    if (state.prisonSentenceRemaining > 0) {
+      playError();
+      return;
+    }
+    updateState(s => {
+      const updated = (s.vatCompanies || []).map(c => {
+        if (c.id === companyId) {
+          const nextActive = !c.isActive;
+          return { ...c, isActive: nextActive };
+        }
+        return c;
+      });
+      playClick();
+      return {
+        ...s,
+        vatCompanies: updated
+      };
+    });
+  };
+
+  const toggleVatCarousel = () => {
+    if (state.prisonSentenceRemaining > 0) {
+      playError();
+      return;
+    }
+    updateState(s => {
+      const nextActive = !s.vatCarouselActive;
+      playClick();
+      return {
+        ...s,
+        vatCarouselActive: nextActive
+      };
+    });
+  };
+
+  const claimVatRefund = () => {
+    if (state.prisonSentenceRemaining > 0) {
+      playError();
+      return;
+    }
+    if (state.vatRefundClaimed <= 0) {
+      playError();
+      addToast("BRAK ROSZCZEŃ", "Nie posiadasz żadnych zadeklarowanych kwot VAT do odzyskania.");
+      return;
+    }
+    if (state.vatRefundStatus === 'pending') {
+      playError();
+      addToast("WERYFIKACJA W TOKU", "Urząd Skarbowy analizuje już poprzednią deklarację VAT-7.");
+      return;
+    }
+
+    updateState(s => {
+      playSuccess();
+      const timer = s.vatUpgrades?.['doradca_vat'] ? 10 : 15;
+      return {
+        ...s,
+        vatRefundStatus: 'pending' as const,
+        vatRefundPendingAmount: Math.floor(s.vatRefundClaimed),
+        vatRefundClaimed: 0,
+        vatRefundTimer: timer
+      };
+    });
+    addToast("DEKLARACJA WYSŁANA", "Złożono deklarację VAT-7 w Urzędzie Skarbowym. Weryfikacja w toku...");
+  };
+
+  const resolveVatAudit = (companyId: string, method: 'bribe' | 'lawyer') => {
+    if (state.prisonSentenceRemaining > 0) {
+      playError();
+      return;
+    }
+    const cost = method === 'lawyer' ? 25000 : 60000;
+    if (method === 'lawyer' && !state.vatUpgrades?.['doradca_vat']) {
+      playError();
+      addToast("BRAK USŁUGI", "Musisz najpierw wykupić ulepszenie Kancelaria Prawa Podatkowego.");
+      return;
+    }
+    if (state.pln < cost) {
+      playError();
+      addToast("BRAK ŚRODKÓW", `Potrzebujesz ${cost.toLocaleString()} PLN na uregulowanie sytuacji.`);
+      return;
+    }
+
+    updateState(s => {
+      const updated = (s.vatCompanies || []).map(c => {
+        if (c.id === companyId) {
+          return { ...c, status: 'idle' as const };
+        }
+        return c;
+      });
+      playSuccess();
+      return {
+        ...s,
+        pln: s.pln - cost,
+        vatCompanies: updated
+      };
+    });
+    addToast("SPÓŁKA ODZYSKANA", "Spółka została pomyślnie oczyszczona z zarzutów skarbowych.");
+  };
+
+  const transferToOffshore = (amount: number) => {
+    if (state.prisonSentenceRemaining > 0) {
+      playError();
+      return;
+    }
+    if (state.pln < amount) {
+      playError();
+      addToast("BRAK ŚRODKÓW", "Nie masz tyle gotówki PLN na głównym koncie.");
+      return;
+    }
+
+    const commissionRate = state.vatUpgrades?.['holding_cypryjski'] ? 0.02 : 0.10;
+    const tax = amount * commissionRate;
+    const transferred = amount - tax;
+
+    updateState(s => {
+      playSuccess();
+      return {
+        ...s,
+        pln: s.pln - amount,
+        offshoreCyprusBalance: (s.offshoreCyprusBalance || 0) + transferred
+      };
+    });
+    addToast("TRANSFER OFFSHORE", `Przelano ${transferred.toLocaleString()} PLN na Cypr (Prowizja: ${tax.toLocaleString()} PLN)`);
+  };
+
+  const withdrawFromOffshore = (amount: number) => {
+    if (state.prisonSentenceRemaining > 0) {
+      playError();
+      return;
+    }
+    if (state.offshoreCyprusBalance < amount) {
+      playError();
+      addToast("BRAK ŚRODKÓW", "Nie posiadasz tylu środków na cypryjskim koncie offshore.");
+      return;
+    }
+
+    updateState(s => {
+      playSuccess();
+      return {
+        ...s,
+        offshoreCyprusBalance: s.offshoreCyprusBalance - amount,
+        pln: s.pln + amount
+      };
+    });
+    addToast("WYPŁATA OFFSHORE", `Wypłacono ${amount.toLocaleString()} PLN z Cypru jako pożyczkę udziałowca.`);
+  };
+
+  const buyVatUpgrade = (upgradeId: string) => {
+    if (state.prisonSentenceRemaining > 0) {
+      playError();
+      return;
+    }
+    const upg = VAT_UPGRADES.find(u => u.id === upgradeId);
+    if (!upg) return;
+
+    if (upg.costPln && state.pln < upg.costPln) {
+      playError();
+      addToast("BRAK ŚRODKÓW", `Potrzebujesz ${upg.costPln.toLocaleString()} PLN.`);
+      return;
+    }
+    if (upg.costUsd && state.dollars < upg.costUsd) {
+      playError();
+      addToast("BRAK ŚRODKÓW", `Potrzebujesz ${upg.costUsd.toLocaleString()} USD.`);
+      return;
+    }
+
+    updateState(s => {
+      playSuccess();
+      const nextUpgrades = { ...s.vatUpgrades, [upgradeId]: true };
+      const nextState = {
+        ...s,
+        vatUpgrades: nextUpgrades
+      };
+      if (upg.costPln) nextState.pln -= upg.costPln;
+      if (upg.costUsd) nextState.dollars -= upg.costUsd;
+      return nextState;
+    });
+    addToast("ZAKUPIONO ULEPSZENIE", `Zakupiono: ${upg.name}`);
+  };
+
   const hardReset = () => {
     playAlert();
     const finalConfirm = window.prompt("🚨 OSTRZEŻENIE OSTATECZNE! 🚨\n\nTa operacja całkowicie wyczyści Twój zapis gry, cofając wszystkie postępy, pieniądze i odblokowane ery.\n\nAby potwierdzić, wpisz drukowanymi literami słowo:\n\nRESETUJ");
@@ -5721,7 +6058,26 @@ function App() {
     chfPlnCost = Math.floor(chfInstallmentPerSec * state.chfExchangeRate);
   }
 
-  const totalPassiveIncome = businessPlnRate + mediaPlnRate + dotcomPlnRate + zmywakPlnRate + nfiPlnRate + gpwPlnRate;
+  let cyprusInterestPlnRate = 0;
+  if (state.fazaSUnlocked && state.offshoreCyprusBalance > 0) {
+    cyprusInterestPlnRate = state.offshoreCyprusBalance * (0.005 / 60);
+  }
+
+  let vatCarouselPlnRate = 0;
+  if (state.fazaSUnlocked && state.vatCarouselActive && state.prisonSentenceRemaining <= 0) {
+    let totalTurnover = 0;
+    (state.vatCompanies || []).forEach(comp => {
+      if (comp.isActive && comp.status === 'trading') {
+        const goods = VAT_GOODS.find(g => g.type === comp.goodsType);
+        if (goods) {
+          totalTurnover += comp.capital * goods.turnoverMult;
+        }
+      }
+    });
+    vatCarouselPlnRate = totalTurnover * 0.22;
+  }
+
+  const totalPassiveIncome = businessPlnRate + mediaPlnRate + dotcomPlnRate + zmywakPlnRate + nfiPlnRate + gpwPlnRate + cyprusInterestPlnRate + vatCarouselPlnRate;
   let lobbyBribeCost = 0;
   if (state.fazaSUnlocked) {
     LOBBY_BILLS.forEach(bill => {
@@ -5882,6 +6238,56 @@ function App() {
                   }}
                 >
                   🔧 DEV: WYWOŁAJ KOMISJĘ
+                </button>
+                <button 
+                  onClick={() => {
+                    updateState(s => ({
+                      ...s,
+                      offshoreCyprusBalance: (s.offshoreCyprusBalance || 0) + 1000000
+                    }));
+                    setSettingsOpen(false);
+                    setTimeout(() => addToast("DEV CHEAT", "Dodano 1 000 000 PLN na Cyprze!"), 50);
+                  }}
+                  style={{
+                    width: '100%',
+                    background: 'rgba(26, 188, 156, 0.2)',
+                    border: '1px solid #1abc9c',
+                    color: '#1abc9c',
+                    padding: '6px',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    fontWeight: 'bold',
+                    boxShadow: '0 0 3px #1abc9c',
+                    marginTop: '4px'
+                  }}
+                >
+                  🔧 DEV: +1M PLN CYPR
+                </button>
+                <button 
+                  onClick={() => {
+                    updateState(s => ({
+                      ...s,
+                      vatAuditRisk: 100
+                    }));
+                    setSettingsOpen(false);
+                    setTimeout(() => addToast("DEV CHEAT", "Ustawiono ryzyko kontroli VAT na 100%!"), 50);
+                  }}
+                  style={{
+                    width: '100%',
+                    background: 'rgba(230, 126, 34, 0.2)',
+                    border: '1px solid #e67e22',
+                    color: '#e67e22',
+                    padding: '6px',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    fontWeight: 'bold',
+                    boxShadow: '0 0 3px #e67e22',
+                    marginTop: '4px'
+                  }}
+                >
+                  🔧 DEV: RYZYKO VAT 100%
                 </button>
               </div>
 
@@ -6216,6 +6622,9 @@ function App() {
                 </button>
                 <button onClick={() => { playClick(); setLata2000SubTab('polityka'); }} style={{ flex: 1, padding: '10px', fontWeight: 'bold', border: 'none', borderRadius: '4px', cursor: 'pointer', backgroundColor: lata2000SubTab === 'polityka' ? '#9b59b6' : '#2c3e50', color: lata2000SubTab === 'polityka' ? '#fff' : '#bdc3c7' }}>
                   ⚖️ POLITYKA 2.0
+                </button>
+                <button onClick={() => { playClick(); setLata2000SubTab('raje'); }} style={{ flex: 1, padding: '10px', fontWeight: 'bold', border: 'none', borderRadius: '4px', cursor: 'pointer', backgroundColor: lata2000SubTab === 'raje' ? '#1abc9c' : '#2c3e50', color: lata2000SubTab === 'raje' ? '#fff' : '#bdc3c7' }}>
+                  🇨🇾 RAJE & VAT
                 </button>
               </div>
 
@@ -6613,6 +7022,259 @@ function App() {
                       >
                         KUP TECZKĘ (50 000 USD)
                       </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {lata2000SubTab === 'raje' && (
+                <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', width: '100%' }}>
+                  {/* Left Column: Shell Companies and Carousel */}
+                  <div style={{ flex: 1.5, minWidth: '320px', backgroundColor: '#34495e', padding: '20px', border: '1px solid #7f8c8d', borderRadius: '6px' }}>
+                    <h3 style={{ margin: '0 0 15px 0', borderBottom: '2px solid #1abc9c', paddingBottom: '5px', color: '#1abc9c' }}>Karuzela VAT & Spółki-krzaki</h3>
+                    
+                    {/* Control Panel */}
+                    <div style={{ backgroundColor: '#2c3e50', padding: '15px', borderRadius: '6px', border: '1px solid #465c71', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+                      <div>
+                        <div>Roszczenie o zwrot VAT: <strong style={{ color: '#2ecc71', fontSize: '1.2em' }}>{Math.floor(state.vatRefundClaimed || 0).toLocaleString()} PLN</strong></div>
+                        <div style={{ fontSize: '0.8em', color: '#bdc3c7', marginTop: '2px' }}>
+                          Status deklaracji: {state.vatRefundStatus === 'none' ? 'Brak deklaracji' :
+                                             state.vatRefundStatus === 'pending' ? `Weryfikacja w toku (${Math.ceil(state.vatRefundTimer || 0)}s)` :
+                                             state.vatRefundStatus === 'approved' ? 'Zwrócono pomyślnie' : 'Odrzucono (Kontrola)'}
+                          {state.vatRefundStatus === 'pending' && ` (${Math.floor(state.vatRefundPendingAmount).toLocaleString()} PLN)`}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '10px' }}>
+                        <button
+                          onClick={toggleVatCarousel}
+                          style={{
+                            padding: '10px 15px',
+                            backgroundColor: state.vatCarouselActive ? '#e74c3c' : '#2ecc71',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontWeight: 'bold'
+                          }}
+                        >
+                          {state.vatCarouselActive ? '🛑 STOP KARUZELA' : '🔄 START KARUZELA'}
+                        </button>
+                        <button
+                          onClick={claimVatRefund}
+                          disabled={state.vatRefundClaimed <= 0 || state.vatRefundStatus === 'pending'}
+                          style={{
+                            padding: '10px 15px',
+                            backgroundColor: '#3498db',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: (state.vatRefundClaimed > 0 && state.vatRefundStatus !== 'pending') ? 'pointer' : 'not-allowed',
+                            fontWeight: 'bold',
+                            opacity: (state.vatRefundClaimed > 0 && state.vatRefundStatus !== 'pending') ? 1.0 : 0.5
+                          }}
+                        >
+                          📩 ZŁÓŻ VAT-7
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Companies List */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                      <h4 style={{ margin: '0 0 10px 0', color: '#ecf0f1' }}>Rejestr Spółek ({ (state.vatCompanies || []).length }/5)</h4>
+                      
+                      {(state.vatCompanies || []).map(comp => {
+                        const goods = VAT_GOODS.find(g => g.type === comp.goodsType);
+                        return (
+                          <div key={comp.id} style={{ backgroundColor: '#2c3e50', padding: '15px', borderRadius: '6px', border: '1px solid #465c71' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <div>
+                                <strong style={{ fontSize: '1.1em', color: '#fff' }}>{comp.name}</strong>
+                                <span style={{ marginLeft: '10px', fontSize: '0.8em', backgroundColor: '#34495e', padding: '2px 6px', borderRadius: '4px', color: '#1abc9c' }}>
+                                  {goods?.name} (VAT {goods ? goods.vatRate * 100 : 22}%)
+                                </span>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <span style={{ fontSize: '0.85em', color: comp.status === 'inspected' ? '#e74c3c' : '#2ecc71', fontWeight: 'bold' }}>
+                                  {comp.status === 'inspected' ? '⚠️ KONTROLA' :
+                                   comp.status === 'trading' ? '🔄 W OBROCIE' : '⏳ BEZCZYNNY'}
+                                </span>
+                                <input
+                                  type="checkbox"
+                                  checked={comp.isActive}
+                                  onChange={() => toggleCompanyActive(comp.id)}
+                                  disabled={comp.status === 'inspected'}
+                                  style={{ transform: 'scale(1.2)', cursor: 'pointer' }}
+                                />
+                              </div>
+                            </div>
+
+                            <p style={{ fontSize: '0.8em', color: '#bdc3c7', margin: '5px 0' }}>{goods?.desc}</p>
+                            
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', backgroundColor: '#34495e', padding: '10px', borderRadius: '4px' }}>
+                              <div>Kapitał obrotowy: <strong style={{ color: '#fff' }}>{comp.capital.toLocaleString()} PLN</strong></div>
+                              <div style={{ display: 'flex', gap: '5px' }}>
+                                <button onClick={() => addCompanyCapital(comp.id, 50000)} disabled={comp.status === 'inspected' || state.pln < 50000} style={{ padding: '4px 8px', fontSize: '0.75em', cursor: 'pointer', fontWeight: 'bold' }}>+50k PLN</button>
+                                <button onClick={() => addCompanyCapital(comp.id, 100000)} disabled={comp.status === 'inspected' || state.pln < 100000} style={{ padding: '4px 8px', fontSize: '0.75em', cursor: 'pointer', fontWeight: 'bold' }}>+100k PLN</button>
+                              </div>
+                            </div>
+
+                            {comp.status === 'inspected' && (
+                              <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px dashed #e74c3c', paddingTop: '10px' }}>
+                                <span style={{ fontSize: '0.8em', color: '#e74c3c' }}>Zablokowane przez US! Opłać adwokata lub daj łapówkę.</span>
+                                <div style={{ display: 'flex', gap: '5px' }}>
+                                  <button onClick={() => resolveVatAudit(comp.id, 'bribe')} disabled={state.pln < 60000} style={{ padding: '4px 8px', fontSize: '0.75em', backgroundColor: '#e67e22', color: '#000', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Łapówka (60k PLN)</button>
+                                  {state.vatUpgrades?.['doradca_vat'] && (
+                                    <button onClick={() => resolveVatAudit(comp.id, 'lawyer')} disabled={state.pln < 25000} style={{ padding: '4px 8px', fontSize: '0.75em', backgroundColor: '#3498db', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Adwokat (25k PLN)</button>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+
+                      {/* Register Form */}
+                      {(state.vatCompanies || []).length < 5 && (
+                        <div style={{ backgroundColor: '#2c3e50', padding: '15px', borderRadius: '6px', border: '1px dashed #1abc9c', marginTop: '10px' }}>
+                          <h5 style={{ margin: '0 0 10px 0', color: '#1abc9c' }}>Zarejestruj nową spółkę z o.o. (Koszt: 100 000 PLN)</h5>
+                          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                            <input
+                              type="text"
+                              placeholder="Nazwa spółki (np. Stal-Trans Sp. z o.o.)"
+                              value={newCompanyName}
+                              onChange={(e) => setNewCompanyName(e.target.value)}
+                              style={{ flex: 2, padding: '8px', borderRadius: '4px', border: '1px solid #7f8c8d', backgroundColor: '#34495e', color: '#fff' }}
+                            />
+                            <select
+                              value={newCompanyGoods}
+                              onChange={(e) => setNewCompanyGoods(e.target.value as any)}
+                              style={{ flex: 1, padding: '8px', borderRadius: '4px', border: '1px solid #7f8c8d', backgroundColor: '#34495e', color: '#fff' }}
+                            >
+                              <option value="steel">Stal zbrojeniowa</option>
+                              <option value="electronics">Elektronika</option>
+                              <option value="fuel">Paliwa płynne</option>
+                            </select>
+                          </div>
+                          <button
+                            onClick={() => {
+                              registerShellCompany(newCompanyName, newCompanyGoods);
+                              setNewCompanyName('');
+                            }}
+                            disabled={state.pln < 100000}
+                            style={{
+                              width: '100%',
+                              padding: '10px',
+                              backgroundColor: '#1abc9c',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: '4px',
+                              fontWeight: 'bold',
+                              cursor: state.pln >= 100000 ? 'pointer' : 'not-allowed',
+                              opacity: state.pln >= 100000 ? 1 : 0.6
+                            }}
+                          >
+                            Zarejestruj spółkę
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Right Column: Skarbówka Monitoring & Offshore */}
+                  <div style={{ flex: 1, minWidth: '300px', backgroundColor: '#34495e', padding: '20px', border: '1px solid #7f8c8d', borderRadius: '6px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    {/* Risk indicator */}
+                    <div style={{ backgroundColor: '#2c3e50', padding: '15px', borderRadius: '6px', border: '1px solid #465c71' }}>
+                      <h4 style={{ margin: '0 0 10px 0', color: '#e67e22' }}>Ryzyko Kontroli Skarbowej</h4>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9em', marginBottom: '5px' }}>
+                        <span>Aktualne Ryzyko:</span>
+                        <strong style={{ color: state.vatAuditRisk >= 75 ? '#e74c3c' : '#e67e22' }}>{Math.floor(state.vatAuditRisk || 0)}%</strong>
+                      </div>
+                      <div style={{ width: '100%', height: '15px', backgroundColor: '#34495e', borderRadius: '4px', overflow: 'hidden', border: '1px solid #465c71' }}>
+                        <div style={{ width: `${state.vatAuditRisk}%`, height: '100%', backgroundColor: state.vatAuditRisk >= 75 ? '#e74c3c' : '#e67e22', transition: 'width 0.3s ease' }}></div>
+                      </div>
+                      <p style={{ margin: '8px 0 0 0', fontSize: '0.72em', color: '#bdc3c7', lineHeight: '1.3' }}>
+                        Ryzyko rośnie, gdy karuzela się kręci (szybciej dla paliw i elektroniki). Spada powoli, gdy karuzela jest wyłączona, oraz po pomyślnych zwrotach VAT.
+                      </p>
+                    </div>
+
+                    {/* Cyprus bank */}
+                    <div style={{ backgroundColor: '#2c3e50', padding: '15px', borderRadius: '6px', border: '1px solid #465c71' }}>
+                      <h4 style={{ margin: '0 0 10px 0', color: '#1abc9c' }}>Bankowość Offshore (Larnaka, Cypr)</h4>
+                      <p style={{ margin: '0 0 10px 0', fontSize: '0.8em', color: '#bdc3c7' }}>
+                        Przelej PLN do cypryjskiego holding-u, aby generować odsetki (+0.5%/min) i uchronić je przed grzywnami skarbowymi.
+                      </p>
+                      
+                      <div style={{ backgroundColor: '#34495e', padding: '10px', borderRadius: '4px', textAlign: 'center', marginBottom: '15px' }}>
+                        <span>Środki na Cyprze:</span>
+                        <div style={{ fontSize: '1.4em', color: '#1abc9c', fontWeight: 'bold', marginTop: '5px' }}>
+                          {Math.floor(state.offshoreCyprusBalance || 0).toLocaleString()} PLN
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div style={{ display: 'flex', gap: '5px' }}>
+                          <input
+                            type="number"
+                            value={vatOffshoreAmountInput}
+                            onChange={(e) => setVatOffshoreAmountInput(e.target.value)}
+                            style={{ flex: 1, padding: '6px', borderRadius: '4px', backgroundColor: '#34495e', color: '#fff', border: '1px solid #7f8c8d' }}
+                          />
+                          <button
+                            onClick={() => {
+                              const amt = parseInt(vatOffshoreAmountInput) || 0;
+                              if (amt > 0) transferToOffshore(amt);
+                            }}
+                            disabled={state.pln < (parseInt(vatOffshoreAmountInput) || 0)}
+                            style={{ padding: '6px 12px', backgroundColor: '#1abc9c', color: '#fff', border: 'none', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}
+                          >
+                            Przelej (Cypr)
+                          </button>
+                        </div>
+                        <button
+                          onClick={() => {
+                            const amt = parseInt(vatOffshoreAmountInput) || 0;
+                            if (amt > 0) withdrawFromOffshore(amt);
+                          }}
+                          disabled={state.offshoreCyprusBalance < (parseInt(vatOffshoreAmountInput) || 0)}
+                          style={{ width: '100%', padding: '6px', backgroundColor: '#3498db', color: '#fff', border: 'none', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}
+                        >
+                          Wypłać pożyczkę udziałowca
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Upgrades */}
+                    <div style={{ backgroundColor: '#2c3e50', padding: '15px', borderRadius: '6px', border: '1px solid #465c71' }}>
+                      <h4 style={{ margin: '0 0 10px 0', color: '#f1c40f' }}>Doradztwo Podatkowe & Słupy</h4>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {VAT_UPGRADES.map(upg => {
+                          const isBought = !!state.vatUpgrades?.[upg.id];
+                          return (
+                            <div key={upg.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#34495e', padding: '8px 12px', borderRadius: '4px' }}>
+                              <div style={{ flex: 1, marginRight: '10px' }}>
+                                <strong style={{ fontSize: '0.85em', color: '#fff' }}>{upg.name}</strong>
+                                <p style={{ margin: '2px 0 0 0', fontSize: '0.72em', color: '#bdc3c7', lineHeight: '1.2' }}>{upg.desc}</p>
+                              </div>
+                              <button
+                                onClick={() => buyVatUpgrade(upg.id)}
+                                disabled={isBought || (upg.costPln ? state.pln < upg.costPln : false) || (upg.costUsd ? state.dollars < upg.costUsd : false)}
+                                style={{
+                                  padding: '5px 10px',
+                                  fontSize: '0.75em',
+                                  backgroundColor: isBought ? '#7f8c8d' : '#f1c40f',
+                                  color: '#000',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  fontWeight: 'bold',
+                                  cursor: isBought ? 'not-allowed' : 'pointer'
+                                }}
+                              >
+                                {isBought ? 'KUPIONE' : upg.costPln ? `${(upg.costPln/1000).toFixed(0)}k zł` : upg.costUsd ? `${(upg.costUsd/1000).toFixed(0)}k $` : '0 $'}
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
                 </div>

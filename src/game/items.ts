@@ -1073,3 +1073,36 @@ export const COMMISSION_QUESTIONS: CommissionQuestion[] = [
     ]
   }
 ];
+
+
+// ===== FAZA V: Raje Podatkowe i Karuzela VAT =====
+
+export interface VatGoodsInfo {
+  type: 'electronics' | 'steel' | 'fuel';
+  name: string;
+  vatRate: number;
+  turnoverMult: number;
+  riskPerSec: number;
+  desc: string;
+}
+
+export const VAT_GOODS: VatGoodsInfo[] = [
+  { type: 'steel', name: 'Stal zbrojeniowa', vatRate: 0.22, turnoverMult: 0.05, riskPerSec: 0.1, desc: 'Bezpieczny handel hurtowy wyrobami stalowymi. Niski przyrost ryzyka.' },
+  { type: 'electronics', name: 'Elektronika (odtwarzacze, CPU)', vatRate: 0.22, turnoverMult: 0.10, riskPerSec: 0.25, desc: 'Średniej skali obrót sprzętem RTV i podzespołami. Umiarkowane ryzyko.' },
+  { type: 'fuel', name: 'Paliwa płynne (oleje)', vatRate: 0.22, turnoverMult: 0.20, riskPerSec: 0.6, desc: 'Agresywny handel cysternami paliwowymi. Gigantyczny zysk, ale natychmiast przyciąga uwagę skarbowców.' }
+];
+
+export interface VatUpgradeInfo {
+  id: string;
+  name: string;
+  desc: string;
+  costPln?: number;
+  costUsd?: number;
+}
+
+export const VAT_UPGRADES: VatUpgradeInfo[] = [
+  { id: 'slup_podlasie', name: 'Słup z Podlasia', desc: 'Zarejestruj spółki na bezdomnego. Zmniejsza bazowe ryzyko kontroli o 30%.', costPln: 250000 },
+  { id: 'doradca_vat', name: 'Kancelaria Prawa Podatkowego', desc: 'Profesjonalne doradztwo skraca weryfikację VAT-7 o 5 sekund i zmniejsza karę o połowę.', costPln: 500000 },
+  { id: 'naczelnik_us', name: 'Przekupny Naczelnik US', desc: 'Naczelnik Urzędu Skarbowego przymyka oko. Zmniejsza bazowe ryzyko kontroli o kolejne 30%.', costUsd: 100000 },
+  { id: 'holding_cypryjski', name: 'Cypryjska Spółka Matka', desc: 'Optymalizacja offshore. Zmniejsza prowizję za transfer środków na Cypr z 10% do 2%.', costUsd: 250000 }
+];

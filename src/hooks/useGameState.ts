@@ -73,6 +73,15 @@ export interface GameStats {
   totalCocomAutoExports?: number;
 }
 
+export interface ShellCompany {
+  id: string;
+  name: string;
+  goodsType: 'electronics' | 'steel' | 'fuel';
+  capital: number;
+  isActive: boolean;
+  status: 'idle' | 'trading' | 'inspected';
+}
+
 export interface GameState {
   pln: number;
   dollars: number;
@@ -303,6 +312,17 @@ export interface GameState {
   commissionQuestionIndex: number;
   teczkiCount: number;
   prisonSentenceRemaining: number;
+  
+  // Faza V: Raje Podatkowe i Karuzela VAT
+  vatCompanies: ShellCompany[];
+  vatCarouselActive: boolean;
+  vatRefundClaimed: number;
+  vatRefundStatus: 'none' | 'pending' | 'approved' | 'rejected';
+  vatRefundTimer: number;
+  vatRefundPendingAmount: number;
+  vatAuditRisk: number;
+  offshoreCyprusBalance: number;
+  vatUpgrades: Record<string, boolean>;
 }
 
 export const INITIAL_STATE: GameState = {
@@ -573,7 +593,18 @@ export const INITIAL_STATE: GameState = {
   commissionEvidence: 0,
   commissionQuestionIndex: 0,
   teczkiCount: 0,
-  prisonSentenceRemaining: 0
+  prisonSentenceRemaining: 0,
+  
+  // Faza V: Raje Podatkowe i Karuzela VAT
+  vatCompanies: [],
+  vatCarouselActive: false,
+  vatRefundClaimed: 0,
+  vatRefundStatus: 'none',
+  vatRefundTimer: 0,
+  vatRefundPendingAmount: 0,
+  vatAuditRisk: 0,
+  offshoreCyprusBalance: 0,
+  vatUpgrades: {}
 };
 
 export function useGameState(isPaused: boolean = false) {
