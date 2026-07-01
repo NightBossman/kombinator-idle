@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Project-specific agent configurations
+.agents/
+.agents
+
