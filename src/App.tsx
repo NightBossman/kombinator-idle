@@ -362,8 +362,15 @@ function App() {
               nextState.vatAuditRisk = Math.min(100, (s.vatAuditRisk || 0) + riskGain);
             }
           } else {
-            // Pasywny spadek ryzyka gdy karuzela jest wyłączona
-            nextState.vatAuditRisk = Math.max(0, (s.vatAuditRisk || 0) - 2 * deltaSec);
+            // Zgromadzone roszczenia wygasają jeśli karuzela stoi (by nie trzymać ich w nieskończoność)
+            if (s.vatRefundClaimed > 0) {
+              nextState.vatRefundClaimed = Math.max(0, s.vatRefundClaimed - (s.vatRefundClaimed * 0.01 * deltaSec));
+            }
+          }
+
+          // Pasywny spadek ryzyka (zamrożone w trakcie weryfikacji oraz w trybie DEV)
+          if (!s.vatCarouselActive && s.vatRefundStatus !== 'pending' && !s.devFreezeVatRisk) {
+            nextState.vatAuditRisk = Math.max(0, (s.vatAuditRisk || 0) - 0.3 * deltaSec);
           }
 
           // 2. Weryfikacja VAT-7 i kontrola skarbowa
@@ -418,7 +425,7 @@ function App() {
 
           // 3. Pasywne odsetki na Cyprze
           if (s.offshoreCyprusBalance > 0) {
-            const interest = s.offshoreCyprusBalance * (0.005 / 60) * deltaSec;
+            const interest = s.offshoreCyprusBalance * (0.0005 / 60) * deltaSec;
             nextState.offshoreCyprusBalance = s.offshoreCyprusBalance + interest;
           }
         }
@@ -4600,11 +4607,11 @@ function App() {
       return;
     }
 
+    const finalName = name.trim() || 'Firma Krzak S.A.';
     updateState(s => {
-      playSuccess();
       const newCompany = {
         id: 'comp_' + Date.now(),
-        name: name.trim() || 'Firma Krzak S.A.',
+        name: finalName,
         goodsType,
         capital: 0,
         isActive: true,
@@ -4616,7 +4623,8 @@ function App() {
         vatCompanies: [...(s.vatCompanies || []), newCompany]
       };
     });
-    addToast("REJESTRACJA", `Zarejestrowano nową spółkę: ${name}`);
+    playSuccess();
+    addToast("REJESTRACJA", `Zarejestrowano nową spółkę: ${finalName}`);
   };
 
   const addCompanyCapital = (companyId: string, amount: number) => {
@@ -6060,7 +6068,7 @@ function App() {
 
   let cyprusInterestPlnRate = 0;
   if (state.fazaSUnlocked && state.offshoreCyprusBalance > 0) {
-    cyprusInterestPlnRate = state.offshoreCyprusBalance * (0.005 / 60);
+    cyprusInterestPlnRate = state.offshoreCyprusBalance * (0.0005 / 60);
   }
 
   let vatCarouselPlnRate = 0;
@@ -6077,7 +6085,7 @@ function App() {
     vatCarouselPlnRate = totalTurnover * 0.22;
   }
 
-  const totalPassiveIncome = businessPlnRate + mediaPlnRate + dotcomPlnRate + zmywakPlnRate + nfiPlnRate + gpwPlnRate + cyprusInterestPlnRate + vatCarouselPlnRate;
+  const totalPassiveIncome = businessPlnRate + mediaPlnRate + dotcomPlnRate + zmywakPlnRate + nfiPlnRate + gpwPlnRate + cyprusInterestPlnRate;
   let lobbyBribeCost = 0;
   if (state.fazaSUnlocked) {
     LOBBY_BILLS.forEach(bill => {
@@ -6287,7 +6295,7 @@ function App() {
                     marginTop: '4px'
                   }}
                 >
-                  🔧 DEV: RYZYKO VAT 100%
+                  🔧 DEV: RYZYKO 100% & ZAMROŹ
                 </button>
               </div>
 
@@ -6491,7 +6499,10 @@ function App() {
                  {state.gpwUnlocked && (
                    <div>Dywidendy GPW (śr): <span style={{color: '#33ff33'}}>+{gpwPlnRate.toFixed(2)} zł/s</span></div>
                  )}
-                 <div style={{borderTop: '1px dashed #33ff33', marginTop: '8px', paddingTop: '5px'}}>Suma Przychodów: <strong>+{totalPassiveIncome.toFixed(2)} zł/s</strong></div>
+                 <div style={{borderTop: '1px dashed #33ff33', marginTop: '8px', paddingTop: '5px'}}>Suma Przychodów (Realne PLN): <strong>+{totalPassiveIncome.toFixed(2)} zł/s</strong></div>
+                 {vatCarouselPlnRate > 0 && (
+                   <div style={{marginTop: '5px', color: 'var(--prl-yellow)'}}>Należności VAT: <strong>+{vatCarouselPlnRate.toFixed(2)} zł/s</strong> (oczekujące)</div>
+                 )}
                </div>
                <div>
                  <strong style={{color: 'var(--prl-red)'}}>PASYWNE KOSZTY (PLN/s):</strong>

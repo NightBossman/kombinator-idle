@@ -323,6 +323,7 @@ export interface GameState {
   vatAuditRisk: number;
   offshoreCyprusBalance: number;
   vatUpgrades: Record<string, boolean>;
+  devFreezeVatRisk?: boolean;
 }
 
 export const INITIAL_STATE: GameState = {
