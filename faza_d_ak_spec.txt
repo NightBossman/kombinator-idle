@@ -1,0 +1,887 @@
+﻿
+> faza_d_details.txt:5895:nator 4.0.","UserFacing":true},"CodeContent":"# Plan Wdrożenia: Kombinator 4.0 – Nowy Horyzon
+t (Fazy A do K)\n\nNowy pl
+  faza_d_details.txt:5896:an rozwoju rozszerza wszystkie istniejące mechaniki gry (Bazar, Przemyt, Kariera, Pewex, Czar
+ny Rynek, Solidarność, Wyd
+  faza_d_details.txt:5897:arzenia historyczne, Prestiż, Speedruny) oraz wprowadza nowe zaawansowane systemy polityczno-
+ekonomiczne schyłku PRL.\n
+  faza_d_details.txt:5898:\n## Faza A: Własna Produkcja i Surowce (Bazar 2.0)\n*   **Rozszerzenie:** Szklarnie, warszta
+ty i kombinaty przestają g
+  faza_d_details.txt:5899:enerować tylko czystą gotówkę.\n*   **Nowe mechaniki:** Generowanie surowców fizycznych (np. 
+Kwiaty, Części Zamienne, W
+  faza_d_details.txt:5900:yroby Hutnicze).\n*   **Integracja:** Surowce można sprzedawać na Bazarze po zmiennych cenach
+ lub używać do ulepszania 
+  faza_d_details.txt:5901:pomocników.\n\n## Faza B: Licytacje i Towary Luksusowe\n*   **Rozszerzenie:** Czarny Rynek zo
+staje rozbudowany o system
+  faza_d_details.txt:5902: aukcji.\n*   **Nowe mechaniki:** Co 10 minut pojawia się unikalny towar luksusowy (np. zacho
+dni samochód, zagraniczne 
+  faza_d_details.txt:5903:meblościanki, elektronika).\n*   **Efekt:** Posiadanie towarów luksusowych daje permanentne m
+nożniki prestiżu i obniża 
+  faza_d_details.txt:5904:generowanie podejrzenia.\n\n## Faza C: Drugi Obieg i Cenzura\n*   **Rozszerzenie:** Rozbudowa
+ konspiracji Solidarności.
+  faza_d_details.txt:5905:\n*   **Nowe mechaniki:** Zarządzanie tajną drukarnią podziemną. Gracz kupuje papier i tusz, 
+aby drukować nielegalne pi
+  faza_d_details.txt:5906:sma (np. Tygodnik Mazowsze).\n*   **Zastosowanie:** Dystrybucja prasy daje olbrzymi napływ pu
+nktów Solidarności, ale gr
+  faza_d_details.txt:5907:ozi aresztowaniem i czasową blokadą zakładki.\n\n## Faza D: Port Gdynia i Baltona (Przemyt 2.
+0)\n*   **Rozszerzenie:** 
+  faza_d_details.txt:5908:Nowa sekcja w zakładce Przemytu.\n*   **Nowe mechaniki:** Przemyt drogą morską przez marynarz
+y. Możliwość wymiany towar
+  faza_d_details.txt:5909:ów na specjalne Bony Towarowe Baltona.\n*   **Zastosowanie:** Sklep Baltona oferuje alternaty
+wne, potężne ulepszenia ni
+  faza_d_details.txt:5910:edostępne w Pewexie.\n\n## Faza E: Służba Bezpieczeństwa (SB) i TW (Tajni Współpracownicy)\n*
+   **Rozszerzenie:** Syste
+  faza_d_details.txt:5911:m Milicji zostaje rozszerzony o wywiad polityczny SB.\n*   **Nowe mechaniki:** Ryzyko, że jed
+en z Twoich pomocników zos
+  faza_d_details.txt:5912:tał zwerbowany jako TW (Tajny Współpracownik) i donosi na Ciebie, zwiększając podejrzenie o +
+1%/s.\n*   **Przeciwdziała
+  faza_d_details.txt:5913:nie:** Możliwość opłacania kontrwywiadu, dawania łapówek SB lub szantażowania informatorów.\n
+\n## Faza F: Hiperinflacja
+  faza_d_details.txt:5914: i Kryzys Walutowy (1989)\n*   **Rozszerzenie:** Wahania kursu dolara i dynamika cen.\n*   **
+Nowe mechaniki:** Wskaźnik
+  faza_d_details.txt:5915: inflacji PLN rosnący z każdą minutą. Gotówka w PLN traci na wartości (mnożnik cen rośnie, al
+e zyski z pracy państwowej
+  faza_d_details.txt:5916: spadają).\n*   **Ucieczka kapitału:** Gracz musi chronić majątek, wymieniając PLN na Dolary,
+ złoto lub Bony Pewexu.\n\
+  faza_d_details.txt:5917:n## Faza G: Giełda i Prywatyzacja (GPW)\n*   **Rozszerzenie:** Finał transformacji gospodarcz
+ej.\n*   **Nowe mechaniki:
+  faza_d_details.txt:5918:** Wczesny rynek akcji (GPW). Możliwość kupowania udziałów w prywatyzowanych kombinatach i fa
+brykach.\n*   **Dynamika:*
+  faza_d_details.txt:5919:* Ceny akcji rosną i spadają na bazie losowych wydarzeń rynkowych.\n\n## Faza H: Spółki Nomen
+klaturowe i Korporacje\n* 
+  faza_d_details.txt:5920:  **Rozszerzenie:** Awans na Członka Biura Politycznego.\n*   **Nowe mechaniki:** Transferowa
+nie majątku państwowych ko
+  faza_d_details.txt:5921:mbinatów do prywatnych spółek nomenklaturowych.\n*   **Zastosowanie:** Generuje gigantyczne p
+asywne zyski w USD i pozwa
+  faza_d_details.txt:5922:la na ominięcie SB.\n\n## Faza I: Konta Zagraniczne (Szwajcaria i Liechtenstein)\n*   **Rozsz
+erzenie:** Bezpieczeństwo 
+  faza_d_details.txt:5923:kapitału.\n*   **Nowe mechaniki:** Przelewy dewizowe na tajne konta w szwajcarskich bankach.\
+n*   **Efekt:** Pieniądze 
+  faza_d_details.txt:5924:na koncie zagranicznym są w 100% bezpieczne przed nalotami Milicji, konfiskatami SB oraz hipe
+rinflacją, generując stały
+  faza_d_details.txt:5925: procent roczny.\n\n## Faza J: Wybory 4 Czerwca (Kampania Wyborcza)\n*   **Rozszerzenie:** Fi
+nisz gry przy Okrągłym Sto
+  faza_d_details.txt:5926:le.\n*   **Nowe mechaniki:** Zamiast prostego czekania 24h, gracz musi aktywnie finansować i 
+zarządzać kampanią wyborcz
+  faza_d_details.txt:5927:ą Komitetu Obywatelskiego „Solidarność”.\n*   **Wymagania:** Druk plakatów z Wałęsą, opłacani
+e wieców, przekonywanie ni
+  faza_d_details.txt:5928:ezdecydowanych.\n\n## Faza K: Plan Balcerowicza (Nowa Gra++)\n*   **Rozszerzenie:** Prestiż d
+rugiego stopnia.\n*   **No
+  faza_d_details.txt:5929:we mechaniki:** Przejście do III RP i denominacja waluty (nowy złoty).\n*   **NG++:** Trwałe 
+odblokowanie wolnorynkowyc
+  faza_d_details.txt:5930:h bonusów i statystyk globalnego kapitalizmu.\n\n---\n\n## Plan Weryfikacji\n*   `npm run bui
+ld` przed wdrożeniem każde
+  faza_d_details.txt:5931:j fazy.\n*   Sprawdzenie stabilności stanu zapisu w `localStorage` (Backward Compatibility).\
+n","Description":"Create a
+  faza_d_details.txt:5932: comprehensive development plan from Phase A to Phase K.","Overwrite":true,"TargetFile":"C:\\
+Users\\Lukpa\\.gemini\\ant
+  faza_d_details.txt:5933:igravity\\brain\\6c6de58b-b6f4-4453-be02-d1f5ee42f15f\\implementation_plan.md","toolAction":"
+Creating implementation pl
+  faza_d_details.txt:5934:an A-K","toolSummary":"File write"}}]}
+  faza_d_details.txt:5935:  C:\Users\Lukpa\.gemini\antigravity\brain\6c6de58b-b6f4-4453-be02-d1f5ee42f15f\.system_gener
+ated\logs\transcript_full.
+  faza_d_details.txt:5936:jsonl:1528:{"step_index":1518,"source":"MODEL","type":"CODE_ACTION","status":"DONE","created_
+at":"2026-06-25T21:03:34Z"
+  faza_d_details.txt:5937:,"content":"Created At: 2026-06-25T21:03:34Z\nCompleted At: 2026-06-25T21:03:34Z\nCreated fil
+e file:///C:/Users/Lukpa/.
+  faza_d_details.txt:5938:gemini/antigravity/brain/6c6de58b-b6f4-4453-be02-d1f5ee42f15f/implementation_plan.md with req
+uested content.\nIf releva
+  faza_d_details.txt:5939:nt, proactively run terminal commands to execute this code for the USER. Don't ask for permis
+sion.\nNote: You have just
+  faza_d_details.txt:5940: created an artifact and requested user feedback. Stop calling tools to end your turn, and al
+low the user to review the
+  faza_d_details.txt:5941: artifact, approve it, or provide feedback"}
+  faza_d_details.txt:5942:  C:\Users\Lukpa\.gemini\antigravity\brain\6c6de58b-b6f4-4453-be02-d1f5ee42f15f\.system_gener
+ated\logs\transcript_full.
+  faza_d_details.txt:5943:jsonl:1529:{"step_index":1519,"source":"MODEL","type":"PLANNER_RESPONSE","status":"DONE","cre
+ated_at":"2026-06-25T21:03
+  faza_d_details.txt:5944::34Z","content":"Stworzyłem nowy, niezwykle szczegółowy plan rozwoju projektu w fazach **od A
+ do K**, który rozwija dot
+  faza_d_details.txt:5945:ychczasowe elementy gry (Bazar, Przemyt, Pewex, Czarny Rynek, Solidarność, SB/Milicję, kryzys
+y historyczne oraz mechani
+  faza_d_details.txt:5946:ki prestiżu) o nowe rozbudowane mechaniki z okresu transformacji ustrojowej i gospodarczej PR
+L/III RP.\n\nZgodnie z pro
+  faza_d_details.txt:5947:cedurami planowania, dokument został zapisany jako interaktywny plik [implementation_plan.md]
+(file:///C:/Users/Lukpa/.g
+  faza_d_details.txt:5948:emini/antigravity/brain/6c6de58b-b6f4-4453-be02-d1f5ee42f15f/implementation_plan.md). \n\nZap
+oznaj się z planem i daj z
+  faza_d_details.txt:5949:nać, czy go zatwierdzasz lub czy chcesz wprowadzić do niego jakieś poprawki, a po Twojej akce
+ptacji przejdziemy do real
+  faza_d_details.txt:5950:izacji pierwszych kroków!"}
+  faza_d_details.txt:5951:  C:\Users\Lukpa\.gemini\antigravity\brain\6c6de58b-b6f4-4453-be02-d1f5ee42f15f\.system_gener
+ated\logs\transcript_full.
+  faza_d_details.txt:5952:jsonl:1530:{"step_index":1520,"source":"USER_EXPLICIT","type":"USER_INPUT","status":"DONE","c
+reated_at":"2026-06-25T21:
+  faza_d_details.txt:5953:30:34Z","content":"<USER_REQUEST>\nWykonaj fazę A.\n</USER_REQUEST>\n<ADDITIONAL_METADATA>\nT
+he current local time is: 
+  faza_d_details.txt:5954:2026-06-25T23:30:34+02:00.\n</ADDITIONAL_METADATA>\n<USER_SETTINGS_CHANGE>\nThe user changed 
+setting `Model Selection` 
+  faza_d_details.txt:5955:from Gemini 3.5 Flash (Low) to Gemini 3.5 Flash (Medium). No need to comment on this change i
+f the user doesn't ask abo
+  faza_d_details.txt:5956:ut it. If reporting what model you are, please use a human readable name instead of the exact
+ string.\n</USER_SETTINGS_
+  faza_d_details.txt:5957:CHANGE>"}
+  faza_d_details.txt:5958:  C:\Users\Lukpa\.gemini\antigravity\brain\6c6de58b-b6f4-4453-be02-d1f5ee42f15f\.system_gener
+ated\logs\transcript_full.
+  faza_d_details.txt:5959:jsonl:1531:{"step_index":1521,"source":"MODEL","type":"PLANNER_RESPONSE","status":"DONE","cre
+ated_at":"2026-06-25T21:30
+  faza_d_details.txt:5960::35Z","tool_calls":[{"name":"view_file","args":{"AbsolutePath":"C:\\Users\\Lukpa\\.gemini\\an
+tigravity\\scratch\\kombin
+  faza_d_details.txt:5961:ator-idle\\src\\game\\items.ts","EndLine":60,"StartLine":1,"toolAction":"Viewing items.ts to 
+locate business definition
+  faza_d_details.txt:5962:s","toolSummary":"Viewing items.ts"}}]}
+  faza_d_details.txt:5963:  C:\Users\Lukpa\.gemini\antigravity\brain\6c6de58b-b6f4-4453-be02-d1f5ee42f15f\.system_gener
+ated\logs\transcript_full.
+  faza_d_details.txt:5964:jsonl:1532:{"step_index":1522,"source":"MODEL","type":"VIEW_FILE","status":"DONE","created_at
+":"2026-06-25T21:30:39Z","
+  faza_d_details.txt:5965:content":"Created At: 2026-06-25T21:30:39Z\nCompleted At: 2026-06-25T21:30:39Z\nFile Path: `f
+ile:///C:/Users/Lukpa/.gem
+  faza_d_details.txt:5966:ini/antigravity/scratch/kombinator-idle/src/game/items.ts`\nTotal Lines: 207\nTotal Bytes: 17
+177\nShowing lines 1 to 60
+  faza_d_details.txt:5967:\nThe following code has been modified to include a line number before every line, in the for
+mat: <line_number>: <origi
+  faza_d_details.txt:5968:nal_line>. Please note that any changes targeting the original code should remove the line nu
+mber, colon, and leading s
+  faza_d_details.txt:5969:pace.\n1: export interface QueueItem { id: string; name: string; costPln: number; sellPricePl
+n: number; timeToBuyMs: nu
+  faza_d_details.txt:5970:mber; kartkiCost?: number; }\n2: \n3: export const QUEUE_ITEMS: QueueItem[] = [\n4:   { id: '
+papier', name: 'Papier Toa
+  faza_d_details.txt:5971:letowy', costPln: 0, sellPricePln: 10, timeToBuyMs: 2000 },\n5:   { id: 'mydlo', name: 'Mydło
+ \"Biały Jeleń\"', costPln
+  faza_d_details.txt:5972:: 5, sellPricePln: 30, timeToBuyMs: 5000, kartkiCost: 1 },\n6:   { id: 'cukier', name: 'Cukie
+r (1kg)', costPln: 15, sel
+  faza_d_details.txt:5973:lPricePln: 75, timeToBuyMs: 12000, kartkiCost: 2 },\n7:   { id: 'maka', name: 'Mąka Pszenna (
+5kg)', costPln: 25, sellPr
+  faza_d_details.txt:5974:icePln: 120, timeToBuyMs: 20000, kartkiCost: 1 },\n8:   { id: 'kawa', name: 'Kawa Marago', co
+stPln: 40, sellPricePln: 1
+  faza_d_details.txt:5975:80, timeToBuyMs: 30000, kartkiCost: 3 },\n9:   { id: 'spirytus', name: 'Spirytus (0.5l)', cos
+tPln: 80, sellPricePln: 40
+  faza_d_details.txt:5976:0, timeToBuyMs: 45000, kartkiCost: 4 },\n10:   { id: 'dzinsy', name: 'Dżinsy \"Odra\"', costP
+ln: 100, sellPricePln: 450
+  faza_d_details.txt:5977:, timeToBuyMs: 60000, kartkiCost: 5 },\n11:   { id: 'relaks', name: 'Buty \"Relaks\"', costPl
+n: 250, sellPricePln: 1100
+  faza_d_details.txt:5978:, timeToBuyMs: 120000 },\n12:   { id: 'predom', name: 'Odkurzacz \"Predom\"', costPln: 600, s
+ellPricePln: 2600, timeToB
+  faza_d_details.txt:5979:uyMs: 250000 },\n13:   { id: 'kasprzak', name: 'Radio \"Kasprzak\"', costPln: 800, sellPriceP
+ln: 3500, timeToBuyMs: 350
+  faza_d_details.txt:5980:000 },\n14:   { id: 'frania', name: 'Pralka \"Frania\"', costPln: 1500, sellPricePln: 6500, t
+imeToBuyMs: 500000 },\n15:
+  faza_d_details.txt:5981:   { id: 'kowalski', name: 'Meblościanka \"Kowalski\"', costPln: 4000, sellPricePln: 18000, t
+imeToBuyMs: 1000000 },\n16
+  faza_d_details.txt:5982::   { id: 'zorki', name: 'Aparat \"Zorki\"', costPln: 6000, sellPricePln: 28000, timeToBuyMs:
+ 1400000 },\n17:   { id: '
+  faza_d_details.txt:5983:neptun', name: 'TV \"Neptun\"', costPln: 10000, sellPricePln: 45000, timeToBuyMs: 2000000 },\
+n18:   { id: 'osa', name: 
+  faza_d_details.txt:5984:'Skuter \"Osa\"', costPln: 18000, sellPricePln: 82000, timeToBuyMs: 3200000 },\n19:   { id: '
+wsk', name: 'Motocykl WSK'
+  faza_d_details.txt:5985:, costPln: 30000, sellPricePln: 140000, timeToBuyMs: 4500000 },\n20:   { id: 'syrena', name: 
+'Syrena 105', costPln: 100
+  faza_d_details.txt:5986:000, sellPricePln: 500000, timeToBuyMs: 12000000 },\n21:   { id: 'fiat125', name: 'Fiat 125p 
+\"Duży\"', costPln: 400000
+  faza_d_details.txt:5987:, sellPricePln: 2000000, timeToBuyMs: 30000000 },\n22:   { id: 'ursus', name: 'Ciągnik \"Ursu
+s\"', costPln: 1500000, se
+  faza_d_details.txt:5988:llPricePln: 8000000, timeToBuyMs: 80000000 },\n23:   { id: 'zis', name: 'Traktor Z.I.S. (Rary
+tas)', costPln: 8000000, s
+  faza_d_details.txt:5989:ellPricePln: 45000000, timeToBuyMs: 200000000 },\n24: ];\n25: \n26: export interface Helper {
+ id: string; name: string;
+  faza_d_details.txt:5990: costPln: number; generateId: string; ratePerTick: number; desc: string; }\n27: export const 
+HELPERS: Helper[] = [\n28:
+  faza_d_details.txt:5991:   { id: 'wladyslaw', name: 'Emeryt Władysław', costPln: 200, generateId: 'papier', ratePerTi
+ck: 0.1, desc: 'Stoi po pa
+  faza_d_details.txt:5992:pier' },\n29:   { id: 'kolega', name: 'Szkolny Kolega', costPln: 1000, generateId: 'mydlo', r
+atePerTick: 0.05, desc: 'S
+  faza_d_details.txt:5993:toi po mydło' },\n30:   { id: 'halinka', name: 'Sąsiadka Halinka', costPln: 5000, generateId:
+ 'cukier', ratePerTick: 0.
+  faza_d_details.txt:5994:02, desc: 'Załatwia cukier' },\n31:   { id: 'basia', name: 'Sklepowa Basia', costPln: 20000, 
+generateId: 'kawa', ratePe
+  faza_d_details.txt:5995:rTick: 0.01, desc: 'Odkłada kawę' },\n32:   { id: 'spekulant', name: 'Spekulant Giełdowy', co
+stPln: 80000, generateId: 
+  faza_d_details.txt:5996:'dzinsy', ratePerTick: 0.005, desc: 'Kombinuje dżinsy' },\n33:   { id: 'staszek', name: 'Złot
+a Rączka Staszek', costPln
+  faza_d_details.txt:5997:: 200000, generateId: 'radio_predom', ratePerTick: 0.003, desc: 'Generuje Radio lub Predom' }
+,\n34:   { id: 'zygmunt', 
+  faza_d_details.txt:5998:name: 'Gierkowiec Zygmunt', costPln: 500000, generateId: 'neptun', ratePerTick: 0.001, desc: 
+'Generuje Telewizor' },\n3
+  faza_d_details.txt:5999:5:   { id: 'cinkciarz', name: 'Cinkciarz \"Kolega\"', costPln: 300000, generateId: 'dollars',
+ ratePerTick: 0.01, desc: 
+  faza_d_details.txt:6000:'Skupuje 0.01$/sek' },\n36:   { id: 'widmo', name: 'Handlarz Widmo', costPln: 2000000, genera
+teId: 'dollars_passive', r
+  faza_d_details.txt:6001:atePerTick: 0.05, desc: 'Generuje $0.05/sek' },\n37:   { id: 'konspiracja', name: 'Sieć Konsp
+iracyjna', costPln: 800000
+  faza_d_details.txt:6002:0, generateId: 'kartki', ratePerTick: 5 / 60, desc: 'Generuje 5 kartek/min' },\n38: ];\n39: \
+n40: export interface Busi
+  faza_d_details.txt:6003:ness { id: string; name: string; costDollars: number; generateType: 'pln' | 'dollars'; ratePe
+rTick: number; desc: strin
+  faza_d_details.txt:6004:g; }\n41: export const BUSINESSES: Business[] = [\n42:   { id: 'szklarnia', name: 'Szklarnia 
+z goździkami', costDollars
+  faza_d_details.txt:6005:: 1000, generateType: 'pln', ratePerTick: 500, desc: 'Prywatna inicjatywa (+500 zł/sek)' },\n
+43:   { id: 'warsztat', na
+  faza_d_details.txt:6006:me: 'Warsztat ślusarski', costDollars: 5000, generateType: 'pln', ratePerTick: 2000, desc: 'P
+rywatna rzemiosło (+2000 z
+  faza_d_details.txt:6007:ł/sek)' },\n44:   { id: 'kombinat', name: 'Spółka Polonijna \"Kombinat\"', costDollars: 20000
+, generateType: 'dollars',
+  faza_d_details.txt:6008: ratePerTick: 0.5, desc: 'Pasywne zyski w walucie (+0.5 $/sek)' }\n45: ];\n46: \n47: export i
+nterface SmugglingRoute { 
+  faza_d_details.txt:6009:id: string; name: string; costPln: number; timeMs: number; riskPercent: number; rewardDesc: s
+tring; minDollarsEarned: n
+  faza_d_details.txt:6010:umber; maxDollarsEarned: number; }\n48: export const SMUGGLING_ROUTES: SmugglingRoute[] = [\n
+49:   { id: 'turcja', name
+  faza_d_details.txt:6011:: 'Autobus do Turcji (Stambuł)', costPln: 5000, timeMs: 60000, riskPercent: 15, rewardDesc: '
+Handel ciuchami (10$ - 30$
+  faza_d_details.txt:6012:)', minDollarsEarned: 10, maxDollarsEarned: 30 },\n50:   { id: 'jugoslawia', name: 'Maluch do
+ Jugosławii', costPln: 200
+  faza_d_details.txt:6013:00, timeMs: 180000, riskPercent: 25, rewardDesc: 'Przemyt elektroniki (50$ - 150$)', minDolla
+rsEarned: 50, maxDollarsEa
+  faza_d_details.txt:6014:rned: 150 },\n51:   { id: 'vhs_route', name: 'Szmugiel kaset VHS', costPln: 50000, timeMs: 30
+0000, riskPercent: 20, rew
+  faza_d_details.txt:6015:ardDesc: 'Kasety z filmami ($150 - $400)', minDollarsEarned: 150, maxDollarsEarned: 400 },\n5
+2:   { id: 'moskwa', name:
+  faza_d_details.txt:6016: 'Pociąg do Moskwy (ZSRR)', costPln: 8000, timeMs: 120000, riskPercent: 10, rewardDesc: 'Szar
+y import towarów ($15 - $4
+  faza_d_details.txt:6017:0 + 20-50 Rubli)', minDollarsEarned: 15, maxDollarsEarned: 40 },\n53: ];\n54: \n55: export in
+terface PewexItem { id: st
+  faza_d_details.txt:6018:ring; name: string; costDollars: number; desc: string; }\n56: export const PEWEX_ITEMS: Pewex
+Item[] = [\n57:   { id: 'd
+  faza_d_details.txt:6019:onald', name: 'Guma Donald', costDollars: 2, desc: '+15% cen sprzedaży' },\n58:   { id: 'tobl
+erone', name: 'Czekolada T
+  faza_d_details.txt:6020:oblerone', costDollars: 10, desc: '-15% czasu w kolejce' },\n59:   { id: 'lego', name: 'Klock
+i Lego', costDollars: 35, 
+  faza_d_details.txt:6021:desc: 'Pomocnicy szybsi o 30%' },\n60:   { id: 'krakus', name: 'Szynka Krakus', costDollars: 
+80, desc: '+5% szansy na x
+  faza_d_details.txt:6022:2 z kolejki' },\nThe above content does NOT show the entire file contents. If you need to vie
+w any lines of the file wh
+  faza_d_details.txt:6023:ich were not shown to complete your task, call this tool again to view those lines.\n"}
+  faza_d_details.txt:6024:  C:\Users\Lukpa\.gemini\antigravity\brain\6c6de58b-b6f4-4453-be02-d1f5ee42f15f\.system_gener
+ated\logs\transcript_full.
+  faza_d_details.txt:6025:jsonl:1533:{"step_index":1523,"source":"MODEL","type":"PLANNER_RESPONSE","status":"DONE","cre
+ated_at":"2026-06-25T21:30
+  faza_d_details.txt:6026::39Z","tool_calls":[{"name":"run_command","args":{"CommandLine":"powershell -Command \"Select
+-String -Path src/App.tsx 
+  faza_d_details.txt:6027:-Pattern 'Bazar|QUEUE_ITEMS' | Select-Object LineNumber, Line\"","Cwd":"C:\\Users\\Lukpa\\.ge
+mini\\antigravity\\scratch
+  faza_d_details.txt:6028:\\kombinator-idle","WaitMsBeforeAsync":5000,"toolAction":"Searching for Bazar goods list in A
+pp.tsx","toolSummary":"Com
+  faza_d_details.txt:6029:mand execution"}}]}
+  faza_d_details.txt:6030:  C:\Users\Lukpa\.gemini\antigravity\brain\6c6de58b-b6f4-4453-be02-d1f5ee42f15f\.system_gener
+ated\logs\transcript_full.
+  faza_d_details.txt:6031:jsonl:1534:{"step_index":1524,"source":"MODEL","type":"RUN_COMMAND","status":"DONE","created_
+at":"2026-06-25T21:30:42Z"
+  faza_d_details.txt:6032:,"content":"Created At: 2026-06-25T21:30:42Z\nCompleted At: 2026-06-25T21:30:43Z\n\n\t\t\t\tT
+he command completed succe
+  faza_d_details.txt:6033:ssfully.\n\t\t\t\tOutput:\n\t\t\t\t\r\nLineNumber Line                                       
+                          
+  faza_d_details.txt:6034:                                       \r\n---------- ----                                   
+                          
+  faza_d_details.txt:6035:                                           \r\n         3 import { QUEUE_ITEMS, HELPERS, PEWE
+X_ITEMS, PARTY_RANKS, PLN_
+  faza_d_details.txt:6036:UPGRADES, BUSINESSES, SMUGGLING_ROUTES, HIST...\r\n         6 type TabId = 'praca' | 'bazar' 
+| 'przemyt' | 'partia' | '
+  faza_d_details.txt:6037:czarnyRynek' | 'odznaczenia';                      \r\n       296              const item = Q
+UEUE_ITEMS.find(i => i.id 
+  faza_d_details.txt:6038:=== activeQueue);                                      \r\n       415     const item = QUEUE_
+ITEMS.find(i => i.id === a
+  faza_d_details.txt:6039:ctiveQueue);                                               \r\n       596     const solidarit
+yBazarMult = state.solidar
+  faza_d_details.txt:6040:nos >= 500 ? 1.05 : 1.0;                                       \r\n       597     multiplier 
+= multiplier * ecoPlnMult 
+  faza_d_details.txt:6041:* presTimeMult * transformMult * solidarityBazarMult;              \r\n       608         tot
+alBazarPlnEarned: (s.stats
+  faza_d_details.txt:6042:.totalBazarPlnEarned || 0) + finalPrice,                               \r\n       690     con
+st originalItem = QUEUE_IT
+  faza_d_details.txt:6043:EMS.find(i => i.id === itemId);                                            \r\n       908   Q
+UEUE_ITEMS.forEach(i => { 
+  faza_d_details.txt:6044:                                                                               \r\n      1060
+                     const
+  faza_d_details.txt:6045: name = QUEUE_ITEMS.find(i => i.id === itemId)?.name || itemId;                    \r\n      
+1102          <button onCl
+> faza_d_details.txt:6279:, colon, and leading space.\n1: # Plan Wdrożenia: Kombinator 4.0 – Nowy Horyzont (Fazy A do K
+)\n2: \n3: Nowy plan rozwo
+  faza_d_details.txt:6280:ju rozszerza wszystkie istniejące mechaniki gry (Bazar, Przemyt, Kariera, Pewex, Czarny Rynek
+, Solidarność, Wydarzenia 
+  faza_d_details.txt:6281:historyczne, Prestiż, Speedruny) oraz wprowadza nowe zaawansowane systemy polityczno-ekonomic
+zne schyłku PRL.\n4: \n5: 
+  faza_d_details.txt:6282:## Faza A: Własna Produkcja i Surowce (Bazar 2.0)\n6: *   **Rozszerzenie:** Szklarnie, warszt
+aty i kombinaty przestają 
+  faza_d_details.txt:6283:generować tylko czystą gotówkę.\n7: *   **Nowe mechaniki:** Generowanie surowców fizycznych (
+np. Kwiaty, Części Zamienn
+  faza_d_details.txt:6284:e, Wyroby Hutnicze).\n8: *   **Integracja:** Surowce można sprzedawać na Bazarze po zmiennych
+ cenach lub używać do ulep
+  faza_d_details.txt:6285:szania pomocników.\n9: \n10: ## Faza B: Licytacje i Towary Luksusowe\n11: *   **Rozszerzenie:
+** Czarny Rynek zostaje ro
+  faza_d_details.txt:6286:zbudowany o system aukcji.\n12: *   **Nowe mechaniki:** Co 10 minut pojawia się unikalny towa
+r luksusowy (np. zachodni 
+  faza_d_details.txt:6287:samochód, zagraniczne meblościanki, elektronika).\n13: *   **Efekt:** Posiadanie towarów luks
+usowych daje permanentne m
+  faza_d_details.txt:6288:nożniki prestiżu i obniża generowanie podejrzenia.\n14: \n15: ## Faza C: Drugi Obieg i Cenzur
+a\n16: *   **Rozszerzenie:
+  faza_d_details.txt:6289:** Rozbudowa konspiracji Solidarności.\n17: *   **Nowe mechaniki:** Zarządzanie tajną drukarn
+ią podziemną. Gracz kupuje
+  faza_d_details.txt:6290: papier i tusz, aby drukować nielegalne pisma (np. Tygodnik Mazowsze).\n18: *   **Zastosowani
+e:** Dystrybucja prasy daj
+  faza_d_details.txt:6291:e olbrzymi napływ punktów Solidarności, ale grozi aresztowaniem i czasową blokadą zakładki.\n
+19: \n20: ## Faza D: Port 
+  faza_d_details.txt:6292:Gdynia i Baltona (Przemyt 2.0)\n21: *   **Rozszerzenie:** Nowa sekcja w zakładce Przemytu.\n2
+2: *   **Nowe mechaniki:**
+  faza_d_details.txt:6293: Przemyt drogą morską przez marynarzy. Możliwość wymiany towarów na specjalne Bony Towarowe B
+altona.\n23: *   **Zastoso
+  faza_d_details.txt:6294:wanie:** Sklep Baltona oferuje alternatywne, potężne ulepszenia niedostępne w Pewexie.\n24: \
+n25: ## Faza E: Służba Bez
+  faza_d_details.txt:6295:pieczeństwa (SB) i TW (Tajni Współpracownicy)\n26: *   **Rozszerzenie:** System Milicji zosta
+je rozszerzony o wywiad po
+  faza_d_details.txt:6296:lityczny SB.\n27: *   **Nowe mechaniki:** Ryzyko, że jeden z Twoich pomocników został zwerbow
+any jako TW (Tajny Współpr
+  faza_d_details.txt:6297:acownik) i donosi na Ciebie, zwiększając podejrzenie o +1%/s.\n28: *   **Przeciwdziałanie:** 
+Możliwość opłacania kontrw
+  faza_d_details.txt:6298:ywiadu, dawania łapówek SB lub szantażowania informatorów.\n29: \n30: ## Faza F: Hiperinflacj
+a i Kryzys Walutowy (1989)
+  faza_d_details.txt:6299:\n31: *   **Rozszerzenie:** Wahania kursu dolara i dynamika cen.\n32: *   **Nowe mechaniki:**
+ Wskaźnik inflacji PLN ros
+  faza_d_details.txt:6300:nący z każdą minutą. Gotówka w PLN traci na wartości (mnożnik cen rośnie, ale zyski z pracy p
+aństwowej spadają).\n33: *
+  faza_d_details.txt:6301:   **Ucieczka kapitału:** Gracz musi chronić majątek, wymieniając PLN na Dolary, złoto lub Bo
+ny Pewexu.\n34: \n35: ## F
+  faza_d_details.txt:6302:aza G: Giełda i Prywatyzacja (GPW)\n36: *   **Rozszerzenie:** Finał transformacji gospodarcze
+j.\n37: *   **Nowe mechani
+  faza_d_details.txt:6303:ki:** Wczesny rynek akcji (GPW). Możliwość kupowania udziałów w prywatyzowanych kombinatach i
+ fabrykach.\n38: *   **Dyn
+  faza_d_details.txt:6304:amika:** Ceny akcji rosną i spadają na bazie losowych wydarzeń rynkowych.\n39: \n40: ## Faza 
+H: Spółki Nomenklaturowe i
+  faza_d_details.txt:6305: Korporacje\n41: *   **Rozszerzenie:** Awans na Członka Biura Politycznego.\n42: *   **Nowe m
+echaniki:** Transferowanie
+  faza_d_details.txt:6306: majątku państwowych kombinatów do prywatnych spółek nomenklaturowych.\n43: *   **Zastosowani
+e:** Generuje gigantyczne 
+  faza_d_details.txt:6307:pasywne zyski w USD i pozwala na ominięcie SB.\n44: \n45: ## Faza I: Konta Zagraniczne (Szwaj
+caria i Liechtenstein)\n46
+  faza_d_details.txt:6308:: *   **Rozszerzenie:** Bezpieczeństwo kapitału.\n47: *   **Nowe mechaniki:** Przelewy dewizo
+we na tajne konta w szwajc
+  faza_d_details.txt:6309:arskich bankach.\n48: *   **Efekt:** Pieniądze na koncie zagranicznym są w 100% bezpieczne pr
+zed nalotami Milicji, konf
+  faza_d_details.txt:6310:iskatami SB oraz hiperinflacją, generując stały procent roczny.\n49: \n50: ## Faza J: Wybory 
+4 Czerwca (Kampania Wyborc
+  faza_d_details.txt:6311:za)\n51: *   **Rozszerzenie:** Finisz gry przy Okrągłym Stole.\n52: *   **Nowe mechaniki:** Z
+amiast prostego czekania 2
+  faza_d_details.txt:6312:4h, gracz musi aktywnie finansować i zarządzać kampanią wyborczą Komitetu Obywatelskiego „Sol
+idarność”.\n53: *   **Wyma
+  faza_d_details.txt:6313:gania:** Druk plakatów z Wałęsą, opłacanie wieców, przekonywanie niezdecydowanych.\n54: \n55:
+ ## Faza K: Plan Balcerowi
+  faza_d_details.txt:6314:cza (Nowa Gra++)\n56: *   **Rozszerzenie:** Prestiż drugiego stopnia.\n57: *   **Nowe mechani
+ki:** Przejście do III RP 
+  faza_d_details.txt:6315:i denominacja waluty (nowy złoty).\n58: *   **NG++:** Trwałe odblokowanie wolnorynkowych bonu
+sów i statystyk globalnego
+  faza_d_details.txt:6316: kapitalizmu.\n59: \n60: ---\n61: \n62: ## Plan Weryfikacji\n63: *   `npm run build` przed wd
+rożeniem każdej fazy.\n64:
+  faza_d_details.txt:6317: *   Sprawdzenie stabilności stanu zapisu w `localStorage` (Backward Compatibility).\n65: \nT
+he above content shows the
+  faza_d_details.txt:6318: entire, complete file contents of the requested file.\n"}
+  faza_d_details.txt:6319:  C:\Users\Lukpa\.gemini\antigravity\brain\6c6de58b-b6f4-4453-be02-d1f5ee42f15f\.system_gener
+ated\logs\transcript_full.
+  faza_d_details.txt:6320:jsonl:1578:{"step_index":1569,"source":"MODEL","type":"PLANNER_RESPONSE","status":"DONE","cre
+ated_at":"2026-06-25T21:32
+  faza_d_details.txt:6321::24Z","content":"I will use grep search to find occurrences of `gozdziki` in the codebase to 
+see what is already implem
+  faza_d_details.txt:6322:ented.","tool_calls":[{"name":"grep_search","args":{"CaseInsensitive":true,"MatchPerLine":tru
+e,"Query":"gozdziki","Sear
+  faza_d_details.txt:6323:chPath":"C:\\Users\\Lukpa\\.gemini\\antigravity\\scratch\\kombinator-idle","toolAction":"Sear
+ch for gozdziki in the pro
+  faza_d_details.txt:6324:ject","toolSummary":"Grep search for resource name"}}]}
+  faza_d_details.txt:6325:  C:\Users\Lukpa\.gemini\antigravity\brain\6c6de58b-b6f4-4453-be02-d1f5ee42f15f\.system_gener
+ated\logs\transcript_full.
+  faza_d_details.txt:6326:jsonl:1579:{"step_index":1570,"source":"MODEL","type":"GREP_SEARCH","status":"ERROR","created
+_at":"2026-06-25T21:32:26Z
+  faza_d_details.txt:6327:","content":"Created At: 2026-06-25T21:32:26Z\nCompleted At: 2026-06-25T21:32:26Z\nEncountere
+d error in step execution:
+  faza_d_details.txt:6328: exec: \"grep\": executable file not found in %PATH%"}
+  faza_d_details.txt:6329:  C:\Users\Lukpa\.gemini\antigravity\brain\6c6de58b-b6f4-4453-be02-d1f5ee42f15f\.system_gener
+ated\logs\transcript_full.
+  faza_d_details.txt:6330:jsonl:1580:{"step_index":1571,"source":"MODEL","type":"PLANNER_RESPONSE","status":"DONE","cre
+ated_at":"2026-06-25T21:32
+  faza_d_details.txt:6331::27Z","content":"I will list the contents of the `src` directory to locate the relevant files
+.","tool_calls":[{"name":"
+  faza_d_details.txt:6332:list_dir","args":{"DirectoryPath":"C:\\Users\\Lukpa\\.gemini\\antigravity\\scratch\\kombinato
+r-idle\\src","toolAction":
+  faza_d_details.txt:6333:"List src directory","toolSummary":"List src directory"}}]}
+  faza_d_details.txt:6334:  C:\Users\Lukpa\.gemini\antigravity\brain\6c6de58b-b6f4-4453-be02-d1f5ee42f15f\.system_gener
+ated\logs\transcript_full.
+  faza_d_details.txt:6335:jsonl:1581:{"step_index":1572,"source":"MODEL","type":"LIST_DIRECTORY","status":"DONE","creat
+ed_at":"2026-06-25T21:32:2
+  faza_d_details.txt:6336:9Z","content":"Created At: 2026-06-25T21:32:29Z\nCompleted At: 2026-06-25T21:32:29Z\n{\"name\
+":\"App.tsx\", \"sizeBytes
+  faza_d_details.txt:6337:\":\"110649\"}\n{\"name\":\"assets\", \"isDir\":true}\n{\"name\":\"game\", \"isDir\":true}\n{
+\"name\":\"hooks\", \"isDi
+  faza_d_details.txt:6338:r\":true}\n{\"name\":\"index.css\", \"sizeBytes\":\"10944\"}\n{\"name\":\"main.tsx\", \"sizeB
+ytes\":\"236\"}\n{\"name\"
+  faza_d_details.txt:6339::\"utils\", \"isDir\":true}\n\nSummary: This directory contains 4 subdirectories and 3 files.
+"}
+  faza_d_details.txt:6340:  C:\Users\Lukpa\.gemini\antigravity\brain\6c6de58b-b6f4-4453-be02-d1f5ee42f15f\.system_gener
+ated\logs\transcript_full.
+  faza_d_details.txt:6341:jsonl:1582:{"step_index":1573,"source":"MODEL","type":"PLANNER_RESPONSE","status":"DONE","cre
+ated_at":"2026-06-25T21:32
+  faza_d_details.txt:6342::29Z","content":"I will list files in `src/game` and `src/hooks`.","tool_calls":[{"name":"lis
+t_dir","args":{"DirectoryP
+  faza_d_details.txt:6343:ath":"C:\\Users\\Lukpa\\.gemini\\antigravity\\scratch\\kombinator-idle\\src\\game","toolActio
+n":"List src/game director
+  faza_d_details.txt:6344:y","toolSummary":"List src/game directory"}}]}
+  faza_d_details.txt:6345:  C:\Users\Lukpa\.gemini\antigravity\brain\6c6de58b-b6f4-4453-be02-d1f5ee42f15f\.system_gener
+ated\logs\transcript_full.
+  faza_d_details.txt:6346:jsonl:1583:{"step_index":1574,"source":"MODEL","type":"LIST_DIRECTORY","status":"DONE","creat
+ed_at":"2026-06-25T21:32:3
+  faza_d_details.txt:6347:6Z","content":"Created At: 2026-06-25T21:32:36Z\nCompleted At: 2026-06-25T21:32:36Z\n{\"name\
+":\"items.ts\", \"sizeByte
+  faza_d_details.txt:6348:s\":\"17628\"}\n\nSummary: This directory contains 0 subdirectories and 1 files."}
+  faza_d_details.txt:6349:  C:\Users\Lukpa\.gemini\antigravity\brain\6c6de58b-b6f4-4453-be02-d1f5ee42f15f\.system_gener
+ated\logs\transcript_full.
+  faza_d_details.txt:6350:jsonl:1584:{"step_index":1575,"source":"MODEL","type":"PLANNER_RESPONSE","status":"DONE","cre
+ated_at":"2026-06-25T21:32
+  faza_d_details.txt:6351::36Z","content":"I will list files in `src/hooks`.","tool_calls":[{"name":"list_dir","args":{
+"DirectoryPath":"C:\\Users
+  faza_d_details.txt:6352:\\Lukpa\\.gemini\\antigravity\\scratch\\kombinator-idle\\src\\hooks","toolAction":"List src/h
+ooks directory","toolSumma
+  faza_d_details.txt:6353:ry":"List src/hooks directory"}}]}
+  faza_d_details.txt:6354:  C:\Users\Lukpa\.gemini\antigravity\brain\6c6de58b-b6f4-4453-be02-d1f5ee42f15f\.system_gener
+ated\logs\transcript_full.
+  faza_d_details.txt:6355:jsonl:1585:{"step_index":1576,"source":"MODEL","type":"LIST_DIRECTORY","status":"DONE","creat
+ed_at":"2026-06-25T21:32:3
+  faza_d_details.txt:6356:8Z","content":"Created At: 2026-06-25T21:32:38Z\nCompleted At: 2026-06-25T21:32:38Z\n{\"name\
+":\"useGameState.ts\", \"s
+  faza_d_details.txt:6357:izeBytes\":\"16810\"}\n\nSummary: This directory contains 0 subdirectories and 1 files."}
+  faza_d_details.txt:6358:  C:\Users\Lukpa\.gemini\antigravity\brain\6c6de58b-b6f4-4453-be02-d1f5ee42f15f\.system_gener
+ated\logs\transcript_full.
+  faza_d_details.txt:6359:jsonl:1586:{"step_index":1577,"source":"MODEL","type":"PLANNER_RESPONSE","status":"DONE","cre
+ated_at":"2026-06-25T21:32
+  faza_d_details.txt:6360::38Z","content":"I will view `src/game/items.ts` to inspect the helper definitions, business 
+definitions, and new items
+  faza_d_details.txt:6361:.","tool_calls":[{"name":"view_file","args":{"AbsolutePath":"C:\\Users\\Lukpa\\.gemini\\antig
+ravity\\scratch\\kombinato
+  faza_d_details.txt:6362:r-idle\\src\\game\\items.ts","toolAction":"View game items definition","toolSummary":"View ga
+me items definition"}}]}
+  faza_d_details.txt:6363:  C:\Users\Lukpa\.gemini\antigravity\brain\6c6de58b-b6f4-4453-be02-d1f5ee42f15f\.system_gener
+ated\logs\transcript_full.
+  faza_d_details.txt:6364:jsonl:1587:{"step_index":1578,"source":"MODEL","type":"VIEW_FILE","status":"DONE","created_at
+":"2026-06-25T21:32:40Z","
+  faza_d_details.txt:6365:content":"Created At: 2026-06-25T21:32:40Z\nCompleted At: 2026-06-25T21:32:40Z\nFile Path: `f
+ile:///C:/Users/Lukpa/.gem
+  faza_d_details.txt:6366:ini/antigravity/scratch/kombinator-idle/src/game/items.ts`\nTotal Lines: 214\nTotal Bytes: 17
+628\nShowing lines 1 to 21
+  faza_d_details.txt:6367:4\nThe following code has been modified to include a line number before every line, in the fo
+rmat: <line_number>: <orig
+  faza_d_details.txt:6368:inal_line>. Please note that any changes targeting the original code should remove the line n
+umber, colon, and leading 
+  faza_d_details.txt:6369:space.\n1: export interface QueueItem { id: string; name: string; costPln: number; sellPriceP
+ln: number; timeToBuyMs: n
+  faza_d_details.txt:6370:umber; kartkiCost?: number; }\n2: \n3: export const QUEUE_ITEMS: QueueItem[] = [\n4:   { id: 
+'papier', name: 'Papier To
+  faza_d_details.txt:6371:aletowy', costPln: 0, sellPricePln: 10, timeToBuyMs: 2000 },\n5:   { id: 'mydlo', name: 'Mydł
+o \"Biały Jeleń\"', costPl
+  faza_d_details.txt:6372:n: 5, sellPricePln: 30, timeToBuyMs: 5000, kartkiCost: 1 },\n6:   { id: 'cukier', name: 'Cuki
+er (1kg)', costPln: 15, se
+  faza_d_details.txt:6373:llPricePln: 75, timeToBuyMs: 12000, kartkiCost: 2 },\n7:   { id: 'maka', name: 'Mąka Pszenna 
+(5kg)', costPln: 25, sellP
+  faza_d_details.txt:6374:ricePln: 120, timeToBuyMs: 20000, kartkiCost: 1 },\n8:   { id: 'kawa', name: 'Kawa Marago', c
+ostPln: 40, sellPricePln: 
+  faza_d_details.txt:6375:180, timeToBuyMs: 30000, kartkiCost: 3 },\n9:   { id: 'spirytus', name: 'Spirytus (0.5l)', co
+stPln: 80, sellPricePln: 4
+  faza_d_details.txt:6376:00, timeToBuyMs: 45000, kartkiCost: 4 },\n10:   { id: 'dzinsy', name: 'Dżinsy \"Odra\"', cost
+Pln: 100, sellPricePln: 45
+  faza_d_details.txt:6377:0, timeToBuyMs: 60000, kartkiCost: 5 },\n11:   { id: 'relaks', name: 'Buty \"Relaks\"', costP
+ln: 250, sellPricePln: 110
+  faza_d_details.txt:6378:0, timeToBuyMs: 120000 },\n12:   { id: 'predom', name: 'Odkurzacz \"Predom\"', costPln: 600, 
+sellPricePln: 2600, timeTo
+  faza_d_details.txt:6379:BuyMs: 250000 },\n13:   { id: 'kasprzak', name: 'Radio \"Kasprzak\"', costPln: 800, sellPrice
+Pln: 3500, timeToBuyMs: 35
+  faza_d_details.txt:6380:0000 },\n14:   { id: 'frania', name: 'Pralka \"Frania\"', costPln: 1500, sellPricePln: 6500, 
+timeToBuyMs: 500000 },\n15
+  faza_d_details.txt:6381::   { id: 'kowalski', name: 'Meblościanka \"Kowalski\"', costPln: 4000, sellPricePln: 18000, 
+timeToBuyMs: 1000000 },\n1
+  faza_d_details.txt:6382:6:   { id: 'zorki', name: 'Aparat \"Zorki\"', costPln: 6000, sellPricePln: 28000, timeToBuyMs
+: 1400000 },\n17:   { id: 
+  faza_d_details.txt:6383:'neptun', name: 'TV \"Neptun\"', costPln: 10000, sellPricePln: 45000, timeToBuyMs: 2000000 },
+\n18:   { id: 'osa', name:
+  faza_d_details.txt:6384: 'Skuter \"Osa\"', costPln: 18000, sellPricePln: 82000, timeToBuyMs: 3200000 },\n19:   { id: 
+'wsk', name: 'Motocykl WSK
+  faza_d_details.txt:6385:', costPln: 30000, sellPricePln: 140000, timeToBuyMs: 4500000 },\n20:   { id: 'syrena', name:
+ 'Syrena 105', costPln: 10
+  faza_d_details.txt:6386:0000, sellPricePln: 500000, timeToBuyMs: 12000000 },\n21:   { id: 'fiat125', name: 'Fiat 125p
+ \"Duży\"', costPln: 40000
+  faza_d_details.txt:6387:0, sellPricePln: 2000000, timeToBuyMs: 30000000 },\n22:   { id: 'ursus', name: 'Ciągnik \"Urs
+us\"', costPln: 1500000, s
+  faza_d_details.txt:6388:ellPricePln: 8000000, timeToBuyMs: 80000000 },\n23:   { id: 'zis', name: 'Traktor Z.I.S. (Rar
+ytas)', costPln: 8000000, 
+  faza_d_details.txt:6389:sellPricePln: 45000000, timeToBuyMs: 200000000 },\n24: ];\n25: \n26: export interface Helper 
+{ id: string; name: string
+  faza_d_details.txt:6390:; costPln: number; generateId: string; ratePerTick: number; desc: string; }\n27: export const
+ HELPERS: Helper[] = [\n28
+  faza_d_details.txt:6391::   { id: 'wladyslaw', name: 'Emeryt Władysław', costPln: 200, generateId: 'papier', ratePerT
+ick: 0.1, desc: 'Stoi po p
+  faza_d_details.txt:6392:apier' },\n29:   { id: 'kolega', name: 'Szkolny Kolega', costPln: 1000, generateId: 'mydlo', 
+ratePerTick: 0.05, desc: '
+  faza_d_details.txt:6393:Stoi po mydło' },\n30:   { id: 'halinka', name: 'Sąsiadka Halinka', costPln: 5000, generateId
+: 'cukier', ratePerTick: 0
+  faza_d_details.txt:6394:.02, desc: 'Załatwia cukier' },\n31:   { id: 'basia', name: 'Sklepowa Basia', costPln: 20000,
+ generateId: 'kawa', rateP
+  faza_d_details.txt:6395:erTick: 0.01, desc: 'Odkłada kawę' },\n32:   { id: 'spekulant', name: 'Spekulant Giełdowy', c
+ostPln: 80000, generateId:
+  faza_d_details.txt:6396: 'dzinsy', ratePerTick: 0.005, desc: 'Kombinuje dżinsy' },\n33:   { id: 'staszek', name: 'Zło
+ta Rączka Staszek', costPl
+  faza_d_details.txt:6397:n: 200000, generateId: 'radio_predom', ratePerTick: 0.003, desc: 'Generuje Radio lub Predom' 
+},\n34:   { id: 'zygmunt',
+  faza_d_details.txt:6398: name: 'Gierkowiec Zygmunt', costPln: 500000, generateId: 'neptun', ratePerTick: 0.001, desc:
+ 'Generuje Telewizor' },\n
+  faza_d_details.txt:6399:35:   { id: 'cinkciarz', name: 'Cinkciarz \"Kolega\"', costPln: 300000, generateId: 'dollars'
+, ratePerTick: 0.01, desc:
+  faza_d_details.txt:6400: 'Skupuje 0.01$/sek' },\n36:   { id: 'widmo', name: 'Handlarz Widmo', costPln: 2000000, gener
+ateId: 'dollars_passive', 
+  faza_d_details.txt:6401:ratePerTick: 0.05, desc: 'Generuje $0.05/sek' },\n37:   { id: 'konspiracja', name: 'Sieć Kons
+piracyjna', costPln: 80000
+  faza_d_details.txt:6402:00, generateId: 'kartki', ratePerTick: 5 / 60, desc: 'Generuje 5 kartek/min' },\n38: ];\n39: 
+\n40: export interface Bus
+  faza_d_details.txt:6403:iness { id: string; name: string; costDollars: number; generateType: 'pln' | 'dollars' | 'goz
+dziki' | 'czesci' | 'wyrob
+  faza_d_details.txt:6404:y_hutnicze'; ratePerTick: number; desc: string; }\n41: export const BUSINESSES: Business[] = 
+[\n42:   { id: 'szklarnia'
+  faza_d_details.txt:6405:, name: 'Szklarnia z goździkami', costDollars: 1000, generateType: 'gozdziki', ratePerTick: 3
+.0, desc: 'Produkcja goźdz
+  faza_d_details.txt:6406:ików (+3.0 szt/sek)' },\n43:   { id: 'warsztat', name: 'Warsztat ślusarski', costDollars: 500
+0, generateType: 'czesci',
+  faza_d_details.txt:6407: ratePerTick: 3.0, desc: 'Produkcja części zamiennych (+3.0 szt/sek)' },\n44:   { id: 'kombin
+at', name: 'Spółka Polonij
+  faza_d_details.txt:6408:na \"Kombinat\"', costDollars: 20000, generateType: 'wyroby_hutnicze', ratePerTick: 0.05, des
+c: 'Produkcja wyrobów hutn
+  faza_d_details.txt:6409:iczych (+0.05 szt/sek)' }\n45: ];\n46: \n47: export interface SmugglingRoute { id: string; na
+me: string; costPln: numbe
+  faza_d_details.txt:6410:r; timeMs: number; riskPercent: number; rewardDesc: string; minDollarsEarned: number; maxDoll
+arsEarned: number; }\n48: 
+  faza_d_details.txt:6411:export const SMUGGLING_ROUTES: SmugglingRoute[] = [\n49:   { id: 'turcja', name: 'Autobus do 
+Turcji (Stambuł)', costPln
+  faza_d_details.txt:6412:: 5000, timeMs: 60000, riskPercent: 15, rewardDesc: 'Handel ciuchami (10$ - 30$)', minDollars
+Earned: 10, maxDollarsEarn
+  faza_d_details.txt:6413:ed: 30 },\n50:   { id: 'jugoslawia', name: 'Maluch do Jugosławii', costPln: 20000, timeMs: 18
+0000, riskPercent: 25, rew
+  faza_d_details.txt:6414:ardDesc: 'Przemyt elektroniki (50$ - 150$)', minDollarsEarned: 50, maxDollarsEarned: 150 },\n
+51:   { id: 'vhs_route', n
+  faza_d_details.txt:6415:ame: 'Szmugiel kaset VHS', costPln: 50000, timeMs: 300000, riskPercent: 20, rewardDesc: 'Kase
+ty z filmami ($150 - $400)
+  faza_d_details.txt:6416:', minDollarsEarned: 150, maxDollarsEarned: 400 },\n52:   { id: 'moskwa', name: 'Pociąg do Mo
+skwy (ZSRR)', costPln: 800
+  faza_d_details.txt:6417:0, timeMs: 120000, riskPercent: 10, rewardDesc: 'Szary import towarów ($15 - $40 + 20-50 Rubl
+i)', minDollarsEarned: 15,
+  faza_d_details.txt:6418: maxDollarsEarned: 40 },\n53: ];\n54: \n55: export interface PewexItem { id: string; name: st
+ring; costDollars: number;
+  faza_d_details.txt:6419: desc: string; }\n56: export const PEWEX_ITEMS: PewexItem[] = [\n57:   { id: 'donald', name: 
+'Guma Donald', costDollars
+  faza_d_details.txt:6420:: 2, desc: '+15% cen sprzedaży' },\n58:   { id: 'toblerone', name: 'Czekolada Toblerone', cos
+tDollars: 10, desc: '-15% 
+  faza_d_details.txt:6421:czasu w kolejce' },\n59:   { id: 'lego', name: 'Klocki Lego', costDollars: 35, desc: 'Pomocni
+cy szybsi o 30%' },\n60:  
+  faza_d_details.txt:6422: { id: 'krakus', name: 'Szynka Krakus', costDollars: 80, desc: '+5% szansy na x2 z kolejki' }
+,\n61:   { id: 'wrangler',
+  faza_d_details.txt:6423: name: 'Jeansy Wrangler', costDollars: 200, desc: '+50% zysków z bazaru' },\n62:   { id: 'col
+a', name: 'Coca-Cola', cos
+  faza_d_details.txt:6424:tDollars: 400, desc: '-20% czasu kolejki' },\n63:   { id: 'sanyo', name: 'Magnetowid Sanyo', 
+costDollars: 1000, desc: '
+  faza_d_details.txt:6425:Pomocnicy szybsi o 50%' },\n64:   { id: 'c64', name: 'Commodore 64', costDollars: 3000, desc:
+ 'Automatycznie pcha kolej
+  faza_d_details.txt:6426:kę' },\n65:   { id: 'walkman', name: 'Walkman Sony', costDollars: 5500, desc: 'Praca państwow
+a daje 2x PLN' },\n66:   {
+  faza_d_details.txt:6427: id: 'rubin', name: 'TV Rubin', costDollars: 8000, desc: '+100% ogólnych zysków' },\n67:   { 
+id: 'polaroid', name: 'Kam
+  faza_d_details.txt:6428:era Polaroid', costDollars: 12000, desc: '-25% ryzyka przemytu' },\n68:   { id: 'casio', name
+: 'Kalkulator Casio', cost
+  faza_d_details.txt:6429:Dollars: 18000, desc: 'Widać szczegółowe statystyki i produkcję/s' },\n69:   { id: 'maluch', 
+name: 'Fiat 126p', costDol
+> faza_d_details.txt:9061:ry lockdown state.","UserFacing":true},"CodeContent":"# Plan Wdrożenia: Kombinator 4.0 – Faza
+ C (Drugi Obieg i Cenzura)
+  faza_d_details.txt:9062:\n\nTa faza rozbudowuje zakładkę **PARTIA / OPOZYCJA** o system podziemnej drukarni (Drugiego
+ Obiegu). Gracz będzie zar
+  faza_d_details.txt:9063:ządzał zasobami papieru i tuszu, drukował nielegalną prasę (bibułę) i rozprowadzał ją, aby zy
+skać duże ilości punktów S
+  faza_d_details.txt:9064:olidarności, licząc się z ryzykiem wpadki i czasowej blokady działalności przez SB.\n\n## Now
+e Zasoby i Stan Gry (`Game
+  faza_d_details.txt:9065:State`)\n\nDo stanu gry w `src/hooks/useGameState.ts` dodamy:\n*   `bibulaPaper`: liczba posi
+adanych ryz papieru (począ
+  faza_d_details.txt:9066:tkowo 0).\n*   `bibulaInk`: liczba posiadanych flakonów tuszu (początkowo 0).\n*   `bibulaPis
+ma`: liczba wydrukowanych 
+  faza_d_details.txt:9067:pism drugiego obiegu (początkowo 0).\n*   `bibulaLockdownRemaining`: pozostały czas blokady d
+rukarni w sekundach (począ
+  faza_d_details.txt:9068:tkowo 0).\n*   `isPrinting`: stan aktywności procesu druku (boolean, do obsługi paska postępu
+).\n*   `printProgress`: a
+  faza_d_details.txt:9069:ktualny postęp druku (0-100%).\n\nWspieramy pełną kompatybilność wsteczną saves w `useGameSta
+te.ts` poprzez merge domyś
+  faza_d_details.txt:9070:lnych wartości tych pól przy wczytywaniu.\n\n## Proposed Changes\n\n### 1. Definicje i Dane\n
+\n#### [MODIFY] [items.ts]
+  faza_d_details.txt:9071:(file:///C:/Users/Lukpa/.gemini/antigravity/scratch/kombinator-idle/src/game/items.ts)\n*   D
+odanie opisu nowych mechan
+  faza_d_details.txt:9072:ik w plikach konfiguracyjnych, jeśli zajdzie taka potrzeba.\n*   Zdefiniowanie ewentualnych u
+lepszeń powiązanych z bibu
+  faza_d_details.txt:9073:łą (np. w `PLN_UPGRADES` lub bezpośrednio w panelu).\n\n### 2. Logika i Pętla Gry\n\n#### [MO
+DIFY] [App.tsx](file:///C:
+  faza_d_details.txt:9074:/Users/Lukpa/.gemini/antigravity/scratch/kombinator-idle/src/App.tsx)\n*   **Inicjalizacja i 
+Akcje:**\n    *   `buyPape
+  faza_d_details.txt:9075:r()`: Kupuje 1 ryzę papieru za 50 PLN.\n    *   `buyInk()`: Kupuje 1 flakon tuszu za 100 PLN.
+\n    *   `startPrinting()
+  faza_d_details.txt:9076:`: Rozpoczyna proces drukowania (trwający 5 sekund). Wymaga 1 papieru i 1 tuszu. Uruchamia pa
+sek postępu.\n    *   `dis
+  faza_d_details.txt:9077:tributePisma(amount)`: Dystrybuuje określoną liczbę pism (x10, x100, x500).\n        *   Zape
+wnia duży zysk Solidarnośc
+  faza_d_details.txt:9078:i: **+2 pkt** za każde pismo (zbalansowane pod kątem zmniejszonych nagród).\n        *   Ryzy
+ko wpadki wynosi: **0.1%**
+  faza_d_details.txt:9079: na każdą rozprowadzaną sztukę (np. 1% dla x10, 10% dla x100, 50% dla x500), maksymalnie 90%.
+\n        *   W przypadku 
+  faza_d_details.txt:9080:wpadki (aresztowanie przez SB):\n            *   Traci 50% wydrukowanych pism (`bibulaPisma`)
+.\n            *   Stan dr
+  faza_d_details.txt:9081:ukarni zostaje zablokowany na 120 sekund (`bibulaLockdownRemaining = 120`).\n            *   
+Podejrzenie milicji rośnie
+  faza_d_details.txt:9082: o **+30%**.\n            *   Gracz otrzymuje powiadomienie retro-modalne o nalocie SB.\n*   
+**Pętla gry (`setInterval`
+  faza_d_details.txt:9083:):**\n    *   Pasywne odliczanie blokady drukarni (`bibulaLockdownRemaining = Math.max(0, bib
+ulaLockdownRemaining - del
+  faza_d_details.txt:9084:taSec)`).\n    *   Obsługa postępu drukowania: jeśli `isPrinting === true`, zwiększaj postęp.
+ Po dojściu do 100% dodaj 
+  faza_d_details.txt:9085:10 sztuk `bibulaPisma`, zużyj 1 papier oraz 1 tusz, po czym zresetuj postęp.\n\n### 3. Interf
+ejs Użytkownika\n\n#### [M
+  faza_d_details.txt:9086:ODIFY] [App.tsx](file:///C:/Users/Lukpa/.gemini/antigravity/scratch/kombinator-idle/src/App.t
+sx)\n*   W zakładce **PART
+  faza_d_details.txt:9087:IA / OPOZYCJA** dodamy nowy panel po prawej stronie (lub pod panelem Solidarności): **DRUGI O
+BIEG (TAJNA DRUKARNIA)**.\
+  faza_d_details.txt:9088:n*   Panel będzie wyświetlał:\n    *   Stany magazynowe: Papier (ryzy), Tusz (flakony), Bibuł
+a (sztuki).\n    *   Przyc
+  faza_d_details.txt:9089:isk kupna papieru (50 zł) oraz tuszu (100 zł) – zablokowane w czasie lockdownu.\n    *   Przy
+cisk **\"Uruchom powielacz
+  faza_d_details.txt:9090:\"** z animowanym paskiem postępu drukowania.\n    *   Sekcję kolportażu: przyciski **Kolport
+uj x10**, **x100**, **x500
+  faza_d_details.txt:9091:** z informacją o zysku Solidarności i ryzyku wpadki.\n    *   W przypadku blokady (aresztowa
+nia): panel zostaje zasłon
+  faza_d_details.txt:9092:ięty czerwonym, klimatycznym komunikatem ostrzegawczym o wpadce i odliczaniem czasu kary.\n\n
+## Verification Plan\n\n##
+  faza_d_details.txt:9093:# Automated Tests\n*   Uruchomienie `npm run build` w celu weryfikacji błędów kompilacji Type
+Script.\n*   Weryfikacja z
+  faza_d_details.txt:9094:a pomocą ESLint (`npx eslint src/App.tsx`).\n\n### Manual Verification\n*   Przebieg procesu 
+zakupu papieru i tuszu ora
+  faza_d_details.txt:9095:z weryfikacja ujemnego bilansu PLN.\n*   Test manualnego drukowania: sprawdzenie czasu ładowa
+nia paska postępu (5s) i d
+  faza_d_details.txt:9096:odawania 10 szt. prasy.\n*   Przetestowanie kolportażu i losowych wpadki z nalotem SB (blokad
+a zakładki na 120s, spadek
+  faza_d_details.txt:9097: prasy o 50%, wzrost podejrzenia o 30%).\n","Description":"Create the implementation plan for
+ Phase C: Drugi Obieg i Ce
+  faza_d_details.txt:9098:nzura.","Overwrite":true,"TargetFile":"C:\\Users\\Lukpa\\.gemini\\antigravity\\brain\\6c6de58
+b-b6f4-4453-be02-d1f5ee42f
+  faza_d_details.txt:9099:15f\\implementation_plan.md","toolAction":"Write Phase C implementation plan","toolSummary":"
+Write implementation plan"
+  faza_d_details.txt:9100:}}]}
+  faza_d_details.txt:9101:  C:\Users\Lukpa\.gemini\antigravity\brain\6c6de58b-b6f4-4453-be02-d1f5ee42f15f\.system_gener
+ated\logs\transcript_full.
+  faza_d_details.txt:9102:jsonl:2108:{"step_index":2102,"source":"MODEL","type":"CODE_ACTION","status":"DONE","created_
+at":"2026-06-28T14:49:17Z"
+  faza_d_details.txt:9103:,"content":"Created At: 2026-06-28T14:49:17Z\nCompleted At: 2026-06-28T14:49:18Z\nCreated fil
+e file:///C:/Users/Lukpa/.
+  faza_d_details.txt:9104:gemini/antigravity/brain/6c6de58b-b6f4-4453-be02-d1f5ee42f15f/implementation_plan.md with req
+uested content.\nIf releva
+  faza_d_details.txt:9105:nt, proactively run terminal commands to execute this code for the USER. Don't ask for permis
+sion.\nNote: You have just
+  faza_d_details.txt:9106: created an artifact and requested user feedback. Stop calling tools to end your turn, and al
+low the user to review the
+  faza_d_details.txt:9107: artifact, approve it, or provide feedback"}
+  faza_d_details.txt:9108:  C:\Users\Lukpa\.gemini\antigravity\brain\6c6de58b-b6f4-4453-be02-d1f5ee42f15f\.system_gener
+ated\logs\transcript_full.
+  faza_d_details.txt:9109:jsonl:2109:{"step_index":2103,"source":"MODEL","type":"PLANNER_RESPONSE","status":"DONE","cre
+ated_at":"2026-06-28T14:49
+  faza_d_details.txt:9110::18Z","content":"Przygotowałem szczegółowy plan wdrożenia **Fazy C (Drugi Obieg i Cenzura)**.
+ \n\nDokument jest dostępn
+  faza_d_details.txt:9111:y jako [implementation_plan.md](file:///C:/Users/Lukpa/.gemini/antigravity/brain/6c6de58b-b6f
+4-4453-be02-d1f5ee42f15f/i
+  faza_d_details.txt:9112:mplementation_plan.md).\n\nProszę o zapoznanie się z założeniami mechaniki tajnej drukarni, z
+akupów papieru/tuszu, logi
+  faza_d_details.txt:9113:ki drukowania, kolportażu (zyski Solidarności vs. ryzyko wpadki) oraz stanu zaplombowania dru
+karni przez SB. \n\nGdy za
+  faza_d_details.txt:9114:twierdzisz ten plan, natychmiast przystąpię do kodowania!"}
+  faza_d_details.txt:9115:  C:\Users\Lukpa\.gemini\antigravity\brain\6c6de58b-b6f4-4453-be02-d1f5ee42f15f\.system_gener
+ated\logs\transcript_full.
+  faza_d_details.txt:9116:jsonl:2110:{"step_index":2104,"source":"USER_EXPLICIT","type":"USER_INPUT","status":"DONE","c
+reated_at":"2026-06-28T14:
+  faza_d_details.txt:9117:58:48Z","content":"<USER_REQUEST>\nNo to jeszcze raz... Wykonaj fazę C.\n</USER_REQUEST>\n<AD
+DITIONAL_METADATA>\nThe cu
+  faza_d_details.txt:9118:rrent local time is: 2026-06-28T16:58:48+02:00.\n</ADDITIONAL_METADATA>"}
+  faza_d_details.txt:9119:  C:\Users\Lukpa\.gemini\antigravity\brain\6c6de58b-b6f4-4453-be02-d1f5ee42f15f\.system_gener
+ated\logs\transcript_full.
+  faza_d_details.txt:9120:jsonl:2111:{"step_index":2105,"source":"MODEL","type":"PLANNER_RESPONSE","status":"DONE","cre
+ated_at":"2026-06-28T14:58
+  faza_d_details.txt:9121::48Z","content":"I will update the checklist `task.md` to add the steps for Phase C: Drugi Ob
+ieg i Cenzura.","tool_call
+  faza_d_details.txt:9122:s":[{"name":"replace_file_content","args":{"AllowMultiple":false,"Description":"Add Phase C t
+ask checklist to task.md",
+  faza_d_details.txt:9123:"EndLine":101,"Instruction":"Append Phase C tasks to task.md","ReplacementContent":"- `[x]` P
+oprawki Balansu (Solidarno
+  faza_d_details.txt:9124:ść)\n  - `[x]` Obniżenie zysków punktowych z finansowania Solidarności o jedno zero (10x mnie
+j punktów za ten sam koszt
+  faza_d_details.txt:9125:) we wszystkich 5 walutach w `App.tsx`.\n\n- `[/]` Faza C: Drugi Obieg i Cenzura\n  - `[ ]` K
+rok 1: Dodanie nowych pól 
+  faza_d_details.txt:9126:stanu (`bibulaPaper`, `bibulaInk`, `bibulaPisma`, `bibulaLockdownRemaining`) do `GameState` w
+ `useGameState.ts` z backw
+  faza_d_details.txt:9127:ard-compatible merge'owaniem.\n  - `[ ]` Krok 2: Zaimplementowanie funkcji i logiki drukowani
+a oraz odliczania lockdown
+  faza_d_details.txt:9128:u w pętli gry w `App.tsx`.\n  - `[ ]` Krok 3: Zaimplementowanie akcji zakupu surowców i kolpo
+rtażu prasy z szansą na na
+  faza_d_details.txt:9129:lot SB i karę czasową w `App.tsx`.\n  - `[ ]` Krok 4: Dodanie panelu interfejsu \"DRUGI OBIEG
+ (TAJNA DRUKARNIA)\" w zak
+  faza_d_details.txt:9130:ładce \"Partia/Opozycja\" w `App.tsx`.\n  - `[ ]` Krok 5: Weryfikacja działania, ESLint i kom
+pilacja projektu (`npm run
+  faza_d_details.txt:9131: build`).\n","StartLine":96,"TargetContent":"- `[x]` Poprawki Balansu (Solidarność)\n  - `[x]
+` Obniżenie zysków punktow
+  faza_d_details.txt:9132:ych z finansowania Solidarności o jedno zero (10x mniej punktów za ten sam koszt) we wszystki
+ch 5 walutach in `App.tsx`
+  faza_d_details.txt:9133:.","TargetFile":"C:\\Users\\Lukpa\\.gemini\\antigravity\\brain\\6c6de58b-b6f4-4453-be02-d1f5e
+e42f15f\\task.md"}}]}
+  faza_d_details.txt:9134:  C:\Users\Lukpa\.gemini\antigravity\brain\6c6de58b-b6f4-4453-be02-d1f5ee42f15f\.system_gener
+ated\logs\transcript_full.
+  faza_d_details.txt:9135:jsonl:2112:{"step_index":2106,"source":"MODEL","type":"CODE_ACTION","status":"DONE","created_
+at":"2026-06-28T14:58:54Z"
+  faza_d_details.txt:9136:,"content":"Created At: 2026-06-28T14:58:54Z\nCompleted At: 2026-06-28T14:59:01Z\nThe followi
+ng changes were made by th
+  faza_d_details.txt:9137:e replace_file_content tool to: C:\\Users\\Lukpa\\.gemini\\antigravity\\brain\\6c6de58b-b6f4-
+4453-be02-d1f5ee42f15f\\ta
+  faza_d_details.txt:9138:sk.md. If relevant, proactively run terminal commands to execute this code for the USER. Don'
+t ask for permission.\n[di
+  faza_d_details.txt:9139:ff_block_start]\n@@ -96,6 +96,10 @@\n - `[x]` Poprawki Balansu (Solidarność)\n   - `[x]` Obni
+żenie zysków punktowych z 
+  faza_d_details.txt:9140:finansowania Solidarności o jedno zero (10x mniej punktów za ten sam koszt) we wszystkich 5 w
+alutach w `App.tsx`.\n \n-
+  faza_d_details.txt:9141:\n-\n+- `[/]` Faza C: Drugi Obieg i Cenzura\n+  - `[ ]` Krok 1: Dodanie nowych pól stanu (`bi
+bulaPaper`, `bibulaInk`, `
+  faza_d_details.txt:9142:bibulaPisma`, `bibulaLockdownRemaining`) do `GameState` w `useGameState.ts` z backward-compat
+ible merge'owaniem.\n+  - 
+  faza_d_details.txt:9143:`[ ]` Krok 2: Zaimplementowanie funkcji i logiki drukowania oraz odliczania lockdownu w pętli
+ gry w `App.tsx`.\n+  - `[
+  faza_d_details.txt:9144: ]` Krok 3: Zaimplementowanie akcji zakupu surowców i kolportażu prasy z szansą na nalot SB i
+ karę czasową w `App.tsx`.
+  faza_d_details.txt:9145:\n+  - `[ ]` Krok 4: Dodanie panelu interfejsu \"DRUGI OBIEG (TAJNA DRUKARNIA)\" w zakładce \
+"Partia/Opozycja\" w `App.
+  faza_d_details.txt:9146:tsx`.\n+  - `[ ]` Krok 5: Weryfikacja działania, ESLint i kompilacja projektu (`npm run build
+`).\n \n[diff_block_end]\n
+  faza_d_details.txt:9147:\nPlease note that the above snippet only shows the MODIFIED lines from the last change. It s
+hows up to 3 lines of unch
+  faza_d_details.txt:9148:anged lines before and after the modified lines. The actual file contents may have many more 
+lines not shown.\n\nWe did
+  faza_d_details.txt:9149: our best to apply changes despite some inaccuracies. Double check if the edit applied is wha
+t you intended."}
+  faza_d_details.txt:9150:  C:\Users\Lukpa\.gemini\antigravity\brain\6c6de58b-b6f4-4453-be02-d1f5ee42f15f\.system_gener
+ated\logs\transcript_full.
+  faza_d_details.txt:9151:jsonl:2113:{"step_index":2107,"source":"MODEL","type":"PLANNER_RESPONSE","status":"DONE","cre
+ated_at":"2026-06-28T14:59
+  faza_d_details.txt:9152::02Z","content":"I will view `useGameState.ts` around line 100 to see where to add the new st
+ate fields.","tool_calls":
+  faza_d_details.txt:9153:[{"name":"view_file","args":{"AbsolutePath":"C:\\Users\\Lukpa\\.gemini\\antigravity\\scratch\
+\kombinator-idle\\src\\hoo
+  faza_d_details.txt:9154:ks\\useGameState.ts","EndLine":185,"StartLine":100,"toolAction":"Read useGameState.ts to loca
+te state fields","toolSumm
+  faza_d_details.txt:9155:ary":"Read useGameState.ts"}}]}
+  faza_d_details.txt:9156:  C:\Users\Lukpa\.gemini\antigravity\brain\6c6de58b-b6f4-4453-be02-d1f5ee42f15f\.system_gener
+ated\logs\transcript_full.
+  faza_d_details.txt:9157:jsonl:2114:{"step_index":2108,"source":"MODEL","type":"VIEW_FILE","status":"DONE","created_at
+":"2026-06-28T14:59:06Z","
+  faza_d_details.txt:9158:content":"Created At: 2026-06-28T14:59:06Z\nCompleted At: 2026-06-28T14:59:06Z\nFile Path: `f
+ile:///C:/Users/Lukpa/.gem
+  faza_d_details.txt:9159:ini/antigravity/scratch/kombinator-idle/src/hooks/useGameState.ts`\nTotal Lines: 435\nTotal B
+ytes: 17507\nShowing lines
+  faza_d_details.txt:9160: 100 to 185\nThe following code has been modified to include a line number before every line,
+ in the format: <line_numb
+  faza_d_details.txt:9161:er>: <original_line>. Please note that any changes targeting the original code should remove 
+the line number, colon, an
+  faza_d_details.txt:9162:d leading space.\n100:   okraglyStolKartki: number; // postęp do Okrągłego Stołu (wymagane 10
+00)\n101:   okraglyStolPln
+  faza_d_details.txt:9163:: number;    // postęp do Okrągłego Stołu (wymagane 100000)\n102:   okraglyStolStartDay: numb
+er; // stats.totalTimePlay
+  faza_d_details.txt:9164:ed przy starcie (wymagane +7776000s = 90 dni)\n103:   okraglyStolVictory: boolean;\n104:   \n
+105:   // Faza F: Prestiż 
+  faza_d_details.txt:9165:i Speedrun\n106:   prestigeCount: number;\n107:   activeDestination: 'nrf' | 'austria' | 'usa
+' | 'kanada' | 'australia'
+  faza_d_details.txt:9166: | null;\n108:   timeInCurrentLoop: number;\n109:   speedrunActive: boolean;\n110:   speedrun
+Time: number;\n111:   spee
+  faza_d_details.txt:9167:drunHistory: number[];\n112: \n113:   // Faza A (Rozszerzenie): Ulepszenia pomocników\n114:  
+ helperUpgrades: Record<st
+  faza_d_details.txt:9168:ring, number>;\n115: \n116:   // Faza B: Licytacje i Towary Luksusowe\n117:   ownedLuxuryItem
+s: Record<string, boolean>
+  faza_d_details.txt:9169:;\n118:   auction: AuctionState | null;\n119:   nextAuctionIn: number;\n120: }\n121: \n122: e
+xport const INITIAL_STATE:
+  faza_d_details.txt:9170: GameState = {\n123:   pln: 5,\n124:   dollars: 0,\n125:   exchangeRate: 100,\n126:   prestig
+ePoints: 0,\n127:   suspic
+  faza_d_details.txt:9171:ion: 0,\n128:   kartki: 0,\n129:   partyRank: null,\n130:   inventory: { \n131:     papier: 0
+, mydlo: 0, cukier: 0, mak
+  faza_d_details.txt:9172:a: 0, kawa: 0, spirytus: 0, dzinsy: 0, relaks: 0, \n132:     predom: 0, kasprzak: 0, frania: 
+0, kowalski: 0, zorki: 0, 
+  faza_d_details.txt:9173:neptun: 0, osa: 0, wsk: 0, \n133:     syrena: 0, fiat125: 0, ursus: 0, zis: 0,\n134:     gozd
+ziki: 0, czesci: 0, wyroby
+  faza_d_details.txt:9174:_hutnicze: 0\n135:   },\n136:   helpers: { \n137:     wladyslaw: 0, kolega: 0, halinka: 0, ba
+sia: 0, spekulant: 0, \n13
+  faza_d_details.txt:9175:8:     staszek: 0, zygmunt: 0, cinkciarz: 0, widmo: 0, konspiracja: 0 \n139:   },\n140:   bus
+inesses: { szklarnia: 0, w
+  faza_d_details.txt:9176:arsztat: 0, kombinat: 0 },\n141:   pewexItems: { \n142:     donald: false, toblerone: false, 
+lego: false, krakus: false
+  faza_d_details.txt:9177:, wrangler: false, \n143:     cola: false, sanyo: false, c64: false, walkman: false, rubin: f
+alse, \n144:     polaroid:
+  faza_d_details.txt:9178: false, casio: false, maluch: false, vhs: false, m3: false, \n145:     willa: false, szwajcar
+ia: false, transformacja: 
+  faza_d_details.txt:9179:false \n146:   },\n147:   plnUpgrades: { torba: false, wozek: false, zeszyt: false, kozuch: f
+alse, znajomosci: false },
+  faza_d_details.txt:9180:\n148:   lastSave: Date.now(),\n149:   \n150:   talony: 0,\n151:   ruble: 0,\n152:   czarnyRy
+nekUnlocked: false,\n153: 
+  faza_d_details.txt:9181:  blackMarketOffers: [],\n154:   lastMarketRefresh: 0,\n155: \n156:   activeEvent: null,\n157
+:   eventTimeLeft: 0,\n158
+  faza_d_details.txt:9182::   nextEventIn: 120,\n159: \n160:   stats: {\n161:     totalPlnEarned: 5,\n162:     totalDol
+larsEarned: 0,\n163:     t
+  faza_d_details.txt:9183:otalItemsSold: 0,\n164:     totalTimeQueued: 0,\n165:     totalCinkciarzExchanges: 0,\n166:  
+   totalBazarPlnEarned: 0,
+  faza_d_details.txt:9184:\n167:     totalBribesPaidPln: 0,\n168:     totalConfiscations: 0,\n169:     totalCleCatches:
+ 0,\n170:     totalSmuggle
+  faza_d_details.txt:9185:sCompleted: 0,\n171:     totalBlackMarketPurchases: 0,\n172:     totalTimePlayed: 0,\n173:   
+  maxPlnHeld: 5\n174:   },
+  faza_d_details.txt:9186:\n175:   unlockedAchievements: {},\n176: \n177:   // Faza E\n178:   solidarnos: 0,\n179:   ok
+raglyStolKartki: 0,\n180: 
+  faza_d_details.txt:9187:  okraglyStolPln: 0,\n181:   okraglyStolStartDay: -1,\n182:   okraglyStolVictory: false,\n183
+: \n184:   // Faza F\n185:
+  faza_d_details.txt:9188:   prestigeCount: 0,\nThe above content does NOT show the entire file contents. If you need t
+o view any lines of the fi
+  faza_d_details.txt:9189:le which were not shown to complete your task, call this tool again to view those lines.\n"}
+  faza_d_details.txt:9190:  C:\Users\Lukpa\.gemini\antigravity\brain\6c6de58b-b6f4-4453-be02-d1f5ee42f15f\.system_gener
+ated\logs\transcript_full.
+  faza_d_details.txt:9191:jsonl:2115:{"step_index":2109,"source":"MODEL","type":"PLANNER_RESPONSE","status":"DONE","cre
+ated_at":"2026-06-28T14:59
+  faza_d_details.txt:9192::06Z","content":"I will view lines 186 to 260 of `useGameState.ts` to locate the save merging
+ and state reset logic.","
+  faza_d_details.txt:9193:tool_calls":[{"name":"view_file","args":{"AbsolutePath":"C:\\Users\\Lukpa\\.gemini\\antigravi
+ty\\scratch\\kombinator-id
+  faza_d_details.txt:9194:le\\src\\hooks\\useGameState.ts","EndLine":260,"StartLine":186,"toolAction":"Read save mergin
+g and reset logic in hook"
+  faza_d_details.txt:9195:,"toolSummary":"Read useGameState.ts merging"}}]}
+  faza_d_details.txt:9196:  C:\Users\Lukpa\.gemini\antigravity\brain\6c6de58b-b6f4-4453-be02-d1f5ee42f15f\.system_gener
+ated\logs\transcript_full.
+  faza_d_details.txt:9197:jsonl:2116:{"step_index":2110,"source":"MODEL","type":"VIEW_FILE","status":"DONE","created_at
+":"2026-06-28T14:59:08Z","
+  faza_d_details.txt:9198:content":"Created At: 2026-06-28T14:59:08Z\nCompleted At: 2026-06-28T14:59:09Z\nFile Path: `f
+ile:///C:/Users/Lukpa/.gem
+  faza_d_details.txt:9199:ini/antigravity/scratch/kombinator-idle/src/hooks/useGameState.ts`\nTotal Lines: 435\nTotal B
+ytes: 17507\nShowing lines
+  faza_d_details.txt:9200: 186 to 260\nThe following code has been modified to include a line number before every line,
+ in the format: <line_numb
+  faza_d_details.txt:9201:er>: <original_line>. Please note that any changes targeting the original code should remove 
+the line number, colon, an
+  faza_d_details.txt:9202:d leading space.\n186:   activeDestination: null,\n187:   timeInCurrentLoop: 0,\n188:   speed
+runActive: false,\n189:   
+  faza_d_details.txt:9203:speedrunTime: 0,\n190:   speedrunHistory: [],\n191: \n192:   // Faza A (Rozszerzenie)\n193:  
+ helperUpgrades: {},\n194:
+  faza_d_details.txt:9204: \n195:   // Faza B: Licytacje i Towary Luksusowe\n196:   ownedLuxuryItems: {},\n197:   aucti
+on: null,\n198:   nextAuct
+  faza_d_details.txt:9205:ionIn: 600,\n199: };\n200: \n201: export function useGameState() {\n202:   const [state, setS
+tate] = useState<GameState
+  faza_d_details.txt:9206:>(() => {\n203:     const saved = localStorage.getItem('kombinator-save');\n204:     if (save
+d) {\n205:       try {\n20
+  faza_d_details.txt:9207:6:         const parsed = JSON.parse(saved);\n207:         const merged = { \n208:           
+...INITIAL_STATE, \n209:  
+  faza_d_details.txt:9208:         ...parsed, \n210:           inventory: { ...INITIAL_STATE.inventory, ...(parsed.inve
+ntory || {}) }, \n211:    
+  faza_d_details.txt:9209:       helpers: { ...INITIAL_STATE.helpers, ...(parsed.helpers || {}) }, \n212:           bus
+inesses: { ...INITIAL_STAT
+  faza_d_details.txt:9210:E.businesses, ...(parsed.businesses || {}) },\n213:           pewexItems: { ...INITIAL_STATE.
+pewexItems, ...(parsed.pew
+  faza_d_details.txt:9211:exItems || {}) },\n214:           plnUpgrades: { ...INITIAL_STATE.plnUpgrades, ...(parsed.pln
+Upgrades || {}) },\n215:  
+
+

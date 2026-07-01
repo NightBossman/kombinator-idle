@@ -1,0 +1,87 @@
+﻿
+> faza_d_details.txt:5912:tał zwerbowany jako TW (Tajny Współpracownik) i donosi na Ciebie, zwiększając podejrzenie o +
+1%/s.\n*   **Przeciwdziała
+  faza_d_details.txt:5913:nie:** Możliwość opłacania kontrwywiadu, dawania łapówek SB lub szantażowania informatorów.\n
+\n## Faza F: Hiperinflacja
+  faza_d_details.txt:5914: i Kryzys Walutowy (1989)\n*   **Rozszerzenie:** Wahania kursu dolara i dynamika cen.\n*   **
+Nowe mechaniki:** Wskaźnik
+  faza_d_details.txt:5915: inflacji PLN rosnący z każdą minutą. Gotówka w PLN traci na wartości (mnożnik cen rośnie, al
+e zyski z pracy państwowej
+  faza_d_details.txt:5916: spadają).\n*   **Ucieczka kapitału:** Gracz musi chronić majątek, wymieniając PLN na Dolary,
+ złoto lub Bony Pewexu.\n\
+  faza_d_details.txt:5917:n## Faza G: Giełda i Prywatyzacja (GPW)\n*   **Rozszerzenie:** Finał transformacji gospodarcz
+ej.\n*   **Nowe mechaniki:
+  faza_d_details.txt:5918:** Wczesny rynek akcji (GPW). Możliwość kupowania udziałów w prywatyzowanych kombinatach i fa
+brykach.\n*   **Dynamika:*
+  faza_d_details.txt:5919:* Ceny akcji rosną i spadają na bazie losowych wydarzeń rynkowych.\n\n## Faza H: Spółki Nomen
+klaturowe i Korporacje\n* 
+  faza_d_details.txt:5920:  **Rozszerzenie:** Awans na Członka Biura Politycznego.\n*   **Nowe mechaniki:** Transferowa
+nie majątku państwowych ko
+  faza_d_details.txt:5921:mbinatów do prywatnych spółek nomenklaturowych.\n*   **Zastosowanie:** Generuje gigantyczne p
+asywne zyski w USD i pozwa
+  faza_d_details.txt:5922:la na ominięcie SB.\n\n## Faza I: Konta Zagraniczne (Szwajcaria i Liechtenstein)\n*   **Rozsz
+erzenie:** Bezpieczeństwo 
+  faza_d_details.txt:5923:kapitału.\n*   **Nowe mechaniki:** Przelewy dewizowe na tajne konta w szwajcarskich bankach.\
+n*   **Efekt:** Pieniądze 
+  faza_d_details.txt:5924:na koncie zagranicznym są w 100% bezpieczne przed nalotami Milicji, konfiskatami SB oraz hipe
+rinflacją, generując stały
+  faza_d_details.txt:5925: procent roczny.\n\n## Faza J: Wybory 4 Czerwca (Kampania Wyborcza)\n*   **Rozszerzenie:** Fi
+nisz gry przy Okrągłym Sto
+  faza_d_details.txt:5926:le.\n*   **Nowe mechaniki:** Zamiast prostego czekania 24h, gracz musi aktywnie finansować i 
+zarządzać kampanią wyborcz
+  faza_d_details.txt:5927:ą Komitetu Obywatelskiego „Solidarność”.\n*   **Wymagania:** Druk plakatów z Wałęsą, opłacani
+e wieców, przekonywanie ni
+  faza_d_details.txt:5928:ezdecydowanych.\n\n## Faza K: Plan Balcerowicza (Nowa Gra++)\n*   **Rozszerzenie:** Prestiż d
+rugiego stopnia.\n*   **No
+  faza_d_details.txt:5929:we mechaniki:** Przejście do III RP i denominacja waluty (nowy złoty).\n*   **NG++:** Trwałe 
+odblokowanie wolnorynkowyc
+  faza_d_details.txt:5930:h bonusów i statystyk globalnego kapitalizmu.\n\n---\n\n## Plan Weryfikacji\n*   `npm run bui
+ld` przed wdrożeniem każde
+  faza_d_details.txt:5931:j fazy.\n*   Sprawdzenie stabilności stanu zapisu w `localStorage` (Backward Compatibility).\
+n","Description":"Create a
+  faza_d_details.txt:5932: comprehensive development plan from Phase A to Phase K.","Overwrite":true,"TargetFile":"C:\\
+Users\\Lukpa\\.gemini\\ant
+> faza_d_details.txt:6296:lityczny SB.\n27: *   **Nowe mechaniki:** Ryzyko, że jeden z Twoich pomocników został zwerbow
+any jako TW (Tajny Współpr
+  faza_d_details.txt:6297:acownik) i donosi na Ciebie, zwiększając podejrzenie o +1%/s.\n28: *   **Przeciwdziałanie:** 
+Możliwość opłacania kontrw
+  faza_d_details.txt:6298:ywiadu, dawania łapówek SB lub szantażowania informatorów.\n29: \n30: ## Faza F: Hiperinflacj
+a i Kryzys Walutowy (1989)
+  faza_d_details.txt:6299:\n31: *   **Rozszerzenie:** Wahania kursu dolara i dynamika cen.\n32: *   **Nowe mechaniki:**
+ Wskaźnik inflacji PLN ros
+  faza_d_details.txt:6300:nący z każdą minutą. Gotówka w PLN traci na wartości (mnożnik cen rośnie, ale zyski z pracy p
+aństwowej spadają).\n33: *
+  faza_d_details.txt:6301:   **Ucieczka kapitału:** Gracz musi chronić majątek, wymieniając PLN na Dolary, złoto lub Bo
+ny Pewexu.\n34: \n35: ## F
+  faza_d_details.txt:6302:aza G: Giełda i Prywatyzacja (GPW)\n36: *   **Rozszerzenie:** Finał transformacji gospodarcze
+j.\n37: *   **Nowe mechani
+  faza_d_details.txt:6303:ki:** Wczesny rynek akcji (GPW). Możliwość kupowania udziałów w prywatyzowanych kombinatach i
+ fabrykach.\n38: *   **Dyn
+  faza_d_details.txt:6304:amika:** Ceny akcji rosną i spadają na bazie losowych wydarzeń rynkowych.\n39: \n40: ## Faza 
+H: Spółki Nomenklaturowe i
+  faza_d_details.txt:6305: Korporacje\n41: *   **Rozszerzenie:** Awans na Członka Biura Politycznego.\n42: *   **Nowe m
+echaniki:** Transferowanie
+  faza_d_details.txt:6306: majątku państwowych kombinatów do prywatnych spółek nomenklaturowych.\n43: *   **Zastosowani
+e:** Generuje gigantyczne 
+  faza_d_details.txt:6307:pasywne zyski w USD i pozwala na ominięcie SB.\n44: \n45: ## Faza I: Konta Zagraniczne (Szwaj
+caria i Liechtenstein)\n46
+  faza_d_details.txt:6308:: *   **Rozszerzenie:** Bezpieczeństwo kapitału.\n47: *   **Nowe mechaniki:** Przelewy dewizo
+we na tajne konta w szwajc
+  faza_d_details.txt:6309:arskich bankach.\n48: *   **Efekt:** Pieniądze na koncie zagranicznym są w 100% bezpieczne pr
+zed nalotami Milicji, konf
+  faza_d_details.txt:6310:iskatami SB oraz hiperinflacją, generując stały procent roczny.\n49: \n50: ## Faza J: Wybory 
+4 Czerwca (Kampania Wyborc
+  faza_d_details.txt:6311:za)\n51: *   **Rozszerzenie:** Finisz gry przy Okrągłym Stole.\n52: *   **Nowe mechaniki:** Z
+amiast prostego czekania 2
+  faza_d_details.txt:6312:4h, gracz musi aktywnie finansować i zarządzać kampanią wyborczą Komitetu Obywatelskiego „Sol
+idarność”.\n53: *   **Wyma
+  faza_d_details.txt:6313:gania:** Druk plakatów z Wałęsą, opłacanie wieców, przekonywanie niezdecydowanych.\n54: \n55:
+ ## Faza K: Plan Balcerowi
+  faza_d_details.txt:6314:cza (Nowa Gra++)\n56: *   **Rozszerzenie:** Prestiż drugiego stopnia.\n57: *   **Nowe mechani
+ki:** Przejście do III RP 
+  faza_d_details.txt:6315:i denominacja waluty (nowy złoty).\n58: *   **NG++:** Trwałe odblokowanie wolnorynkowych bonu
+sów i statystyk globalnego
+  faza_d_details.txt:6316: kapitalizmu.\n59: \n60: ---\n61: \n62: ## Plan Weryfikacji\n63: *   `npm run build` przed wd
+rożeniem każdej fazy.\n64:
+
+

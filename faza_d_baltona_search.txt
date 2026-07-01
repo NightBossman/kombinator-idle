@@ -1,0 +1,143 @@
+﻿
+  faza_d_details.txt:5905:\n*   **Nowe mechaniki:** Zarządzanie tajną drukarnią podziemną. Gracz kupuje papier i tusz, 
+aby drukować nielegalne pi
+  faza_d_details.txt:5906:sma (np. Tygodnik Mazowsze).\n*   **Zastosowanie:** Dystrybucja prasy daje olbrzymi napływ pu
+nktów Solidarności, ale gr
+> faza_d_details.txt:5907:ozi aresztowaniem i czasową blokadą zakładki.\n\n## Faza D: Port Gdynia i Baltona (Przemyt 2.
+0)\n*   **Rozszerzenie:** 
+  faza_d_details.txt:5908:Nowa sekcja w zakładce Przemytu.\n*   **Nowe mechaniki:** Przemyt drogą morską przez marynarz
+y. Możliwość wymiany towar
+> faza_d_details.txt:5909:ów na specjalne Bony Towarowe Baltona.\n*   **Zastosowanie:** Sklep Baltona oferuje alternaty
+wne, potężne ulepszenia ni
+  faza_d_details.txt:5910:edostępne w Pewexie.\n\n## Faza E: Służba Bezpieczeństwa (SB) i TW (Tajni Współpracownicy)\n*
+   **Rozszerzenie:** Syste
+  faza_d_details.txt:5911:m Milicji zostaje rozszerzony o wywiad polityczny SB.\n*   **Nowe mechaniki:** Ryzyko, że jed
+en z Twoich pomocników zos
+  faza_d_details.txt:5912:tał zwerbowany jako TW (Tajny Współpracownik) i donosi na Ciebie, zwiększając podejrzenie o +
+1%/s.\n*   **Przeciwdziała
+  faza_d_details.txt:5913:nie:** Możliwość opłacania kontrwywiadu, dawania łapówek SB lub szantażowania informatorów.\n
+\n## Faza F: Hiperinflacja
+  faza_d_details.txt:5914: i Kryzys Walutowy (1989)\n*   **Rozszerzenie:** Wahania kursu dolara i dynamika cen.\n*   **
+Nowe mechaniki:** Wskaźnik
+  faza_d_details.txt:6290: papier i tusz, aby drukować nielegalne pisma (np. Tygodnik Mazowsze).\n18: *   **Zastosowani
+e:** Dystrybucja prasy daj
+  faza_d_details.txt:6291:e olbrzymi napływ punktów Solidarności, ale grozi aresztowaniem i czasową blokadą zakładki.\n
+19: \n20: ## Faza D: Port 
+> faza_d_details.txt:6292:Gdynia i Baltona (Przemyt 2.0)\n21: *   **Rozszerzenie:** Nowa sekcja w zakładce Przemytu.\n2
+2: *   **Nowe mechaniki:**
+> faza_d_details.txt:6293: Przemyt drogą morską przez marynarzy. Możliwość wymiany towarów na specjalne Bony Towarowe B
+altona.\n23: *   **Zastoso
+> faza_d_details.txt:6294:wanie:** Sklep Baltona oferuje alternatywne, potężne ulepszenia niedostępne w Pewexie.\n24: \
+n25: ## Faza E: Służba Bez
+  faza_d_details.txt:6295:pieczeństwa (SB) i TW (Tajni Współpracownicy)\n26: *   **Rozszerzenie:** System Milicji zosta
+je rozszerzony o wywiad po
+  faza_d_details.txt:6296:lityczny SB.\n27: *   **Nowe mechaniki:** Ryzyko, że jeden z Twoich pomocników został zwerbow
+any jako TW (Tajny Współpr
+  faza_d_details.txt:6297:acownik) i donosi na Ciebie, zwiększając podejrzenie o +1%/s.\n28: *   **Przeciwdziałanie:** 
+Możliwość opłacania kontrw
+  faza_d_details.txt:6298:ywiadu, dawania łapówek SB lub szantażowania informatorów.\n29: \n30: ## Faza F: Hiperinflacj
+a i Kryzys Walutowy (1989)
+  faza_d_details.txt:6299:\n31: *   **Rozszerzenie:** Wahania kursu dolara i dynamika cen.\n32: *   **Nowe mechaniki:**
+ Wskaźnik inflacji PLN ros
+  faza_d_details.txt:7360:Zarz�dzanie tajn� drukarni� podziemn�. Gracz kupuje papier\r\n i tusz, aby drukowa� nielegaln
+e pisma (np. Tygodnik Mazo
+  faza_d_details.txt:7361:wsze).\\n18: *   **Zastosowanie:** Dystrybucja prasy daje olbrz\r\nymi nap�yw punkt�w Solidar
+no�ci, ale grozi aresztowa
+> faza_d_details.txt:7362:niem i czasow� blokad� zak�adki.\\n19: \\n20: ## Faza D: Port Gdynia \r\ni Baltona (Pr\\n<tru
+ncated 1135 bytes>\\n, wym
+  faza_d_details.txt:7363:ieniaj�c PLN na Dolary, z�oto lub Bony Pewexu.\\n34: \\n35: ## Faza G: Gie�da\r\n i Prywatyza
+cja (GPW)\\n36: *   **Rozs
+  faza_d_details.txt:7364:zerzenie:** Fina� transformacji gospodarczej.\\n37: *   **Nowe mechaniki:** Wczesny\r\n rynek
+ akcji (GPW). Mo�liwo� kup
+  faza_d_details.txt:7365:owania udzia�w w prywatyzowanych kombinatach i fabrykach.\\n38: *   **Dynamika:** Ceny\r\n ak
+cji rosn� i spadaj� na baz
+  faza_d_details.txt:7366:ie losowych wydarze� rynkowych.\\n39: \\n40: ## Faza H: Sp�ki Nomenklaturowe i Korporacje\\n\
+r\n41: *   **Rozszerzenie:
+  faza_d_details.txt:7367:** Awans na Cz�onka Biura Politycznego.\\n42: *   **Nowe mechaniki:** Transferowanie maj�tku 
+pa�s\r\ntwowych kombinat�w
+  faza_d_details.txt:7560:echaniki:** Zarz?dz\r\nanie tajn? drukarni? podziemn?. Gracz kupuje papier\\r\\n i tusz, aby 
+drukowa? nielegalne pisma 
+  faza_d_details.txt:7561:(np. Tygodnik Mazowsze).\\\r\n\\n18: *   **Zastosowanie:** Dystrybucja prasy daje olbrz\\r\\n
+ymi nap?yw punkt?w Solidar
+> faza_d_details.txt:7562:no?ci, ale grozi aresztowaniem i \r\nczasow? blokad? zak?adki.\\\\n19: \\\\n20: ## Faza D: Po
+rt Gdynia \\r\\ni Baltona 
+  faza_d_details.txt:7563:(Pr\\\\n<truncated 1135 bytes>\\\\n, wymieniaj?\r\nc PLN na Dolary, z?oto lub Bony Pewexu.\\\
+\n34: \\\\n35: ## Faza G: 
+  faza_d_details.txt:7564:Gie?da\\r\\n i Prywatyzacja (GPW)\\\\n36: *   **Rozszerzeni\r\ne:** Fina? transformacji gospo
+darczej.\\\\n37: *   **Now
+  faza_d_details.txt:7565:e mechaniki:** Wczesny\\r\\n rynek akcji (GPW). Mo?liwo? kupowania \r\nudzia?w w prywatyzowan
+ych kombinatach i fabrykac
+  faza_d_details.txt:7566:h.\\\\n38: *   **Dynamika:** Ceny\\r\\n akcji rosn? i spadaj? na bazie loso\r\nwych wydarze? 
+rynkowych.\\\\n39: \\\\n40
+  faza_d_details.txt:7567:: ## Faza H: Sp?ki Nomenklaturowe i Korporacje\\\\n\\r\\n41: *   **Rozszerzenie:** Awan\r\ns 
+na Cz?onka Biura Polityczn
+  faza_d_details.txt:8312:ą drukarnią podziemną. Gracz kupuje papier i tusz, aby\r\n60:  drukować nielegalne pisma (np.
+ Tygodnik Mazowsze).\\\\n*
+  faza_d_details.txt:8313:   **Zastosowanie:** Dystrybucja prasy daje olbrzymi napływ punk\r\n61: tów Solidarności, ale
+ grozi aresztowaniem i cza
+> faza_d_details.txt:8314:sową blokadą zakładki.\\\\n\\\\n## Faza D: Port Gdynia i Baltona (Przemyt 2.\r\n62: 0)\\\\n* 
+  **Rozszerzenie:** Nowa s
+  faza_d_details.txt:8315:ekcja w zakładce Przemytu.\\\\n*   **Nowe mechaniki:** Przemyt drogą morską przez maryna\r\n6
+3: rzy. Możliwość wymiany 
+> faza_d_details.txt:8316:towarów na specjalne Bony Towarowe Baltona.\\\\n*   **Zastosowanie:** Sklep Baltona oferuje a
+ltern\r\n64: atywne, potęż
+  faza_d_details.txt:8317:ne ulepszenia niedostępne w Pewexie.\\\\n\\\\n## Faza E: Służba Bezpieczeństwa (SB) i TW (Taj
+ni Współpracownic\r\n65: y
+  faza_d_details.txt:8318:)\\\\n*   **Rozszerzenie:** System Milicji zostaje rozszerzony o wywiad polityczny SB.\\\\n* 
+  **Nowe mechaniki:** Ryzy
+  faza_d_details.txt:8319:ko,\r\n66:  że jeden z Twoich pomocników został zwerbow\\n<truncated 2427 bytes>\",\"Descript
+ion\":\"\\\"Create a compr
+  faza_d_details.txt:8320:ehensive developme\r\n67: nt plan from Phase A to Phase K.\\\"\",\"Overwrite\":\"true\",\"Tar
+getFile\":\"\\\"C:\\\\\\\\
+  faza_d_details.txt:8321:Users\\\\\\\\Lukpa\\\\\\\\.gemini\\\\\\\\antigravity\\\\\r\n68: \\\\brain\\\\\\\\6c6de58b-b6f
+4-4453-be02-d1f5ee42f15f\\
+  faza_d_details.txt:9727:t:8681:esti�u) o nowe rozbudowane mechaniki z okresu transformacji ustrojowej i gospodarczej 
+PRL/III RP\r\n.\\n\\nZgodn
+  faza_d_details.txt:9728:ie z procedur\r\n> faza_c_spec.txt:9186:rzymi nap�yw punkt�w Solidarno�ci, ale grozi aresztow
+aniem i czasow� blokad� za
+> faza_d_details.txt:9729:k�adki.\\n19: \\n20\r\n: ## Faza D: Port Gdyni\r\n  faza_c_spec.txt:9187:a i Baltona (Pr\\n<t
+runcated 1135 bytes>\\n, w
+  faza_d_details.txt:9730:ymieniaj�c PLN na Dolary, z�oto lub Bony Pewexu.\\n34\r\n: \\n35: ## Faza G: Gie�\r\n  faza_c
+_spec.txt:9188:da i Prywat
+  faza_d_details.txt:9731:yzacja (GPW)\\n36: *   **Rozszerzenie:** Fina� transformacji gospodarczej.\\n37: *   **\r\nNo
+we mechaniki:** Wczes\r\n 
+  faza_d_details.txt:9732: faza_c_spec.txt:9189:ny rynek akcji (GPW). Mo�liwo� kupowania udzia�w w prywatyzowanych komb
+inatach i fabrykach.\\n3\r
+  faza_d_details.txt:9733:\n8: *   **Dynamika:** Ce\r\n  faza_c_spec.txt:9190:ny akcji rosn� i spadaj� na bazie losowyc
+h wydarze� rynkowych.\\n39
+  faza_d_details.txt:9734:: \\n40: ## Faza H: Sp�ki Nome\r\nnklaturowe i Korporacje\r\n  faza_c_spec.txt:9191:\\n41: * 
+  **Rozszerzenie:** Awans 
+  faza_d_details.txt:9753:tem_generate\r\nd\\logs\\transcript.jsonl\r\n  faza_c_spec.txt:9206::1578:{\"step_index\":156
+9,\"source\":\"MODEL\",\"t
+  faza_d_details.txt:9754:ype\":\"PLANNER_RESPONSE\",\"status\":\"DONE\",\"created_at\"\r\n:\"2026-06-25T21:32:24Z\"\r\
+n> faza_c_spec.txt:12018:i
+> faza_d_details.txt:9755: czasow? blokad? zak?adki.\\\\n19: \\\\n20: ## Faza D: Port Gdynia \\r\\ni Baltona (Pr\\\\n<t
+runcated \r\n1135 bytes>\\
+  faza_d_details.txt:9756:\\n, wymienia\r\n  faza_c_spec.txt:12019:j?c PLN na Dolary, z?oto lub Bony Pewexu.\\\\n34: \\
+\\n35: ## Faza G: Gie?da\\
+  faza_d_details.txt:9757:r\\n i Prywatyzacja (GP\r\nW)\\\\n36: *   **Rozszerze\r\n  faza_c_spec.txt:12020:nie:** Fina?
+ transformacji gospodarcze
+  faza_d_details.txt:9758:j.\\\\n37: *   **Nowe mechaniki:** Wczesny\\r\\n rynek akcji \r\n(GPW). Mo?liwo? kupowani\r\n
+  faza_c_spec.txt:12021:a 
+  faza_d_details.txt:9759:udzia?w w prywatyzowanych kombinatach i fabrykach.\\\\n38: *   **Dynamika:** Ceny\\r\\n akcji
+ ros\r\nn? i spadaj? na ba
+  faza_d_details.txt:9760:zie lo\r\n  faza_c_spec.txt:12022:sowych wydarze? rynkowych.\\\\n39: \\\\n40: ## Faza H: Sp?k
+i Nomenklaturowe i Korpora
+  faza_d_details.txt:9812:haniki:** Zarządzanie tajną drukarnią podziemną. Gracz kupuje papi\r\n9185: er i tusz, aby dr
+ukować nielegalne pisma (n
+  faza_d_details.txt:9813:p. Tygodnik Mazowsze).\\n18: *   **Zastosowanie:** Dystrybucja prasy daje olb\r\n9186: rzymi 
+napływ punktów Solidarnośc
+> faza_d_details.txt:9814:i, ale grozi aresztowaniem i czasową blokadą zakładki.\\n19: \\n20: ## Faza D: Port Gdyni\r\n
+9187: a i Baltona (Pr\\n<t
+  faza_d_details.txt:9815:runcated 1135 bytes>\\n, wymieniając PLN na Dolary, złoto lub Bony Pewexu.\\n34: \\n35: ## Fa
+za G: Gieł\r\n9188: da i P
+  faza_d_details.txt:9816:rywatyzacja (GPW)\\n36: *   **Rozszerzenie:** Finał transformacji gospodarczej.\\n37: *   **N
+owe mechaniki:** Wczes\r\n
+  faza_d_details.txt:9817:9189: ny rynek akcji (GPW). Możliwość kupowania udziałów w prywatyzowanych kombinatach i fabr
+ykach.\\n38: *   **Dynamik
+  faza_d_details.txt:9818:a:** Ce\r\n9190: ny akcji rosną i spadają na bazie losowych wydarzeń rynkowych.\\n39: \\n40: 
+## Faza H: Spółki Nomenkla
+  faza_d_details.txt:9819:turowe i Korporacje\r\n9191: \\n41: *   **Rozszerzenie:** Awans na Członka Biura Politycznego
+.\\n42: *   **Nowe mechani
+
+

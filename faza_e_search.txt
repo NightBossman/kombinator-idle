@@ -1,0 +1,215 @@
+﻿
+> faza_d_details.txt:5013:nsrc\\App.tsx:267:        // Faza E: Solidarno� Dzia�acz - kartki co 30 sekund (+1, niezale�n
+ie od partii)\r\nsrc\\App.
+> faza_d_details.txt:5014:tsx:276:        // Faza E: Biuro Politycznego - 3x PLN z biznes�w (dodatkowe 2x = 3x �cznie)\
+r\nsrc\\App.tsx:869:      
+  faza_d_details.txt:5015:     <span style={{fontSize: '1.2rem'}}>{Math.floor(state.pln).toLocaleString()} z�</span>\r\
+nsrc\\App.tsx:921:        
+  faza_d_details.txt:5016:        <div style={{marginTop: '5px'}}>Z�ot�wki: <span style={{color: plnRate >= 0 ? '#33ff3
+3'\r\n : 'var(--prl-red)'}
+  faza_d_details.txt:5017:}>{plnRate >= 0 ? '+' : ''}{plnRate.toFixed(2)} z�/s</span></div>\r\nsrc\\App.tsx:947:       
+            <div>�czne PLN
+  faza_d_details.txt:5018:: <span style={{color: 'var(--crt-text)'}}>{Math.floor(state.stats.to\r\ntalPlnEarned).toLoca
+leString()} z�</span></div
+  faza_d_details.txt:5019:>\r\nsrc\\App.tsx:948:                   <div>�czne Dolary: <span style={{color: 'var(--dolla
+r-green)'}}>${Math.floor(s
+  faza_d_details.txt:5020:tate.\r\nstats.totalDollarsEarned).toLocaleString()}</span></div>\r\nsrc\\App.tsx:949:       
+            <div>Max PLN w
+  faza_d_details.txt:5021: r�ku: <span style={{color: 'var(--crt-text)'}}>{Math.floor(state.stat\r\ns.maxPlnHeld).toLoc
+aleString()} z�</span></di
+  faza_d_details.txt:5022:v>\r\nsrc\\App.tsx:955:                   <div>Wydatki na �ap�wki: <span style={{color: 'var(
+--prl-red)'}}>{state.stats
+  faza_d_details.txt:5023:.totalB\r\nribesPaidPln.toLocaleString()} z�</span></div>\r\nsrc\\App.tsx:990:               
+     Id� do pracy (+5 z�, 
+  faza_d_details.txt:5024:10% szans na Kartk�)\r\nsrc\\App.tsx:1015:                               {owned ? \"KUPIONE\"
+ : `${u.costPln} z�`}\r\ns
+  faza_d_details.txt:5025:rc\\App.tsx:1038:                                Koszt: {cost} z� {item.kartkiCost ? `+ ${ite
+m.kartkiCost} kartek` : ''
+  faza_d_details.txt:5026:\r\n}\r\nsrc\\App.tsx:1084:                           <button onClick={() => sellItem(item.id
+, item.sellPricePln, 1)}>x
+  faza_d_details.txt:5027:1 (+{sellP\r\n} z�)</button>\r\nsrc\\App.tsx:1086:                              <button onCli
+ck={() => sellItem(item.id
+  faza_d_details.txt:5028:, item.sellPricePln, 5)}>x5 (+{se\r\nllP*5} z�)</button>\r\nsrc\\App.tsx:1089:               
+               <button onC
+  faza_d_details.txt:5029:lick={() => sellItem(item.id, item.sellPricePln, 10)}>x10 (+{\r\nsellP*10} z�)</button>\r\nsr
+c\\App.tsx:1106:          
+  faza_d_details.txt:5030:          1$ = {state.activeEvent === 'drozyzna' ? Math.floor(state.exchangeRate * 1.30) : M\
+r\nath.floor(state.exchang
+  faza_d_details.txt:5031:eRate)} z�\r\nsrc\\App.tsx:1124:                  Kup 1$ (-{state.activeEvent === 'drozyzna' 
+? Math.floor(state.exchang
+  faza_d_details.txt:5032:eRate * 1.30) :\r\n Math.floor(state.exchangeRate)} z�)\r\nsrc\\App.tsx:1142:                
+        <span>5x Myd�o \"B
+  faza_d_details.txt:5033:ia�y Jele�\"</span>\r\nsrc\\App.tsx:1208:                      const costDesc = offer.costPln
+ !== undefined ? `${offer.
+  faza_d_details.txt:5034:costPln} z�` :\r\nsrc\\App.tsx:1269:                                   Kup ({finalCost} z�)\r
+\nsrc\\App.tsx:1291:      
+> faza_d_details.txt:5910:edostępne w Pewexie.\n\n## Faza E: Służba Bezpieczeństwa (SB) i TW (Tajni Współpracownicy)\n*
+   **Rozszerzenie:** Syste
+  faza_d_details.txt:5911:m Milicji zostaje rozszerzony o wywiad polityczny SB.\n*   **Nowe mechaniki:** Ryzyko, że jed
+en z Twoich pomocników zos
+  faza_d_details.txt:5912:tał zwerbowany jako TW (Tajny Współpracownik) i donosi na Ciebie, zwiększając podejrzenie o +
+1%/s.\n*   **Przeciwdziała
+  faza_d_details.txt:5913:nie:** Możliwość opłacania kontrwywiadu, dawania łapówek SB lub szantażowania informatorów.\n
+\n## Faza F: Hiperinflacja
+  faza_d_details.txt:5914: i Kryzys Walutowy (1989)\n*   **Rozszerzenie:** Wahania kursu dolara i dynamika cen.\n*   **
+Nowe mechaniki:** Wskaźnik
+  faza_d_details.txt:5915: inflacji PLN rosnący z każdą minutą. Gotówka w PLN traci na wartości (mnożnik cen rośnie, al
+e zyski z pracy państwowej
+  faza_d_details.txt:5916: spadają).\n*   **Ucieczka kapitału:** Gracz musi chronić majątek, wymieniając PLN na Dolary,
+ złoto lub Bony Pewexu.\n\
+  faza_d_details.txt:5917:n## Faza G: Giełda i Prywatyzacja (GPW)\n*   **Rozszerzenie:** Finał transformacji gospodarcz
+ej.\n*   **Nowe mechaniki:
+  faza_d_details.txt:5918:** Wczesny rynek akcji (GPW). Możliwość kupowania udziałów w prywatyzowanych kombinatach i fa
+brykach.\n*   **Dynamika:*
+  faza_d_details.txt:5919:* Ceny akcji rosną i spadają na bazie losowych wydarzeń rynkowych.\n\n## Faza H: Spółki Nomen
+klaturowe i Korporacje\n* 
+  faza_d_details.txt:5920:  **Rozszerzenie:** Awans na Członka Biura Politycznego.\n*   **Nowe mechaniki:** Transferowa
+nie majątku państwowych ko
+  faza_d_details.txt:5921:mbinatów do prywatnych spółek nomenklaturowych.\n*   **Zastosowanie:** Generuje gigantyczne p
+asywne zyski w USD i pozwa
+  faza_d_details.txt:5922:la na ominięcie SB.\n\n## Faza I: Konta Zagraniczne (Szwajcaria i Liechtenstein)\n*   **Rozsz
+erzenie:** Bezpieczeństwo 
+  faza_d_details.txt:5923:kapitału.\n*   **Nowe mechaniki:** Przelewy dewizowe na tajne konta w szwajcarskich bankach.\
+n*   **Efekt:** Pieniądze 
+  faza_d_details.txt:5924:na koncie zagranicznym są w 100% bezpieczne przed nalotami Milicji, konfiskatami SB oraz hipe
+rinflacją, generując stały
+  faza_d_details.txt:5925: procent roczny.\n\n## Faza J: Wybory 4 Czerwca (Kampania Wyborcza)\n*   **Rozszerzenie:** Fi
+nisz gry przy Okrągłym Sto
+  faza_d_details.txt:5926:le.\n*   **Nowe mechaniki:** Zamiast prostego czekania 24h, gracz musi aktywnie finansować i 
+zarządzać kampanią wyborcz
+  faza_d_details.txt:5927:ą Komitetu Obywatelskiego „Solidarność”.\n*   **Wymagania:** Druk plakatów z Wałęsą, opłacani
+e wieców, przekonywanie ni
+  faza_d_details.txt:5928:ezdecydowanych.\n\n## Faza K: Plan Balcerowicza (Nowa Gra++)\n*   **Rozszerzenie:** Prestiż d
+rugiego stopnia.\n*   **No
+  faza_d_details.txt:5929:we mechaniki:** Przejście do III RP i denominacja waluty (nowy złoty).\n*   **NG++:** Trwałe 
+odblokowanie wolnorynkowyc
+  faza_d_details.txt:5930:h bonusów i statystyk globalnego kapitalizmu.\n\n---\n\n## Plan Weryfikacji\n*   `npm run bui
+ld` przed wdrożeniem każde
+> faza_d_details.txt:6294:wanie:** Sklep Baltona oferuje alternatywne, potężne ulepszenia niedostępne w Pewexie.\n24: \
+n25: ## Faza E: Służba Bez
+  faza_d_details.txt:6295:pieczeństwa (SB) i TW (Tajni Współpracownicy)\n26: *   **Rozszerzenie:** System Milicji zosta
+je rozszerzony o wywiad po
+  faza_d_details.txt:6296:lityczny SB.\n27: *   **Nowe mechaniki:** Ryzyko, że jeden z Twoich pomocników został zwerbow
+any jako TW (Tajny Współpr
+  faza_d_details.txt:6297:acownik) i donosi na Ciebie, zwiększając podejrzenie o +1%/s.\n28: *   **Przeciwdziałanie:** 
+Możliwość opłacania kontrw
+  faza_d_details.txt:6298:ywiadu, dawania łapówek SB lub szantażowania informatorów.\n29: \n30: ## Faza F: Hiperinflacj
+a i Kryzys Walutowy (1989)
+  faza_d_details.txt:6299:\n31: *   **Rozszerzenie:** Wahania kursu dolara i dynamika cen.\n32: *   **Nowe mechaniki:**
+ Wskaźnik inflacji PLN ros
+  faza_d_details.txt:6300:nący z każdą minutą. Gotówka w PLN traci na wartości (mnożnik cen rośnie, ale zyski z pracy p
+aństwowej spadają).\n33: *
+  faza_d_details.txt:6301:   **Ucieczka kapitału:** Gracz musi chronić majątek, wymieniając PLN na Dolary, złoto lub Bo
+ny Pewexu.\n34: \n35: ## F
+  faza_d_details.txt:6302:aza G: Giełda i Prywatyzacja (GPW)\n36: *   **Rozszerzenie:** Finał transformacji gospodarcze
+j.\n37: *   **Nowe mechani
+  faza_d_details.txt:6303:ki:** Wczesny rynek akcji (GPW). Możliwość kupowania udziałów w prywatyzowanych kombinatach i
+ fabrykach.\n38: *   **Dyn
+  faza_d_details.txt:6304:amika:** Ceny akcji rosną i spadają na bazie losowych wydarzeń rynkowych.\n39: \n40: ## Faza 
+H: Spółki Nomenklaturowe i
+  faza_d_details.txt:6305: Korporacje\n41: *   **Rozszerzenie:** Awans na Członka Biura Politycznego.\n42: *   **Nowe m
+echaniki:** Transferowanie
+  faza_d_details.txt:6306: majątku państwowych kombinatów do prywatnych spółek nomenklaturowych.\n43: *   **Zastosowani
+e:** Generuje gigantyczne 
+  faza_d_details.txt:6307:pasywne zyski w USD i pozwala na ominięcie SB.\n44: \n45: ## Faza I: Konta Zagraniczne (Szwaj
+caria i Liechtenstein)\n46
+  faza_d_details.txt:6308:: *   **Rozszerzenie:** Bezpieczeństwo kapitału.\n47: *   **Nowe mechaniki:** Przelewy dewizo
+we na tajne konta w szwajc
+  faza_d_details.txt:6309:arskich bankach.\n48: *   **Efekt:** Pieniądze na koncie zagranicznym są w 100% bezpieczne pr
+zed nalotami Milicji, konf
+  faza_d_details.txt:6310:iskatami SB oraz hiperinflacją, generując stały procent roczny.\n49: \n50: ## Faza J: Wybory 
+4 Czerwca (Kampania Wyborc
+  faza_d_details.txt:6311:za)\n51: *   **Rozszerzenie:** Finisz gry przy Okrągłym Stole.\n52: *   **Nowe mechaniki:** Z
+amiast prostego czekania 2
+  faza_d_details.txt:6312:4h, gracz musi aktywnie finansować i zarządzać kampanią wyborczą Komitetu Obywatelskiego „Sol
+idarność”.\n53: *   **Wyma
+  faza_d_details.txt:6313:gania:** Druk plakatów z Wałęsą, opłacanie wieców, przekonywanie niezdecydowanych.\n54: \n55:
+ ## Faza K: Plan Balcerowi
+  faza_d_details.txt:6314:cza (Nowa Gra++)\n56: *   **Rozszerzenie:** Prestiż drugiego stopnia.\n57: *   **Nowe mechani
+ki:** Przejście do III RP 
+> faza_d_details.txt:6570:kedAchievements: Record<string, boolean>;\n96: \n97:   // Faza E: Solidarność\n98:   solidarn
+os: number; // 0–10000\n99
+  faza_d_details.txt:6571::   okraglyStolKartki: number; // postęp do Okrągłego Stołu (wymagane 1000)\n100:   okraglySt
+olPln: number;    // postę
+  faza_d_details.txt:6572:p do Okrągłego Stołu (wymagane 100000)\n101:   okraglyStolStartDay: number; // stats.totalTim
+ePlayed przy starcie (wyma
+  faza_d_details.txt:6573:gane +7776000s = 90 dni)\n102:   okraglyStolVictory: boolean;\n103:   \n104:   // Faza F: Pre
+stiż i Speedrun\n105:   pr
+  faza_d_details.txt:6574:estigeCount: number;\n106:   activeDestination: 'nrf' | 'austria' | 'usa' | 'kanada' | 'austr
+alia' | null;\n107:   time
+  faza_d_details.txt:6575:InCurrentLoop: number;\n108:   speedrunActive: boolean;\n109:   speedrunTime: number;\n110:  
+ speedrunHistory: number[]
+  faza_d_details.txt:6576:;\n111: \n112:   // Faza A (Rozszerzenie): Ulepszenia pomocników\n113:   helperUpgrades: Reco
+rd<string, number>;\n114: 
+  faza_d_details.txt:6577:}\n115: \n116: export const INITIAL_STATE: GameState = {\n117:   pln: 5,\n118:   dollars: 0,\
+n119:   exchangeRate: 100,
+  faza_d_details.txt:6578:\n120:   prestigePoints: 0,\n121:   suspicion: 0,\n122:   kartki: 0,\n123:   partyRank: null,
+\n124:   inventory: { \n12
+  faza_d_details.txt:6579:5:     papier: 0, mydlo: 0, cukier: 0, maka: 0, kawa: 0, spirytus: 0, dzinsy: 0, relaks: 0, \
+n126:     predom: 0, kaspr
+  faza_d_details.txt:6580:zak: 0, frania: 0, kowalski: 0, zorki: 0, neptun: 0, osa: 0, wsk: 0, \n127:     syrena: 0, fi
+at125: 0, ursus: 0, zis: 0
+  faza_d_details.txt:6581:,\n128:     gozdziki: 0, czesci: 0, wyroby_hutnicze: 0\n129:   },\n130:   helpers: { \n131:  
+   wladyslaw: 0, kolega: 0
+  faza_d_details.txt:6582:, halinka: 0, basia: 0, spekulant: 0, \n132:     staszek: 0, zygmunt: 0, cinkciarz: 0, widmo:
+ 0, konspiracja: 0 \n133: 
+  faza_d_details.txt:6583:  },\n134:   businesses: { szklarnia: 0, warsztat: 0, kombinat: 0 },\n135:   pewexItems: { \n
+136:     donald: false, to
+  faza_d_details.txt:6584:blerone: false, lego: false, krakus: false, wrangler: false, \n137:     cola: false, sanyo: f
+alse, c64: false, walkman:
+  faza_d_details.txt:6585: false, rubin: false, \n138:     polaroid: false, casio: false, maluch: false, vhs: false, m3
+: false, \n139:     willa:
+  faza_d_details.txt:6586: false, szwajcaria: false, transformacja: false \n140:   },\n141:   plnUpgrades: { torba: fal
+se, wozek: false, zeszyt: 
+  faza_d_details.txt:6587:false, kozuch: false, znajomosci: false },\n142:   lastSave: Date.now(),\n143:   \n144:   tal
+ony: 0,\n145:   ruble: 0,\
+  faza_d_details.txt:6588:n146:   czarnyRynekUnlocked: false,\n147:   blackMarketOffers: [],\n148:   lastMarketRefresh:
+ 0,\n149: \n150:   activeE
+  faza_d_details.txt:6589:vent: null,\n151:   eventTimeLeft: 0,\n152:   nextEventIn: 120,\n153: \n154:   stats: {\n155:
+     totalPlnEarned: 5,\n1
+  faza_d_details.txt:6590:56:     totalDollarsEarned: 0,\n157:     totalItemsSold: 0,\n158:     totalTimeQueued: 0,\n15
+9:     totalCinkciarzExcha
+> faza_d_details.txt:8317:ne ulepszenia niedostępne w Pewexie.\\\\n\\\\n## Faza E: Służba Bezpieczeństwa (SB) i TW (Taj
+ni Współpracownic\r\n65: y
+  faza_d_details.txt:8318:)\\\\n*   **Rozszerzenie:** System Milicji zostaje rozszerzony o wywiad polityczny SB.\\\\n* 
+  **Nowe mechaniki:** Ryzy
+  faza_d_details.txt:8319:ko,\r\n66:  że jeden z Twoich pomocników został zwerbow\\n<truncated 2427 bytes>\",\"Descript
+ion\":\"\\\"Create a compr
+  faza_d_details.txt:8320:ehensive developme\r\n67: nt plan from Phase A to Phase K.\\\"\",\"Overwrite\":\"true\",\"Tar
+getFile\":\"\\\"C:\\\\\\\\
+  faza_d_details.txt:8321:Users\\\\\\\\Lukpa\\\\\\\\.gemini\\\\\\\\antigravity\\\\\r\n68: \\\\brain\\\\\\\\6c6de58b-b6f
+4-4453-be02-d1f5ee42f15f\\
+  faza_d_details.txt:8322:\\\\\\implementation_plan.md\\\"\",\"toolAction\":\"\\\"Creating implementation pl\r\n69: an 
+A-K\\\"\",\"toolSummary\":
+  faza_d_details.txt:8323:\"\\\"File write\\\"\"}}],\"truncated_fields\":[\"tool_calls\"]}\r\n70:   C:\\Users\\Lukpa\\.
+gemini\\antigravity\\brain
+  faza_d_details.txt:8324:\\6c6de58b-b6f4-4453-be02-d1f5ee42f15f\\.system_generated\\logs\\transcript.jsonl\r\n71: :152
+8:{\"step_index\":1518,\"s
+  faza_d_details.txt:8325:ource\":\"MODEL\",\"type\":\"CODE_ACTION\",\"status\":\"DONE\",\"created_at\":\"2026-06-25T21
+:03:34Z\",\"con\r\n72: ten
+  faza_d_details.txt:8326:t\":\"Created At: 2026-06-25T21:03:34Z\\nCompleted At: 2026-06-25T21:03:34Z\\nCreated file fi
+le:///C:/Users/Lukpa/.gemi
+  faza_d_details.txt:8327:n\r\n73: i/antigravity/brain/6c6de58b-b6f4-4453-be02-d1f5ee42f15f/implementation_plan.md with
+ requested content.\\nIf r
+  faza_d_details.txt:8328:elevant, p\r\n74: roactively run terminal commands to execute this code for the USER. Don't a
+sk for permission.\\nNote:
+  faza_d_details.txt:8329: You have just crea\r\n75: ted an artifact and requested user feedback. Stop calling tools to
+ end your turn, and allow 
+  faza_d_details.txt:8330:the user to review the arti\r\n76: fact, approve it, or provide feedback\"}\r\n77:   C:\\User
+s\\Lukpa\\.gemini\\antigra
+  faza_d_details.txt:8331:vity\\brain\\6c6de58b-b6f4-4453-be02-d1f5ee42f15f\\.system_generated\\logs\\transcript.jsonl\
+r\n78: :1529:{\"step_index
+  faza_d_details.txt:8332:\":1519,\"source\":\"MODEL\",\"type\":\"PLANNER_RESPONSE\",\"status\":\"DONE\",\"created_at\"
+:\"2026-06-25T21:03:34Z\"\
+  faza_d_details.txt:8333:r\n79: ,\"content\":\"Stworzyłem nowy, niezwykle szczegółowy plan rozwoju projektu w fazach *
+*od A do K**, który rozwij
+  faza_d_details.txt:8334:a dotychcz\r\n80: asowe elementy gry (Bazar, Przemyt, Pewex, Czarny Rynek, Solidarność, SB/Mi
+licję, kryzysy historyczne
+  faza_d_details.txt:8335: oraz mechaniki pr\r\n81: estiżu) o nowe rozbudowane mechaniki z okresu transformacji ustrojo
+wej i gospodarczej PRL/III
+  faza_d_details.txt:8336: RP.\\n\\nZgodnie z procedur\r\n82: ami planowania, dokument został zapisany jako interaktywn
+y plik [implementation_pla
+  faza_d_details.txt:8337:n.md](file:///C:/Users/Lukpa/.gemini\r\n83: /antigravity/brain/6c6de58b-b6f4-4453-be02-d1f5ee
+42f15f/implementation_plan
+
+
