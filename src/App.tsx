@@ -314,7 +314,18 @@ function App() {
           });
           
           if (activeBribes > 0) {
-            nextState.pln = Math.max(0, nextState.pln - Math.floor(activeBribes * deltaSec));
+            const cost = Math.floor(activeBribes * deltaSec);
+            if (nextState.pln >= cost) {
+              nextState.pln -= cost;
+            } else {
+              nextState.lobbyActiveBills = {};
+              if (settingsOpen) { /* do not spam toasts in pause */ } else {
+                setTimeout(() => {
+                  addToast("BRAK ŚRODKÓW", "Lobbing wstrzymany - zabrakło gotówki na łapówki!");
+                  playError();
+                }, 50);
+              }
+            }
           }
           
           if (corruptionGain > 0 && !s.commissionActive && s.prisonSentenceRemaining <= 0) {
@@ -328,7 +339,7 @@ function App() {
           nextState.commissionAggression = 50;
           nextState.commissionEvidence = 20;
           nextState.commissionQuestionIndex = 0;
-          nextState.commissionTimer = 20;
+          
           setTimeout(() => {
             playAlert();
             showAlert("Sejm powołał Nadzwyczajną Komisję Śledczą do zbadania wpływów lobbingowych w sektorze dewelopersko-finansowym! Zostajesz wezwany na przesłuchanie.", "🚨 SEJMOWA KOMISJA ŚLEDCZA", "raid");
@@ -5847,6 +5858,31 @@ function App() {
                 >
                   🔧 DEV: ZERUJ DŁUG CHF
                 </button>
+                <button 
+                  onClick={() => {
+                    updateState(s => ({
+                      ...s,
+                      lobbyCorruption: 100
+                    }));
+                    setSettingsOpen(false);
+                    setTimeout(() => addToast("DEV CHEAT", "Ustawiono korupcję na 100% - Komisja Śledcza zostanie wywołana!"), 50);
+                  }}
+                  style={{
+                    width: '100%',
+                    background: 'rgba(155, 89, 182, 0.2)',
+                    border: '1px solid #9b59b6',
+                    color: '#9b59b6',
+                    padding: '6px',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    fontWeight: 'bold',
+                    boxShadow: '0 0 3px #9b59b6',
+                    marginTop: '4px'
+                  }}
+                >
+                  🔧 DEV: WYWOŁAJ KOMISJĘ
+                </button>
               </div>
 
               {/* Hard Reset */}
@@ -6177,6 +6213,9 @@ function App() {
                 </button>
                 <button onClick={() => { playClick(); setLata2000SubTab('zmywak'); }} style={{ flex: 1, padding: '10px', fontWeight: 'bold', border: 'none', borderRadius: '4px', cursor: 'pointer', backgroundColor: lata2000SubTab === 'zmywak' ? '#3498db' : '#2c3e50', color: lata2000SubTab === 'zmywak' ? '#fff' : '#bdc3c7' }}>
                   ✈️ EMIGRACJA (ZMYWAK)
+                </button>
+                <button onClick={() => { playClick(); setLata2000SubTab('polityka'); }} style={{ flex: 1, padding: '10px', fontWeight: 'bold', border: 'none', borderRadius: '4px', cursor: 'pointer', backgroundColor: lata2000SubTab === 'polityka' ? '#9b59b6' : '#2c3e50', color: lata2000SubTab === 'polityka' ? '#fff' : '#bdc3c7' }}>
+                  ⚖️ POLITYKA 2.0
                 </button>
               </div>
 

@@ -295,11 +295,9 @@ export interface GameState {
   devStateBackup: any | null;
   
   // Faza U: Polityka 2.0
-  fazaUUnlocked: boolean;
   lobbyActiveBills: Record<string, boolean>;
   lobbyCorruption: number;
   commissionActive: boolean;
-  commissionTimer: number;
   commissionAggression: number;
   commissionEvidence: number;
   commissionQuestionIndex: number;
@@ -568,11 +566,9 @@ export const INITIAL_STATE: GameState = {
   devStateBackup: null,
   
   // Faza U: Polityka 2.0
-  fazaUUnlocked: false,
   lobbyActiveBills: {},
   lobbyCorruption: 0,
   commissionActive: false,
-  commissionTimer: 0,
   commissionAggression: 0,
   commissionEvidence: 0,
   commissionQuestionIndex: 0,
@@ -609,11 +605,9 @@ export function useGameState(isPaused: boolean = false) {
           devStateBackup: parsed.devStateBackup !== undefined ? parsed.devStateBackup : null,
           
           // Faza U backward compat
-          fazaUUnlocked: parsed.fazaUUnlocked !== undefined ? parsed.fazaUUnlocked : false,
           lobbyActiveBills: parsed.lobbyActiveBills || {},
           lobbyCorruption: parsed.lobbyCorruption !== undefined ? parsed.lobbyCorruption : 0,
           commissionActive: parsed.commissionActive !== undefined ? parsed.commissionActive : false,
-          commissionTimer: parsed.commissionTimer !== undefined ? parsed.commissionTimer : 0,
           commissionAggression: parsed.commissionAggression !== undefined ? parsed.commissionAggression : 0,
           commissionEvidence: parsed.commissionEvidence !== undefined ? parsed.commissionEvidence : 0,
           commissionQuestionIndex: parsed.commissionQuestionIndex !== undefined ? parsed.commissionQuestionIndex : 0,
