@@ -556,7 +556,7 @@ export const INITIAL_STATE: GameState = {
   devStateBackup: null
 };
 
-export function useGameState() {
+export function useGameState(isPaused: boolean = false) {
   const [state, setState] = useState<GameState>(() => {
     const saved = localStorage.getItem('kombinator-save');
     if (saved) {
@@ -1082,6 +1082,7 @@ export function useGameState() {
 
   // Zapis i wahania kursu
   useEffect(() => {
+    if (isPaused) return;
     const interval = setInterval(() => {
       setState(s => {
         const change = Math.floor(Math.random() * 21) - 10;
@@ -1095,7 +1096,7 @@ export function useGameState() {
       });
     }, 2000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isPaused]);
 
   const updateState = useCallback((updates: Partial<GameState> | ((s: GameState) => GameState)) => {
     setState(s => {
