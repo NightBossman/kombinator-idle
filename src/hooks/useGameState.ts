@@ -233,7 +233,7 @@ export interface GameState {
   campaignTimePlayed: number;
 
   // Faza L: Globalne Imperium Przemytnicze
-  unlockedCocomNodes: Record<string, boolean>;
+  // [Claude] usunięto pole unlockedCocomNodes - nigdy nie było czytane (mapa węzłów nie powstała)
   cocomVehicles: Record<string, number>;
   cocomPersonnel: Record<string, number>;
   activeCocomSmugglingRuns: { 
@@ -301,7 +301,7 @@ export interface GameState {
   currencyOptions: { id: string; type: 'call' | 'put' | 'toxic'; strikeRate: number; amountChf: number; durationSec: number; timeLeft: number; premiumPln: number }[];
   crisisRealEstateOwned: Record<string, number>;
   bankAdvisors: number;
-  devStateBackup: any | null;
+  devStateBackup: GameState | null; // [Claude] typ zamiast any - backup to pełna migawka stanu
   
   // Faza U: Polityka 2.0
   lobbyActiveBills: Record<string, boolean>;
@@ -323,7 +323,7 @@ export interface GameState {
   vatAuditRisk: number;
   offshoreCyprusBalance: number;
   vatUpgrades: Record<string, boolean>;
-  devFreezeVatRisk?: boolean;
+  // [Claude] usunięto devFreezeVatRisk - flaga była czytana w pętli gry, ale ŻADEN kod jej nie ustawiał
 }
 
 export const INITIAL_STATE: GameState = {
@@ -505,7 +505,6 @@ export const INITIAL_STATE: GameState = {
   campaignTimePlayed: 0,
 
   // Faza L: Globalne Imperium Przemytnicze
-  unlockedCocomNodes: { warszawa: true },
   cocomVehicles: {},
   cocomPersonnel: {},
   activeCocomSmugglingRuns: [],
@@ -739,7 +738,6 @@ export function useGameState(isPaused: boolean = false) {
           senateSeatsWon: parsed.senateSeatsWon !== undefined ? parsed.senateSeatsWon : 0,
           campaignTimePlayed: parsed.campaignTimePlayed !== undefined ? parsed.campaignTimePlayed : 0,
           // Faza L: Globalne Imperium Przemytnicze backward compat
-          unlockedCocomNodes: parsed.unlockedCocomNodes || { warszawa: true },
           cocomVehicles: parsed.cocomVehicles || {},
           cocomPersonnel: parsed.cocomPersonnel || {},
           activeCocomSmugglingRuns: parsed.activeCocomSmugglingRuns || [],
@@ -1000,7 +998,7 @@ export function useGameState(isPaused: boolean = false) {
                 const hasZurichAch = merged.unlockedAchievements?.['offshore_zurich'];
                 const baseInterestRateMin = hasZurichAch ? 0.0015 : 0.0010;
 
-                const remainingTransfers: any[] = [];
+                const remainingTransfers: { id: string; amount: number; currency: 'pln' | 'dollars'; timeLeft: number }[] = [];
                 let transferredPln = 0;
                 let transferredUsd = 0;
 
@@ -1015,7 +1013,7 @@ export function useGameState(isPaused: boolean = false) {
                 });
                 merged.activeWireTransfers = remainingTransfers;
 
-                const remainingCouriers: any[] = [];
+                const remainingCouriers: { id: string; amount: number; currency: 'pln' | 'dollars'; timeLeft: number }[] = [];
                 (merged.activeCouriers || []).forEach((courier: { id: string; amount: number; currency: 'pln' | 'dollars'; timeLeft: number }) => {
                   const tLeft = courier.timeLeft - offlineSec;
                   if (tLeft <= 0) {
@@ -1035,7 +1033,7 @@ export function useGameState(isPaused: boolean = false) {
                 merged.swissBalancePln = (merged.swissBalancePln || 0) + transferredPln;
                 merged.swissBalanceUsd = (merged.swissBalanceUsd || 0) + transferredUsd;
 
-                const remainingDeposits: any[] = [];
+                const remainingDeposits: { id: string; amount: number; currency: 'pln' | 'dollars'; timeLeft: number; depositTypeId: string }[] = [];
                 let returnedPln = 0;
                 let returnedUsd = 0;
 
@@ -1081,7 +1079,7 @@ export function useGameState(isPaused: boolean = false) {
               // Faza J: Syndykat COCOM offline
               if (merged.syndicateUnlocked) {
               // Resolve COCOM shipments
-              const remainingShipments: any[] = [];
+              const remainingShipments: { id: string; itemId: string; contactId: string; route: string; amount: number; timeLeft: number }[] = [];
               (merged.activeCocomShipments || []).forEach((ship: { id: string; itemId: string; contactId: string; route: string; amount: number; timeLeft: number }) => {
                 const tLeft = ship.timeLeft - offlineSec;
                 if (tLeft <= 0) {
@@ -1104,8 +1102,8 @@ export function useGameState(isPaused: boolean = false) {
               }
 
               // Faza L: Globalne Imperium Przemytnicze offline
-              const remainingSmugglingRuns: any[] = [];
-              (merged.activeCocomSmugglingRuns || []).forEach((run: any) => {
+              const remainingSmugglingRuns: GameState['activeCocomSmugglingRuns'] = [];
+              (merged.activeCocomSmugglingRuns || []).forEach((run: GameState['activeCocomSmugglingRuns'][number]) => {
                 const tLeft = run.timeLeft - offlineSec;
                 if (tLeft <= 0) {
                   // Wypłata zysków w offline (uproszczony sukces)
@@ -1114,7 +1112,7 @@ export function useGameState(isPaused: boolean = false) {
                   merged.stats.totalCocomRevenuePln = (merged.stats.totalCocomRevenuePln || 0) + run.potentialPayoutPln;
                   
                   // Wypłata pensji kurierowi
-                  const salary = run.personnelId ? (COCOM_PERSONNEL.find((p: any) => p.id === run.personnelId)?.salaryPerRunPln || 0) : 0;
+                  const salary = run.personnelId ? (COCOM_PERSONNEL.find(person => person.id === run.personnelId)?.salaryPerRunPln || 0) : 0;
                   merged.pln = Math.max(0, merged.pln - salary);
                 } else {
                   remainingSmugglingRuns.push({ ...run, timeLeft: tLeft });
@@ -1142,21 +1140,25 @@ export function useGameState(isPaused: boolean = false) {
     return INITIAL_STATE;
   });
 
-  // Zapis i wahania kursu
+  // Autozapis gry
+  // [Claude] naprawa: ten interwał losowo zmieniał exchangeRate co 2 s (±10, widełki 50-500),
+  // podczas gdy pętla gry w App.tsx ma WŁASNE wahania kursu co 10 s (±5%, widełki 80-150,
+  // z bonusem polisy asekuracyjnej). Dwa systemy walczyły ze sobą - kurs skakał chaotycznie
+  // i uciekał poza widełki nowszego systemu. Zostaje wyłącznie system z pętli gry,
+  // a tu zostaje sam autozapis (rzadszy: co 5 s zamiast 2 s, bo serializacja całego stanu
+  // do localStorage to najdroższa cykliczna operacja poza renderem).
   useEffect(() => {
     if (isPaused) return;
     const interval = setInterval(() => {
       setState(s => {
-        const change = Math.floor(Math.random() * 21) - 10;
-        const newRate = Math.max(50, Math.min(500, s.exchangeRate + change));
-        const newState = { ...s, lastSave: Date.now(), exchangeRate: newRate };
+        const newState = { ...s, lastSave: Date.now() };
         if (newState.partyRank === 'minister' || newState.partyRank === 'biuro') {
           newState.suspicion = 0;
         }
         localStorage.setItem('kombinator-save', JSON.stringify(newState));
         return newState;
       });
-    }, 2000);
+    }, 5000);
     return () => clearInterval(interval);
   }, [isPaused]);
 
