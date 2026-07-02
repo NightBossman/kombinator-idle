@@ -33,6 +33,13 @@ body {
 }
 
 /* CRT Scanlines and Flicker Effects */
+/* [Claude] KIERUNEK 7.2: klasa .crt-off (ustawienia gry) wyłącza scanlines i migotanie
+   na słabszych komputerach - pełnoekranowa animacja + gradient potrafią obciążać GPU */
+.crt-screen.crt-off::before,
+.crt-screen.crt-off::after {
+  display: none;
+}
+
 .crt-screen::before {
   content: " ";
   display: block;

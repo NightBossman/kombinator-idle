@@ -1,0 +1,144 @@
+// [Claude] NOWY PLIK (KIERUNEK.md pkt 1.3): wspólne wzory mnożników w jednym miejscu.
+// Powód: te same wzory były skopiowane w 3-4 miejscach (pętla gry w engine.ts, symulacja
+// offline w useGameState.ts, panel Casio i bazar w App.tsx) i ZDĄŻYŁY się rozjechać:
+//  - Casio nie uwzględniał Magnetofonu Grundig (+40% pomocników), Prywatnego Importu ani
+//    Ustawy Wilczka - pokazywał zaniżone tempo produkcji;
+//  - kurs cinkciarza w Casio nie uwzględniał inflacji ani Czarnego Wtorku;
+//  - bazar w dolarach OBIECYWAŁ na przycisku bonus z Uwolnienia Cen, którego mechanika
+//    (sellItemDollars) nigdy nie wypłacała.
+// Teraz każdy wzór ma jedno źródło prawdy, a wyświetlane wartości = faktyczna mechanika.
+//
+// Konwencja: opcja { zZdarzeniami: true } dolicza bonusy aktywnych zdarzeń historycznych
+// (np. Ustawa Wilczka). Pętla gry i UI podają true; symulacja offline NIE podaje
+// (zdarzenia celowo nie działają, gdy gra jest wyłączona - tak było od zawsze).
+
+import type { GameState } from '../hooks/useGameState';
+import { LUXURY_ITEMS } from './items';
+
+export interface FormulaOpts {
+  zZdarzeniami?: boolean;
+}
+
+/** Mnożnik ogólnej produkcji: prestiż NRF (+10%/DM) x Nowa Gra+ (od 5. pętli +5%/pętlę). */
+export const generalProductionMult = (s: GameState): number => {
+  const nrfMult = (s.activeDestination === 'nrf' || s.activeDestination === null)
+    ? (1 + (s.prestigePoints * 0.10))
+    : 1.0;
+  const ngPlusCount = s.prestigeCount || 0;
+  const ngPlusMult = ngPlusCount >= 5 ? 1 + (ngPlusCount - 4) * 0.05 : 1.0;
+  return nrfMult * ngPlusMult;
+};
+
+/** Tempo pomocników: Lego, Sanyo, Grundig, produkcja ogólna, ruble, odznaczenia,
+ *  Solidarność >= 9000, opcjonalnie Ustawa Wilczka. */
+export const helperSpeedMult = (s: GameState, opts: FormulaOpts = {}): number => {
+  const rubleMult = 1 + (s.ruble * 0.005);
+  const helperSpeedAchMult = (s.unlockedAchievements?.['pres_points'] ? 1.10 : 1)
+    * (s.unlockedAchievements?.['pol_rank_4'] ? 1.25 : 1);
+  const baltonaGrundigMult = s.baltonaUpgrades?.['grundig'] ? 1.4 : 1.0;
+  const solidarityMult = s.solidarnos >= 9000 ? 1.25 : 1.0;
+  const wilczekMult = (opts.zZdarzeniami && s.activeEvent === 'reforma_wilczka') ? 1.5 : 1.0;
+  return (s.pewexItems['lego'] ? 1.3 : 1)
+    * (s.pewexItems['sanyo'] ? 1.5 : 1)
+    * baltonaGrundigMult
+    * generalProductionMult(s)
+    * rubleMult
+    * helperSpeedAchMult
+    * solidarityMult
+    * wilczekMult;
+};
+
+/** Tempo biznesów (szklarnia/warsztat/kombinat): Rubin, Biuro Polityczne, odznaczenie
+ *  walutowe, Transformacja, produkcja ogólna, Prywatny Import (tylko PLN/USD),
+ *  opcjonalnie Ustawa Wilczka. */
+export const businessProductionMult = (s: GameState, generateType: string, opts: FormulaOpts = {}): number => {
+  const rubinMult = s.pewexItems['rubin'] ? 2.0 : 1.0;
+  const biuroMult = s.partyRank === 'biuro' ? 3.0 : 1.0;
+  const businessAchMult = s.unlockedAchievements?.['eco_usd_1'] ? 1.10 : 1;
+  const transformMult = s.unlockedAchievements?.['pres_transform'] ? 1.50 : 1.0;
+  const importMult = (s.baltonaUpgrades?.['import'] && (generateType === 'pln' || generateType === 'dollars')) ? 1.35 : 1.0;
+  const wilczekMult = (opts.zZdarzeniami && s.activeEvent === 'reforma_wilczka') ? 1.5 : 1.0;
+  return rubinMult * biuroMult * businessAchMult * transformMult * generalProductionMult(s) * importMult * wilczekMult;
+};
+
+/** Czas stania w kolejce po modyfikatorach: Toblerone, Kożuch, Cola, Maluch, Kawa Jacobs,
+ *  Kryzys Paliwowy, Austria, Solidarność-Łącznik, odznaczenia kolejkowe. */
+export const queueTimeMs = (baseMs: number, s: GameState): number => {
+  let t = baseMs;
+  if (s.pewexItems['toblerone']) t *= 0.85;
+  if (s.plnUpgrades['kozuch']) t *= 0.90;
+  if (s.pewexItems['cola']) t *= 0.8;
+  if (s.pewexItems['maluch']) t *= 0.6;
+  if (s.baltonaUpgrades?.['jacobs']) t *= 0.90;
+  if (s.activeEvent === 'kryzys') t *= 1.20;          // Kryzys Paliwowy: +20% czasu
+  if (s.activeDestination === 'austria') t *= 0.90;   // Austria: -10% czasu
+  if (s.solidarnos >= 2000) t *= 0.95;                // Łącznik: -5% czasu
+  const achMult = (s.unlockedAchievements?.['eco_queue_1'] ? 0.95 : 1)
+    * (s.unlockedAchievements?.['eco_queue_2'] ? 0.85 : 1);
+  return t * achMult;
+};
+
+/** Kurs cinkciarza (zł za 1$): Drożyzna +30%, odznaczenia i Sympatyk Solidarności obniżają,
+ *  inflacja podbija, Czarny Wtorek podwaja. inflationPercent można nadpisać (silnik podaje
+ *  wartość z bieżącego ticku). */
+export const cinkciarzRate = (s: GameState, inflationPercent: number = s.inflationPercent): number => {
+  const baseRate = s.activeEvent === 'drozyzna' ? Math.floor(s.exchangeRate * 1.30) : s.exchangeRate;
+  const solidarityBonus = s.solidarnos >= 1000 ? 0.95 : 1.0;
+  const achRateMult = (s.unlockedAchievements?.['eco_cinkciarz_1'] ? 0.98 : 1)
+    * (s.unlockedAchievements?.['eco_cinkciarz_2'] ? 0.95 : 1)
+    * solidarityBonus;
+  let inflationMult = 1 + ((inflationPercent || 0) / 100);
+  if (s.activeEvent === 'czarny_wtorek') inflationMult *= 2;
+  return Math.floor(baseRate * achRateMult * inflationMult);
+};
+
+// Wspólna część mnożnika bazarowego (Pewex + zdarzenia obniżające)
+const bazarBaseMult = (s: GameState): number => {
+  let m = 1;
+  if (s.pewexItems['donald']) m *= 1.15;
+  if (s.pewexItems['wrangler']) m *= 1.5;
+  if (s.pewexItems['rubin']) m *= 2.0;
+  if (s.activeEvent === 'czarnobyl') m *= 0.7; // Czarnobyl: -30% wartości sprzedaży
+  return m;
+};
+
+const peklimaxMult = (s: GameState, itemId: string): number =>
+  (s.baltonaUpgrades?.['peklimax'] && (itemId === 'gozdziki' || itemId === 'czesci' || itemId === 'wyroby_hutnicze')) ? 1.40 : 1.0;
+
+/** Cena JEDNEJ sztuki na Bazarze w złotówkach (zaokrąglona w dół) - to, co widnieje na
+ *  przycisku i DOKŁADNIE to, co wypłaca sprzedaż (x1/x10/x100 = wielokrotność ceny sztuki). */
+export const bazarPlnUnitPrice = (basePricePln: number, itemId: string, s: GameState): number => {
+  let multiplier = bazarBaseMult(s);
+  if (s.activeEvent === 'uwolnienie_cen') multiplier *= 2.5; // Uwolnienie Cen: +150% na Bazarze
+  const ecoPlnMult = 1 + (s.unlockedAchievements?.['eco_pln_1'] ? 0.05 : 0)
+    + (s.unlockedAchievements?.['eco_pln_2'] ? 0.10 : 0)
+    + (s.unlockedAchievements?.['eco_pln_3'] ? 0.20 : 0);
+  const presTimeMult = 1 + (s.unlockedAchievements?.['pres_time_1'] ? 0.10 : 0)
+    + (s.unlockedAchievements?.['pres_time_2'] ? 0.25 : 0);
+  const transformMult = s.unlockedAchievements?.['pres_transform'] ? 1.50 : 1.0;
+  const solidarityBazarMult = s.solidarnos >= 500 ? 1.05 : 1.0;
+  const importMult = s.baltonaUpgrades?.['import'] ? 1.35 : 1.0;
+  const inflationFactor = 1 + (s.inflationPercent / 100);
+  return Math.floor(basePricePln * multiplier * ecoPlnMult * presTimeMult * transformMult
+    * solidarityBazarMult * importMult * peklimaxMult(s, itemId) * inflationFactor);
+};
+
+/** Cena JEDNEJ sztuki na Bazarze w dolarach (zaokrąglona w dół). Celowo BEZ bonusu
+ *  Uwolnienia Cen - mechanika sprzedaży USD nigdy go nie wypłacała, a stary przycisk
+ *  błędnie go obiecywał. */
+export const bazarUsdUnitPrice = (basePriceUsd: number, itemId: string, s: GameState): number => {
+  const importMult = s.baltonaUpgrades?.['import'] ? 1.35 : 1.0;
+  return Math.floor(basePriceUsd * bazarBaseMult(s) * importMult * peklimaxMult(s, itemId));
+};
+
+/** Suma premii prestizu (DM) z posiadanych towarow luksusowych. Przeniesione z App.tsx
+ *  (KIERUNEK 1.2), zeby komponenty zakladek mogly importowac bez cyklu. */
+export const calculateLuxuryPrestigeBonus = (ownedLuxuryItems: Record<string, boolean> | undefined): number => {
+  let bonus = 0;
+  LUXURY_ITEMS.forEach(item => {
+    if (ownedLuxuryItems?.[item.id]) {
+      bonus += item.prestigeMult;
+    }
+  });
+  return bonus;
+};
