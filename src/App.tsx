@@ -2,7 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { useGameState, generateBlackMarketOffers } from './hooks/useGameState';
 import { QUEUE_ITEMS, HELPERS, PEWEX_ITEMS, PARTY_RANKS, PLN_UPGRADES, BUSINESSES, SMUGGLING_ROUTES, HISTORY_EVENTS, ACHIEVEMENTS, SOLIDARITY_LEVELS, PRODUCED_ITEMS, LUXURY_ITEMS, SEA_SMUGGLING_ROUTES, BALTONA_ITEMS, GPW_STOCKS, GPW_EVENTS, NOMENKLATURA_COMPANIES, OFFSHORE_DEPOSITS, COCOM_ITEMS, EXPORT_CONTACTS, SYNDICATE_UPGRADES, GEOPOLITICAL_EVENTS, ELECTION_REGIONS, CAMPAIGN_MATERIALS, CAMPAIGN_LEADERS, DEBATE_OPTIONS, ELECTION_UPGRADES, COCOM_SMUGGLING_ROUTES, COCOM_VEHICLES, COCOM_PERSONNEL, BAZAR_ITEMS, NFI_COMPANIES, MAFIA_PROTECTIONS, WARSAW_DISTRICTS, GANGSTER_UNITS, BLACK_MARKET_WEAPONS, BAZAR_LOGISTICS_ROUTES, WAREHOUSE_UPGRADES, MEDIA_STATIONS, MEDIA_PROGRAMS, MEDIA_ANTENNA_REGIONS , EU_PROJECTS, DOTCOM_UPGRADES, REAL_ESTATE_PROJECTS, CRISIS_REAL_ESTATE, CURRENCY_OPTION_PRESETS, LOBBY_BILLS, COMMISSION_QUESTIONS, VAT_GOODS, VAT_UPGRADES } from './game/items';
 import { playClick, playSuccess, playError, playAlert, isSoundEnabled, setSoundEnabled } from './utils/audio';
-void DEBATE_OPTIONS; void ELECTION_UPGRADES; // Used in Phase K UI tab (added later)
+// [Claude] fmtNum/pluralPL: polskie formatowanie liczb (przecinek dziesiętny) i odmiana rzeczowników po liczebnikach.
+// Usunięto też martwe "void DEBATE_OPTIONS; void ELECTION_UPGRADES;" - obie stałe są od dawna używane w zakładce Wyborów.
+import { fmtNum, pluralPL, fmtShort } from './utils/format';
 
 type TabId = 'praca' | 'bazar' | 'przemyt' | 'partia' | 'czarnyRynek' | 'odznaczenia' | 'gpw' | 'offshore' | 'syndykat' | 'wybory' | 'lata90' | 'miasto' | 'lata2000';
 
@@ -199,6 +201,7 @@ function App() {
   };
 
   const addToast = (title: string, desc: string) => {
+    // eslint-disable-next-line react-hooks/purity -- [Claude] addToast wywoływany z handlerów/setTimeout, nie z renderu; losowe id jest tu bezpieczne
     const id = Math.random().toString();
     setToasts(prev => [...prev, { id, title, desc }]);
     setTimeout(() => {
@@ -368,8 +371,9 @@ function App() {
             }
           }
 
-          // Pasywny spadek ryzyka (zamrożone w trakcie weryfikacji oraz w trybie DEV)
-          if (!s.vatCarouselActive && s.vatRefundStatus !== 'pending' && !s.devFreezeVatRisk) {
+          // Pasywny spadek ryzyka (zamrożone w trakcie weryfikacji)
+          // [Claude] usunięto warunek !s.devFreezeVatRisk - flaga nie była nigdzie ustawiana (martwy kod)
+          if (!s.vatCarouselActive && s.vatRefundStatus !== 'pending') {
             nextState.vatAuditRisk = Math.max(0, (s.vatAuditRisk || 0) - 0.3 * deltaSec);
           }
 
@@ -406,7 +410,7 @@ function App() {
 
                 setTimeout(() => {
                   playAlert();
-                  showAlert(`KONTROLA SKARBOWA! Urząd Skarbowy wykrył nieprawidłowości w spółce "${targetName}". Kapitał obrotowy został zajęty, a na Twoją firmę nałożono karę w wysokości ${penalty.toLocaleString()} PLN.`, "🚨 URZĄD SKARBOWY", "error");
+                  showAlert(`KONTROLA SKARBOWA! Urząd Skarbowy wykrył nieprawidłowości w spółce "${targetName}". Kapitał obrotowy został zajęty, a na Twoją firmę nałożono karę w wysokości ${penalty.toLocaleString('pl-PL')} PLN.`, "🚨 URZĄD SKARBOWY", "error");
                 }, 100);
               } else {
                 // Sukces - Zwrot zaakceptowany
@@ -417,7 +421,7 @@ function App() {
                 nextState.vatAuditRisk = Math.max(0, s.vatAuditRisk - 30);
                 setTimeout(() => {
                   playSuccess();
-                  addToast("VAT ZWRÓCONY", `Zatwierdzono deklarację VAT-7. Otrzymałeś ${s.vatRefundPendingAmount.toLocaleString()} PLN zwrotu!`);
+                  addToast("VAT ZWRÓCONY", `Zatwierdzono deklarację VAT-7. Otrzymałeś ${s.vatRefundPendingAmount.toLocaleString('pl-PL')} PLN zwrotu!`);
                 }, 100);
               }
             }
@@ -501,6 +505,64 @@ function App() {
         nextState.activeEvent = activeEvent;
         nextState.eventTimeLeft = Math.max(0, Math.floor(eventTimeLeft));
         nextState.nextEventIn = Math.max(0, Math.floor(nextEventIn));
+
+        // [Claude] naprawa (Faza T): recessionTimer był ustawiany na 180 przy zdarzeniu 'lehman_recession',
+        // ale NIGDZIE nie był odliczany, a recessionActive nigdy nie wracało na false - raz uruchomiona
+        // recesja trwałaby wiecznie (wieczny krach GPW i zamrożony rynek nieruchomości).
+        if (s.recessionActive) {
+          nextState.recessionTimer = Math.max(0, (s.recessionTimer || 0) - deltaSec);
+          if (nextState.recessionTimer <= 0) {
+            nextState.recessionActive = false;
+            setTimeout(() => {
+              playSuccess();
+              showAlert('Rynki finansowe odbijają po krachu. Recesja dobiegła końca - GPW i rynek nieruchomości wracają do normy. Czas sprzedać wykończone budowy od syndyka!', '📈 KONIEC RECESJI', 'success');
+            }, 50);
+          }
+        }
+
+        // [Claude] naprawa (Faza T): opcje walutowe dawało się kupić, ale ich timeLeft nigdy nie malał
+        // i nie istniało żadne rozliczenie - gracz płacił premię i nic z tego nie miał. Rozliczenie
+        // według opisów z CURRENCY_OPTION_PRESETS: PUT (strike 3.50) i CALL (strike 3.00) wypłacają
+        // różnicę kursu ponad strike razy wolumen ("zarabiasz, gdy frank drożeje"); opcja toksyczna
+        // daje niewielki zysk przy franku poniżej 4.20, a powyżej - podwójną karę od nadwyżki.
+        if ((s.currencyOptions || []).length > 0) {
+          const stillRunning: typeof s.currencyOptions = [];
+          (s.currencyOptions || []).forEach(opt => {
+            const tLeft = opt.timeLeft - deltaSec;
+            if (tLeft > 0) {
+              stillRunning.push({ ...opt, timeLeft: tLeft });
+              return;
+            }
+            const rate = nextState.chfExchangeRate;
+            let payout: number;
+            if (opt.type === 'toxic') {
+              payout = rate <= opt.strikeRate
+                ? (opt.strikeRate - rate) * opt.amountChf * 0.05
+                : -2 * (rate - opt.strikeRate) * opt.amountChf;
+            } else {
+              payout = Math.max(0, rate - opt.strikeRate) * opt.amountChf;
+            }
+            payout = Math.floor(payout);
+            if (payout >= 0) {
+              nextState.pln += payout;
+              nextState.stats.totalPlnEarned = (nextState.stats.totalPlnEarned || 0) + payout;
+            } else {
+              nextState.pln = Math.max(0, nextState.pln + payout);
+            }
+            setTimeout(() => {
+              if (payout > 0) {
+                playSuccess();
+                addToast('OPCJA ROZLICZONA', `Kontrakt ${opt.type.toUpperCase()} wygasł przy kursie ${fmtNum(rate, 2)} PLN/CHF. Zysk: +${payout.toLocaleString('pl-PL')} PLN.`);
+              } else if (payout === 0) {
+                addToast('OPCJA WYGASŁA', `Kontrakt ${opt.type.toUpperCase()} wygasł bez wartości (kurs ${fmtNum(rate, 2)} PLN/CHF).`);
+              } else {
+                playError();
+                showAlert(`Toksyczna opcja walutowa wygasła przy kursie ${fmtNum(rate, 2)} PLN/CHF - powyżej kursu wykonania ${fmtNum(opt.strikeRate, 2)}! Bank potrąca ${Math.abs(payout).toLocaleString('pl-PL')} PLN kary.`, '🚨 ROZLICZENIE OPCJI TOKSYCZNEJ', 'error');
+              }
+            }, 50);
+          });
+          nextState.currencyOptions = stillRunning;
+        }
 
         // Odblokowanie Czarnego Rynku
         if (!s.czarnyRynekUnlocked && s.pln >= 1000) {
@@ -648,13 +710,18 @@ function App() {
         const helperSpeedAchMult = (s.unlockedAchievements?.['pres_points'] ? 1.10 : 1) * (s.unlockedAchievements?.['pol_rank_4'] ? 1.25 : 1);
         const baltonaGrundigMult = s.baltonaUpgrades?.['grundig'] ? 1.4 : 1.0;
         const wilczekMult = s.activeEvent === 'reforma_wilczka' ? 1.5 : 1.0;
-        const helperMult = (s.pewexItems['lego'] ? 1.3 : 1) 
-                         * (s.pewexItems['sanyo'] ? 1.5 : 1) 
+        // [Claude] naprawa: pętla używała solidarityHelperSpeedMult zadeklarowanego ~5200 linii NIŻEJ,
+        // w ciele komponentu. Efekt (useEffect) łapał wartość z ostatniego renderu, przy którym się
+        // zamontował - po przekroczeniu 9000 Solidarności bonus +25% NIE działał, dopóki gracz nie
+        // zmienił kolejki/ustawień (restart efektu). Teraz liczymy świeżo z "s" jak resztę mnożników.
+        const solidarityHelperSpeedMultTick = s.solidarnos >= 9000 ? 1.25 : 1.0;
+        const helperMult = (s.pewexItems['lego'] ? 1.3 : 1)
+                         * (s.pewexItems['sanyo'] ? 1.5 : 1)
                          * baltonaGrundigMult
                          * generalProductionMult
                          * rubleMult
                          * helperSpeedAchMult
-                         * solidarityHelperSpeedMult
+                         * solidarityHelperSpeedMultTick
                          * wilczekMult;
                           
         // Helpers processing
@@ -861,7 +928,7 @@ function App() {
           const hasZurichAch = s.unlockedAchievements?.['offshore_zurich'];
           const baseInterestRateMin = hasZurichAch ? 0.0015 : 0.0010;
 
-          const remainingTransfers: any[] = [];
+          const remainingTransfers: { id: string; amount: number; currency: 'pln' | 'dollars'; timeLeft: number }[] = [];
           let swiftPlnEarned = 0;
           let swiftUsdEarned = 0;
 
@@ -873,7 +940,7 @@ function App() {
               
               setTimeout(() => {
                 playSuccess();
-                addToast("PRZELEW SWIFT", `Zaksięgowano przelew na kwotę: ${transfer.currency === 'pln' ? `${transfer.amount.toLocaleString()} zł` : `$${transfer.amount} USD`}.`);
+                addToast("PRZELEW SWIFT", `Zaksięgowano przelew na kwotę: ${transfer.currency === 'pln' ? `${transfer.amount.toLocaleString('pl-PL')} zł` : `$${transfer.amount} USD`}.`);
               }, 50);
             } else {
               remainingTransfers.push({ ...transfer, timeLeft: newTime });
@@ -883,7 +950,7 @@ function App() {
           nextState.swissBalancePln = (s.swissBalancePln || 0) + swiftPlnEarned;
           nextState.swissBalanceUsd = (s.swissBalanceUsd || 0) + swiftUsdEarned;
 
-          const remainingCouriers: any[] = [];
+          const remainingCouriers: { id: string; amount: number; currency: 'pln' | 'dollars'; timeLeft: number }[] = [];
           let courierPlnEarned = 0;
           let courierUsdEarned = 0;
 
@@ -894,7 +961,7 @@ function App() {
               if (fail) {
                 setTimeout(() => {
                   playError();
-                  showAlert(`Twój kurier został zatrzymany na granicy! Służby celne skonfiskowały całą gotówkę (${courier.currency === 'pln' ? `${courier.amount.toLocaleString()} zł` : `$${courier.amount} USD`}) i wszczęły dochodzenie.`, '🚨 KURIER ZATRZYMANY', 'error');
+                  showAlert(`Twój kurier został zatrzymany na granicy! Służby celne skonfiskowały całą gotówkę (${courier.currency === 'pln' ? `${courier.amount.toLocaleString('pl-PL')} zł` : `$${courier.amount} USD`}) i wszczęły dochodzenie.`, '🚨 KURIER ZATRZYMANY', 'error');
                 }, 50);
                 nextState.suspicion = Math.min(100, (s.suspicion || 0) + 30);
               } else {
@@ -903,7 +970,7 @@ function App() {
                 
                 setTimeout(() => {
                   playSuccess();
-                  addToast("KURIER OMINĄŁ CŁO", `Kurier pomyślnie dostarczył gotówkę do banku: ${courier.currency === 'pln' ? `${courier.amount.toLocaleString()} zł` : `$${courier.amount} USD`}.`);
+                  addToast("KURIER OMINĄŁ CŁO", `Kurier pomyślnie dostarczył gotówkę do banku: ${courier.currency === 'pln' ? `${courier.amount.toLocaleString('pl-PL')} zł` : `$${courier.amount} USD`}.`);
                 }, 50);
               }
             } else {
@@ -914,7 +981,7 @@ function App() {
           nextState.swissBalancePln += courierPlnEarned;
           nextState.swissBalanceUsd += courierUsdEarned;
 
-          const remainingDeposits: any[] = [];
+          const remainingDeposits: { id: string; amount: number; currency: 'pln' | 'dollars'; timeLeft: number; depositTypeId: string }[] = [];
           let depositPlnEarned = 0;
           let depositUsdEarned = 0;
 
@@ -930,7 +997,7 @@ function App() {
 
               setTimeout(() => {
                 playSuccess();
-                showAlert(`Zakończył się okres lokaty "${depType?.name || 'Lokata'}". Środki wraz z odsetkami (${dep.currency === 'pln' ? `${finalAmount.toLocaleString()} zł` : `$${finalAmount} USD`}) wróciły na Twoje konto szwajcarskie.`, '💰 LOKATA ZAKOŃCZONA', 'success');
+                showAlert(`Zakończył się okres lokaty "${depType?.name || 'Lokata'}". Środki wraz z odsetkami (${dep.currency === 'pln' ? `${finalAmount.toLocaleString('pl-PL')} zł` : `$${finalAmount} USD`}) wróciły na Twoje konto szwajcarskie.`, '💰 LOKATA ZAKOŃCZONA', 'success');
               }, 50);
             } else {
               remainingDeposits.push({ ...dep, timeLeft: newTime });
@@ -1053,7 +1120,7 @@ function App() {
               nextState.okraglyStolPln = (nextState.okraglyStolPln || 0) + 0.5;
               setTimeout(() => {
                 playSuccess();
-                addToast("SYNDYKAT: TRANSAKCJA", `Dostarczono ${item.name} za ${earned.toLocaleString()} zł!`);
+                addToast("SYNDYKAT: TRANSAKCJA", `Dostarczono ${item.name} za ${earned.toLocaleString('pl-PL')} zł!`);
               }, 50);
             }
           });
@@ -1193,7 +1260,7 @@ function App() {
 
               setTimeout(() => {
                 playSuccess();
-                addToast("GLOBALNY PRZEMYT", `Sukces na trasie ${route.name}! Zysk: ${earned.toLocaleString()} zł (odjęto pensję kuriera).`);
+                addToast("GLOBALNY PRZEMYT", `Sukces na trasie ${route.name}! Zysk: ${earned.toLocaleString('pl-PL')} zł (odjęto pensję kuriera).`);
               }, 50);
             }
           });
@@ -1207,7 +1274,7 @@ function App() {
           ELECTION_REGIONS.forEach(region => {
             if (!nextState.regionalCommittees[region.id]) return;
             
-            let baseRate = region.baseSupportRate;
+            const baseRate = region.baseSupportRate;
             
             // Achievements multipliers
             const hasPropagandaKiller = !!nextState.unlockedAchievements?.['propaganda_killer'];
@@ -1276,7 +1343,7 @@ function App() {
                 }
                 setTimeout(() => {
                   playSuccess();
-                  addToast('WIEC ZAKOŃCZONY', `${leader.name} zdobył ${boost.toLocaleString()} głosów w ${region.name}!`);
+                  addToast('WIEC ZAKOŃCZONY', `${leader.name} zdobył ${boost.toLocaleString('pl-PL')} głosów w ${region.name}!`);
                 }, 50);
               }
             } else {
@@ -1340,7 +1407,7 @@ function App() {
                   const regionName = ELECTION_REGIONS.find(r => r.id === targetRegion)?.name || targetRegion;
                   setTimeout(() => {
                     playAlert();
-                    showAlert(`Funkcjonariusze SB zrywają plakaty w ${regionName}! Strata: ${loss.toLocaleString()} głosów.`, '🚨 PROWOKACJA SB', 'raid');
+                    showAlert(`Funkcjonariusze SB zrywają plakaty w ${regionName}! Strata: ${loss.toLocaleString('pl-PL')} głosów.`, '🚨 PROWOKACJA SB', 'raid');
                   }, 50);
                 }
               } else {
@@ -1456,7 +1523,7 @@ function App() {
                  nextState.pln -= extorted;
                  setTimeout(() => {
                    playAlert();
-                   showAlert(`Ludzie "Pershinga" pobrali haracz! Utracono ${extorted.toLocaleString()} zł!`, '🔫 MAFIA', 'raid');
+                   showAlert(`Ludzie "Pershinga" pobrali haracz! Utracono ${extorted.toLocaleString('pl-PL')} zł!`, '🔫 MAFIA', 'raid');
                  }, 50);
                }
              } else {
@@ -1640,7 +1707,7 @@ function App() {
 
             // Dochody z reklam (8 PLN/s za punkt ratingu * mnoznik programu)
             if (activeProgramCount > 0 && stationRating > 0) {
-              let revenuePerSec = stationRating * 8 * totalIncomeMult;
+              const revenuePerSec = stationRating * 8 * totalIncomeMult;
               const mult = nextState.isDenominated ? 1 : nextState.plzInflationMult;
               const finalRevenue = Math.floor(revenuePerSec * mult * deltaSec);
               nextState.pln += finalRevenue;
@@ -1654,7 +1721,7 @@ function App() {
           const prev5sTick = Math.floor((s.stats.totalTimePlayed || 0) / 5);
           const current5sTick = Math.floor(nextState.stats.totalTimePlayed / 5);
           if (current5sTick > prev5sTick) {
-            let fluctuation = 1 + (Math.random() * 0.10 - 0.05); // +/- 5%
+            const fluctuation = 1 + (Math.random() * 0.10 - 0.05); // +/- 5%
             let newRate = nextState.chfExchangeRate * fluctuation;
             // Zapobieganie ucieczce kursu w skrajności
             if (newRate < 2.0) newRate += 0.1;
@@ -1698,7 +1765,7 @@ function App() {
                 nextState.euAuditRisk = Math.min(100, nextState.euAuditRisk + 15); // Rośnie ryzyko audytu!
                 setTimeout(() => {
                   playSuccess();
-                  showAlert(`Zakończono rozliczanie wniosku unijnego: ${euDef.name}! Unia zwróciła Ci ${refund.toLocaleString()} PLN.`, '🇪🇺 DOTACJA WYPŁACONA', 'success');
+                  showAlert(`Zakończono rozliczanie wniosku unijnego: ${euDef.name}! Unia zwróciła Ci ${refund.toLocaleString('pl-PL')} PLN.`, '🇪🇺 DOTACJA WYPŁACONA', 'success');
                 }, 50);
               }
             } else {
@@ -1742,7 +1809,7 @@ function App() {
              nextState.euAuditRisk = 0; // Reset po nalocie
              setTimeout(() => {
                playAlert();
-               showAlert(`Kontrola z OLAF i Urzędu Skarbowego wykazała nieprawidłowości w Twoich dotacjach unijnych! Skonfiskowano ${penalty.toLocaleString()} PLN tytułem zwrotu i kar.`, '🚨 KONTROLA UNIJNA', 'raid');
+               showAlert(`Kontrola z OLAF i Urzędu Skarbowego wykazała nieprawidłowości w Twoich dotacjach unijnych! Skonfiskowano ${penalty.toLocaleString('pl-PL')} PLN tytułem zwrotu i kar.`, '🚨 KONTROLA UNIJNA', 'raid');
              }, 50);
           }
         }
@@ -1809,7 +1876,7 @@ function App() {
         const prev10sTick = Math.floor((s.stats.totalTimePlayed || 0) / 10);
         const current10sTick = Math.floor(nextState.stats.totalTimePlayed / 10);
         if (current10sTick > prev10sTick) {
-          let fluctuation = 1 + (Math.random() * 0.10 - 0.05); // ±5%
+          const fluctuation = 1 + (Math.random() * 0.10 - 0.05); // ±5%
           let newRate = s.exchangeRate * fluctuation;
           
           const minRate = s.inflationUpgrades?.['polisaAsekuracyjna'] ? 110 : 80;
@@ -2146,7 +2213,9 @@ function App() {
     const queueTimeAchMult = (state.unlockedAchievements?.['eco_queue_1'] ? 0.95 : 1) * (state.unlockedAchievements?.['eco_queue_2'] ? 0.85 : 1);
     timeToBuy *= queueTimeAchMult;
 
-    const tickMs = 50;
+    // [Claude] wydajność: tick 50 ms wymuszał ~20 pełnych re-renderów aplikacji na sekundę na KAŻDY aktywny pasek.
+    // 200 ms wystarcza (płynność zapewnia CSS transition na pasku), a obciążenie spada 4-krotnie.
+    const tickMs = 200;
     const interval = setInterval(() => {
       setQueueProgress(prev => {
         const next = prev + (tickMs / timeToBuy) * 100;
@@ -2191,7 +2260,9 @@ function App() {
     }, tickMs);
     
     return () => clearInterval(interval);
-  }, [activeQueue, state.pewexItems, state.plnUpgrades, state.activeEvent, state.unlockedAchievements, state.activeDestination, state.solidarnos, updateState, settingsOpen]);
+  // [Claude] naprawa: brakowało state.baltonaUpgrades w zależnościach - po kupnie Kawy Jacobs (-10% czasu)
+  // trwająca kolejka liczyła czas po staremu, dopóki efekt się nie zrestartował z innego powodu
+  }, [activeQueue, state.pewexItems, state.plnUpgrades, state.baltonaUpgrades, state.activeEvent, state.unlockedAchievements, state.activeDestination, state.solidarnos, updateState, settingsOpen]);
 
   // Queue Progression 2 (Double queue upgrade)
   useEffect(() => {
@@ -2212,7 +2283,9 @@ function App() {
     const queueTimeAchMult = (state.unlockedAchievements?.['eco_queue_1'] ? 0.95 : 1) * (state.unlockedAchievements?.['eco_queue_2'] ? 0.85 : 1);
     timeToBuy *= queueTimeAchMult;
 
-    const tickMs = 50;
+    // [Claude] wydajność: tick 50 ms wymuszał ~20 pełnych re-renderów aplikacji na sekundę na KAŻDY aktywny pasek.
+    // 200 ms wystarcza (płynność zapewnia CSS transition na pasku), a obciążenie spada 4-krotnie.
+    const tickMs = 200;
     const interval = setInterval(() => {
       setQueueProgress2(prev => {
         const next = prev + (tickMs / timeToBuy) * 100;
@@ -2256,7 +2329,8 @@ function App() {
     }, tickMs);
     
     return () => clearInterval(interval);
-  }, [activeQueue2, state.pewexItems, state.plnUpgrades, state.activeEvent, state.unlockedAchievements, state.activeDestination, state.solidarnos, updateState, settingsOpen]);
+  // [Claude] naprawa: jak w pierwszej kolejce - brakujące state.baltonaUpgrades w zależnościach
+  }, [activeQueue2, state.pewexItems, state.plnUpgrades, state.baltonaUpgrades, state.activeEvent, state.unlockedAchievements, state.activeDestination, state.solidarnos, updateState, settingsOpen]);
 
   // Smuggling Progression
   useEffect(() => {
@@ -2264,7 +2338,9 @@ function App() {
     const route = SMUGGLING_ROUTES.find(r => r.id === activeSmuggle);
     if (!route) return;
 
-    const tickMs = 50;
+    // [Claude] wydajność: tick 50 ms wymuszał ~20 pełnych re-renderów aplikacji na sekundę na KAŻDY aktywny pasek.
+    // 200 ms wystarcza (płynność zapewnia CSS transition na pasku), a obciążenie spada 4-krotnie.
+    const tickMs = 200;
     const interval = setInterval(() => {
       setSmuggleProgress(prev => {
         let timeMs = route.timeMs;
@@ -2319,7 +2395,8 @@ function App() {
                 if (route.id === 'moskwa') {
                   rubleEarned = Math.floor(Math.random() * 31) + 20; // 20 - 50 Rubli
                   if (s.unlockedAchievements?.['smug_moskwa']) rubleEarned += 2;
-                  alertMsg += ` oraz ${rubleEarned} Rubli`;
+                  // [Claude] naprawa odmiany: "22 Rubli" -> "22 ruble" (reguły liczebnika polskiego)
+                  alertMsg += ` oraz ${rubleEarned} ${pluralPL(rubleEarned, 'rubel', 'ruble', 'rubli')}`;
                 }
                 
                 setTimeout(() => showAlert(alertMsg, 'SUKCES SZMUGLA', 'success'), 50);
@@ -2352,7 +2429,9 @@ function App() {
   useEffect(() => {
     if (!state.isPrinting || settingsOpen) return;
     const printTimeMs = 5000; // 5 seconds
-    const tickMs = 50;
+    // [Claude] wydajność: tick 50 ms wymuszał ~20 pełnych re-renderów aplikacji na sekundę na KAŻDY aktywny pasek.
+    // 200 ms wystarcza (płynność zapewnia CSS transition na pasku), a obciążenie spada 4-krotnie.
+    const tickMs = 200;
     const interval = setInterval(() => {
       updateState(s => {
         if (!s.isPrinting) return s;
@@ -2407,7 +2486,8 @@ function App() {
       timeMs *= 0.85;
     }
 
-    const tickMs = 100;
+    // [Claude] wydajność: jak wyżej - rzadszy tick, płynność daje CSS transition
+    const tickMs = 200;
     const interval = setInterval(() => {
       updateState(s => {
         if (!s.activeSeaSmuggle) return s;
@@ -2457,7 +2537,7 @@ function App() {
             
             setTimeout(() => {
               showAlert(
-                `Statek dotarł do portu! Marynarze pomyślnie dostarczyli towar i wręczyli Ci ${bonyEarned} Bonów Towarowych Baltona.`,
+                `Statek dotarł do portu! Marynarze pomyślnie dostarczyli towar i wręczyli Ci ${bonyEarned} ${pluralPL(bonyEarned, 'Bon Towarowy', 'Bony Towarowe', 'Bonów Towarowych')} Baltona.`,
                 "UDANY PRZEMYT MORSKI",
                 "success"
               );
@@ -2512,7 +2592,8 @@ function App() {
       return;
     }
     const hasDoubleQueue = !!state.pewexItems['podwojna_kolejka'];
-    let targetSlot = 0;
+    // [Claude] porządki: początkowe "= 0" nigdy nie było używane (każda gałąź nadpisuje lub wychodzi)
+    let targetSlot: 1 | 2;
     if (!activeQueue) {
       targetSlot = 1;
     } else if (hasDoubleQueue && !activeQueue2) {
@@ -3065,12 +3146,12 @@ function App() {
 
     if (payWith === 'pln' && state.pln < costPln) {
       playError();
-      showAlert(`Brak środków! Otwarcie konta kosztuje ${costPln.toLocaleString()} zł.`, 'Brak gotówki', 'error');
+      showAlert(`Brak środków! Otwarcie konta kosztuje ${costPln.toLocaleString('pl-PL')} zł.`, 'Brak gotówki', 'error');
       return;
     }
     if (payWith === 'dollars' && state.dollars < costUsd) {
       playError();
-      showAlert(`Brak środków! Otwarcie konta kosztuje $${costUsd.toLocaleString()} USD.`, 'Brak gotówki', 'error');
+      showAlert(`Brak środków! Otwarcie konta kosztuje $${costUsd.toLocaleString('pl-PL')} USD.`, 'Brak gotówki', 'error');
       return;
     }
 
@@ -3125,7 +3206,7 @@ function App() {
         nextInterpolSusp = Math.min(100, nextInterpolSusp + (amount * 0.0005));
       }
 
-      addToast("ZLECONO PRZELEW SWIFT", `Wysłano ${amountToTransfer.toLocaleString()} ${currency === 'pln' ? 'zł' : 'USD'} (Prowizja: ${commission.toLocaleString()}).`);
+      addToast("ZLECONO PRZELEW SWIFT", `Wysłano ${amountToTransfer.toLocaleString('pl-PL')} ${currency === 'pln' ? 'zł' : 'USD'} (Prowizja: ${commission.toLocaleString('pl-PL')}).`);
 
       return {
         ...s,
@@ -3166,13 +3247,13 @@ function App() {
         const targetUsd = Math.floor((amount / currentMarketRate) * (1 - spreadRate));
         nextBalPln -= amount;
         nextBalUsd += targetUsd;
-        addToast("KANTOR ZURYCH", `Wymieniono ${amount.toLocaleString()} PLN na $${targetUsd} USD.`);
+        addToast("KANTOR ZURYCH", `Wymieniono ${amount.toLocaleString('pl-PL')} PLN na $${targetUsd} USD.`);
       } else {
         const spreadRate = 0.015;
         const targetPln = Math.floor((amount * currentMarketRate) * (1 - spreadRate));
         nextBalUsd -= amount;
         nextBalPln += targetPln;
-        addToast("KANTOR ZURYCH", `Wymieniono $${amount} USD na ${targetPln.toLocaleString()} PLN.`);
+        addToast("KANTOR ZURYCH", `Wymieniono $${amount} USD na ${targetPln.toLocaleString('pl-PL')} PLN.`);
       }
 
       return {
@@ -3223,7 +3304,7 @@ function App() {
 
     if (state.dollars < costUsd) {
       playError();
-      showAlert(`Brak dewiz! Założenie fundacji w Vaduz kosztuje $${costUsd.toLocaleString()} USD.`, "Brak dolarów", "error");
+      showAlert(`Brak dewiz! Założenie fundacji w Vaduz kosztuje $${costUsd.toLocaleString('pl-PL')} USD.`, "Brak dolarów", "error");
       return;
     }
 
@@ -3256,7 +3337,7 @@ function App() {
         totalOffshoreTransfersPln: (s.stats.totalOffshoreTransfersPln || 0) + amount
       };
 
-      addToast("POLISA PRALNICZA", `Legalnie przetransferowano ${amount.toLocaleString()} PLN do kraju. Krajowe Podejrzenie Milicji spadło!`);
+      addToast("POLISA PRALNICZA", `Legalnie przetransferowano ${amount.toLocaleString('pl-PL')} PLN do kraju. Krajowe Podejrzenie Milicji spadło!`);
 
       return {
         ...s,
@@ -3290,7 +3371,7 @@ function App() {
         timeLeft: 120
       });
 
-      addToast("KURIER WYRUSZYŁ", `Kurier wyruszył z kwotą ${amount.toLocaleString()} ${currency === 'pln' ? 'zł' : 'USD'} w walizce.`);
+      addToast("KURIER WYRUSZYŁ", `Kurier wyruszył z kwotą ${amount.toLocaleString('pl-PL')} ${currency === 'pln' ? 'zł' : 'USD'} w walizce.`);
 
       return {
         ...s,
@@ -3341,7 +3422,7 @@ function App() {
 
     playSuccess();
     updateState(s => {
-      addToast("KREDYT DEWIZOWY", `Zaciągnięto pożyczkę na kwotę $${maxUsdCredit.toLocaleString()} USD. Czas na spłatę: 5 minut.`);
+      addToast("KREDYT DEWIZOWY", `Zaciągnięto pożyczkę na kwotę $${maxUsdCredit.toLocaleString('pl-PL')} USD. Czas na spłatę: 5 minut.`);
       return {
         ...s,
         swissBalanceUsd: (s.swissBalanceUsd || 0) + maxUsdCredit,
@@ -3358,7 +3439,7 @@ function App() {
 
     if (state.swissBalanceUsd < cost) {
       playError();
-      showAlert(`Brak dolarów na koncie szwajcarskim! Spłata kredytu wraz z odsetkami kosztuje $${cost.toLocaleString()} USD.`, "Brak środków", "error");
+      showAlert(`Brak dolarów na koncie szwajcarskim! Spłata kredytu wraz z odsetkami kosztuje $${cost.toLocaleString('pl-PL')} USD.`, "Brak środków", "error");
       return;
     }
 
@@ -3406,7 +3487,7 @@ function App() {
       interpolSuspicion: Math.min(100, (s.interpolSuspicion || 0) + (item.riskPercent * 0.15))
     }));
     playSuccess();
-    addToast("SYNDYKAT: ZAKUP", `Zakupiono ${item.name} za $${item.costUsd.toLocaleString()}`);
+    addToast("SYNDYKAT: ZAKUP", `Zakupiono ${item.name} za $${item.costUsd.toLocaleString('pl-PL')}`);
   };
 
   const sendCocomShipment = (itemId: string, contactId: string, route: 'lad_road' | 'sea_route' | 'air_cargo') => {
@@ -3428,6 +3509,7 @@ function App() {
     const routeMult: Record<string, number> = { lad_road: 1.0, sea_route: 1.10, air_cargo: 1.25 };
 
     const shipment = {
+      // eslint-disable-next-line react-hooks/purity -- [Claude] handler onClick, nie render
       id: Date.now().toString(),
       itemId,
       contactId,
@@ -3512,6 +3594,7 @@ function App() {
     });
 
     const run = {
+      // eslint-disable-next-line react-hooks/purity -- [Claude] handler onClick, nie render
       id: Date.now().toString(),
       routeId,
       vehicleId,
@@ -3611,7 +3694,7 @@ function App() {
         stats: { ...s.stats, totalOffshoreTransfersPln: (s.stats.totalOffshoreTransfersPln || 0) + clampedAmount }
       }));
       playSuccess();
-      addToast("PRANIE ZYSKÓW", `Wyprany kapitał: ${netAmount.toLocaleString()} zł (prowizja ${Math.round(commissionRate * 100)}%)`);
+      addToast("PRANIE ZYSKÓW", `Wyprany kapitał: ${netAmount.toLocaleString('pl-PL')} zł (prowizja ${Math.round(commissionRate * 100)}%)`);
     } else {
       const commissionRate = state.syndicateUpgrades['fake_docs'] ? 0.40 : 0.50; // Bardzo wysoka prowizja za USD
       const netAmountPln = Math.floor(clampedAmount * (1 - commissionRate));
@@ -3627,7 +3710,7 @@ function App() {
         stats: { ...s.stats, totalOffshoreTransfersPln: (s.stats.totalOffshoreTransfersPln || 0) + clampedAmount }
       }));
       playSuccess();
-      addToast("ZAGRANICZNE KONTA", `Wyprano kapitał na kwotę $${usdEarned.toLocaleString()} (ogromna prowizja operacyjna)`);
+      addToast("ZAGRANICZNE KONTA", `Wyprano kapitał na kwotę $${usdEarned.toLocaleString('pl-PL')} (ogromna prowizja operacyjna)`);
     }
   };
 
@@ -3892,7 +3975,7 @@ function App() {
       }
     }));
     playSuccess();
-    showAlert(`Podpisano kontrakt sponsorski z marką Pollena 2000! Otrzymano ${payout.toLocaleString()} zł. Widzowie są lekko zirytowani komercjalizacją (Zaufanie -15).`, '🧴 KONTRAKT SPONSORSKI', 'success');
+    showAlert(`Podpisano kontrakt sponsorski z marką Pollena 2000! Otrzymano ${payout.toLocaleString('pl-PL')} zł. Widzowie są lekko zirytowani komercjalizacją (Zaufanie -15).`, '🧴 KONTRAKT SPONSORSKI', 'success');
   };
 
   const broadcastPoliticalSpot = (stationId: string, alignment: 'government' | 'solidarity') => {
@@ -3928,6 +4011,7 @@ function App() {
     const costPln = Math.floor(1000000 * (state.isDenominated ? 1 : state.plzInflationMult));
     if (state.pln < costPln) { playError(); return; }
 
+    // eslint-disable-next-line react-hooks/purity -- [Claude] handler onClick, nie render
     const success = Math.random() > 0.25;
     if (success) {
       const profit = Math.floor(8000000 * (state.isDenominated ? 1 : state.plzInflationMult));
@@ -3940,7 +4024,7 @@ function App() {
         }
       }));
       playSuccess();
-      showAlert(`Afera na pierwszej stronie! Ujawniono romanse elit giełdowych. Sprzedaż poszybowała w górę! Zarobiono netto: ${(profit - costPln).toLocaleString()} zł (Zaufanie -10).`, '📸 PAPARAZZI', 'success');
+      showAlert(`Afera na pierwszej stronie! Ujawniono romanse elit giełdowych. Sprzedaż poszybowała w górę! Zarobiono netto: ${(profit - costPln).toLocaleString('pl-PL')} zł (Zaufanie -10).`, '📸 PAPARAZZI', 'success');
     } else {
       const penalty = Math.floor(12000000 * (state.isDenominated ? 1 : state.plzInflationMult));
       updateState(s => ({
@@ -3952,7 +4036,7 @@ function App() {
         }
       }));
       playAlert();
-      showAlert(`Przegrany proces sądowy o naruszenie dóbr osobistych! Musisz opłacić odszkodowanie w wysokości ${penalty.toLocaleString()} zł (Zaufanie -25).`, '⚖️ POZEW SĄDOWY', 'raid');
+      showAlert(`Przegrany proces sądowy o naruszenie dóbr osobistych! Musisz opłacić odszkodowanie w wysokości ${penalty.toLocaleString('pl-PL')} zł (Zaufanie -25).`, '⚖️ POZEW SĄDOWY', 'raid');
     }
   };
 
@@ -3999,7 +4083,7 @@ function App() {
       };
     });
     playClick();
-    addToast('RESTRUKTURYZACJA', `Zwolniono ${amount.toLocaleString()} pracowników. Koszty żołdu spadły, morale osłabło.`);
+    addToast('RESTRUKTURYZACJA', `Zwolniono ${amount.toLocaleString('pl-PL')} pracowników. Koszty żołdu spadły, morale osłabło.`);
   };
 
   const hireNfiEmployees = (compId: string, amount: number) => {
@@ -4029,7 +4113,7 @@ function App() {
       };
     });
     playClick();
-    addToast('ZATRUDNIENIE', `Zatrudniono dodatkowe ${amount.toLocaleString()} osób. Wzrost potencjału produkcyjnego.`);
+    addToast('ZATRUDNIENIE', `Zatrudniono dodatkowe ${amount.toLocaleString('pl-PL')} osób. Wzrost potencjału produkcyjnego.`);
   };
 
   const modernizeNfiInfrastructure = (compId: string) => {
@@ -4204,7 +4288,7 @@ function App() {
       pln: s.pln + plnReceived
     }));
     playSuccess();
-    showAlert(`Otrzymałeś kredyt we frankach szwajcarskich! Do spłaty: ${amountChf.toLocaleString()} CHF. Otrzymano po potrąceniu prowizji: ${plnReceived.toLocaleString()} PLN.`, '🏦 KREDYT CHF UZYSKANY', 'success');
+    showAlert(`Otrzymałeś kredyt we frankach szwajcarskich! Do spłaty: ${amountChf.toLocaleString('pl-PL')} CHF. Otrzymano po potrąceniu prowizji: ${plnReceived.toLocaleString('pl-PL')} PLN.`, '🏦 KREDYT CHF UZYSKANY', 'success');
   };
 
   const buyRealEstate = (projectId: string, useChf: boolean) => {
@@ -4245,7 +4329,7 @@ function App() {
       realEstateOwned: { ...s.realEstateOwned, [projectId]: s.realEstateOwned[projectId] - 1 }
     }));
     playSuccess();
-    addToast('SPRZEDAŻ NIERUCHOMOŚCI', `Sprzedano: ${proj.name} za ${proj.sellRevenuePln.toLocaleString()} PLN.`);
+    addToast('SPRZEDAŻ NIERUCHOMOŚCI', `Sprzedano: ${proj.name} za ${proj.sellRevenuePln.toLocaleString('pl-PL')} PLN.`);
   };
 
   const sendWorkerToZmywak = (count: number) => {
@@ -4259,7 +4343,7 @@ function App() {
       zmywakWorkers: s.zmywakWorkers + count
     }));
     playSuccess();
-    addToast('AGENCJA PRACY', `Wysłano ${count} osób na zmywak do UK.`);
+    addToast('AGENCJA PRACY', `Wysłano ${count} ${pluralPL(count, 'osobę', 'osoby', 'osób')} na zmywak do UK.`);
   };
 
   const bribeEuAuditor = () => {
@@ -4300,7 +4384,7 @@ function App() {
       ]
     }));
     playSuccess();
-    addToast('KONTRAKT SPEKULACYJNY', `Nabyto opcję ${preset.type.toUpperCase()} na sumę ${preset.amountChf.toLocaleString()} CHF.`);
+    addToast('KONTRAKT SPEKULACYJNY', `Nabyto opcję ${preset.type.toUpperCase()} na sumę ${preset.amountChf.toLocaleString('pl-PL')} CHF.`);
   };
 
   const buyCrisisRealEstate = (projectId: string) => {
@@ -4380,7 +4464,7 @@ function App() {
       };
     });
     playSuccess();
-    addToast('KAPITAŁ ODZYSKANY', `Sprzedano inwestycję: ${proj.name} za ${proj.sellRevenuePln.toLocaleString()} PLN!`);
+    addToast('KAPITAŁ ODZYSKANY', `Sprzedano inwestycję: ${proj.name} za ${proj.sellRevenuePln.toLocaleString('pl-PL')} PLN!`);
   };
 
   const hireBankAdvisor = () => {
@@ -4411,7 +4495,7 @@ function App() {
 
     if (state.pln < plnCost) {
       playError();
-      showAlert(`Brak gotówki! Restrukturyzacja 500 000 CHF wymaga spłaty po karnym kursie stabilizującym ${penaltyRate.toFixed(2)} PLN/CHF. Wymagane: ${plnCost.toLocaleString()} PLN.`, 'BRAK ŚRODKÓW', 'error');
+      showAlert(`Brak gotówki! Restrukturyzacja 500 000 CHF wymaga spłaty po karnym kursie stabilizującym ${fmtNum(penaltyRate, 2)} PLN/CHF. Wymagane: ${plnCost.toLocaleString('pl-PL')} PLN.`, 'BRAK ŚRODKÓW', 'error');
       return;
     }
 
@@ -4421,7 +4505,7 @@ function App() {
       chfDebt: Math.max(0, s.chfDebt - restructureAmountChf)
     }));
     playSuccess();
-    showAlert(`Pomyślnie spłacono i zamknięto 500 000 CHF długu walutowego za kwotę ${plnCost.toLocaleString()} PLN. Ograniczyłeś ryzyko kursowe!`, '🏦 RESTRUKTURYZACJA CHF', 'success');
+    showAlert(`Pomyślnie spłacono i zamknięto 500 000 CHF długu walutowego za kwotę ${plnCost.toLocaleString('pl-PL')} PLN. Ograniczyłeś ryzyko kursowe!`, '🏦 RESTRUKTURYZACJA CHF', 'success');
   };
 
   const devUnlockEverything = () => {
@@ -4522,9 +4606,9 @@ function App() {
     if (!option) return;
 
     updateState(s => {
-      let newAggression = Math.max(0, Math.min(100, s.commissionAggression + option.aggressionChange));
-      let newEvidence = Math.max(0, Math.min(100, s.commissionEvidence + option.evidenceChange));
-      let newQuestionIndex = s.commissionQuestionIndex + 1;
+      const newAggression = Math.max(0, Math.min(100, s.commissionAggression + option.aggressionChange));
+      const newEvidence = Math.max(0, Math.min(100, s.commissionEvidence + option.evidenceChange));
+      const newQuestionIndex = s.commissionQuestionIndex + 1;
       
       let commissionActive = s.commissionActive;
       let prisonSentenceRemaining = s.prisonSentenceRemaining;
@@ -4653,7 +4737,7 @@ function App() {
         vatCompanies: updated
       };
     });
-    addToast("KAPITAŁ ZASILONY", `Zasilono kapitał spółki kwotą ${amount.toLocaleString()} PLN`);
+    addToast("KAPITAŁ ZASILONY", `Zasilono kapitał spółki kwotą ${amount.toLocaleString('pl-PL')} PLN`);
   };
 
   const toggleCompanyActive = (companyId: string) => {
@@ -4735,7 +4819,7 @@ function App() {
     }
     if (state.pln < cost) {
       playError();
-      addToast("BRAK ŚRODKÓW", `Potrzebujesz ${cost.toLocaleString()} PLN na uregulowanie sytuacji.`);
+      addToast("BRAK ŚRODKÓW", `Potrzebujesz ${cost.toLocaleString('pl-PL')} PLN na uregulowanie sytuacji.`);
       return;
     }
 
@@ -4779,7 +4863,7 @@ function App() {
         offshoreCyprusBalance: (s.offshoreCyprusBalance || 0) + transferred
       };
     });
-    addToast("TRANSFER OFFSHORE", `Przelano ${transferred.toLocaleString()} PLN na Cypr (Prowizja: ${tax.toLocaleString()} PLN)`);
+    addToast("TRANSFER OFFSHORE", `Przelano ${transferred.toLocaleString('pl-PL')} PLN na Cypr (Prowizja: ${tax.toLocaleString('pl-PL')} PLN)`);
   };
 
   const withdrawFromOffshore = (amount: number) => {
@@ -4801,7 +4885,7 @@ function App() {
         pln: s.pln + amount
       };
     });
-    addToast("WYPŁATA OFFSHORE", `Wypłacono ${amount.toLocaleString()} PLN z Cypru jako pożyczkę udziałowca.`);
+    addToast("WYPŁATA OFFSHORE", `Wypłacono ${amount.toLocaleString('pl-PL')} PLN z Cypru jako pożyczkę udziałowca.`);
   };
 
   const buyVatUpgrade = (upgradeId: string) => {
@@ -4814,12 +4898,12 @@ function App() {
 
     if (upg.costPln && state.pln < upg.costPln) {
       playError();
-      addToast("BRAK ŚRODKÓW", `Potrzebujesz ${upg.costPln.toLocaleString()} PLN.`);
+      addToast("BRAK ŚRODKÓW", `Potrzebujesz ${upg.costPln.toLocaleString('pl-PL')} PLN.`);
       return;
     }
     if (upg.costUsd && state.dollars < upg.costUsd) {
       playError();
-      addToast("BRAK ŚRODKÓW", `Potrzebujesz ${upg.costUsd.toLocaleString()} USD.`);
+      addToast("BRAK ŚRODKÓW", `Potrzebujesz ${upg.costUsd.toLocaleString('pl-PL')} USD.`);
       return;
     }
 
@@ -4886,7 +4970,7 @@ function App() {
       }));
     }
     playClick();
-    addToast("TRANSFER NA KAMPANIĘ", `Przekazano ${amount.toLocaleString()} ${currency === 'pln' ? 'zł' : 'USD'} na fundusz wyborczy.`);
+    addToast("TRANSFER NA KAMPANIĘ", `Przekazano ${amount.toLocaleString('pl-PL')} ${currency === 'pln' ? 'zł' : 'USD'} na fundusz wyborczy.`);
   };
 
   const buyPrintingSupplies = (type: 'paper' | 'ink', payWith: 'pln' | 'usd') => {
@@ -4926,8 +5010,10 @@ function App() {
     const printMult = state.electionUpgrades['printing_press'] ? 2 : 1;
 
     // SB risk check
+    // eslint-disable-next-line react-hooks/purity -- [Claude] handler onClick, nie render
     if (Math.random() * 100 < mat.sbRiskPercent) {
       const guardMod = state.electionUpgrades['guard_squad'] ? 0.6 : 1.0;
+      // eslint-disable-next-line react-hooks/purity -- [Claude] handler onClick, nie render
       if (Math.random() < guardMod) {
         updateState(s => ({
           ...s,
@@ -5049,7 +5135,7 @@ function App() {
   const runElectionsFirstRound = () => {
     if (state.electionsPhase !== 'campaign') { playError(); return; }
     const totalVotes = Object.values(state.regionalVotes).reduce((a, b) => a + b, 0);
-    if (totalVotes < 5000000) { playError(); showAlert(`Potrzebujesz minimum 5 000 000 głosów poparcia! Masz: ${totalVotes.toLocaleString()}.`, '⛔ ZA MAŁO GŁOSÓW', 'error'); return; }
+    if (totalVotes < 5000000) { playError(); showAlert(`Potrzebujesz minimum 5 000 000 głosów poparcia! Masz: ${totalVotes.toLocaleString('pl-PL')}.`, '⛔ ZA MAŁO GŁOSÓW', 'error'); return; }
     if (state.campaignTimePlayed < 600) { playError(); showAlert('Kampania musi trwać minimum 10 minut przed wyborami!', '⛔ ZA WCZEŚNIE', 'error'); return; }
 
     // Calculate seats
@@ -5116,7 +5202,7 @@ function App() {
     if (state.sejmSeatsWon >= 161 && state.senateSeatsWon >= 90) {
       showAlert(`Rząd Tadeusza Mazowieckiego sformowany z pełną przewagą parlamentarną! „Wasz Prezydent, Nasz Premier" — wolna Polska stała się faktem. Twoje finanse otrzymują x${bonusMult} bonus!`, '🇵🇱 RZĄD MAZOWIECKIEGO', 'success');
     } else {
-      showAlert(`Rząd koalicyjny sformowany z bonusem x${bonusMult.toFixed(1)}. Transformacja w III RP rozpoczyna się!`, '🇵🇱 RZĄD KOALICYJNY', 'success');
+      showAlert(`Rząd koalicyjny sformowany z bonusem x${fmtNum(bonusMult, 1)}. Transformacja w III RP rozpoczyna się!`, '🇵🇱 RZĄD KOALICYJNY', 'success');
     }
   };
 
@@ -5973,7 +6059,7 @@ function App() {
       stationRating = Math.floor(stationRating * trustMult);
 
       if (activeProgramCount > 0 && stationRating > 0) {
-        let revenuePerSec = stationRating * 8 * totalIncomeMult;
+        const revenuePerSec = stationRating * 8 * totalIncomeMult;
         const mult = state.isDenominated ? 1 : state.plzInflationMult;
         mediaPlnRate += Math.floor(revenuePerSec * mult);
       }
@@ -6365,16 +6451,16 @@ function App() {
         {state.activeDestination === 'usa' && (
           <div className="flex-col animate-pulse" style={{color: 'var(--prl-red)'}}>
              <span style={{fontSize: '0.8rem', color: 'var(--prl-gray)'}}>INFLACJA</span>
-             <span style={{fontSize: '1.2rem'}}>{state.inflationPercent.toFixed(1)}%</span>
+             <span style={{fontSize: '1.2rem'}}>{fmtNum(state.inflationPercent, 1)}%</span>
           </div>
         )}
         <div className="flex-col">
            <span style={{fontSize: '0.8rem', color: 'var(--prl-gray)'}}>ZŁOTÓWKI</span>
-           <span style={{fontSize: '1.2rem'}}>{Math.floor(state.pln).toLocaleString()} zł</span>
+           <span style={{fontSize: '1.2rem'}}>{Math.floor(state.pln).toLocaleString('pl-PL')} zł</span>
         </div>
         <div className="flex-col text-dollar">
            <span style={{fontSize: '0.8rem', color: 'var(--prl-gray)'}}>DOLARY</span>
-           <span style={{fontSize: '1.2rem'}}>${Math.floor(state.dollars).toLocaleString()}</span>
+           <span style={{fontSize: '1.2rem'}}>${Math.floor(state.dollars).toLocaleString('pl-PL')}</span>
         </div>
         {(state.activeDestination === 'usa' || (state.bonyPewex || 0) > 0) && (
           <div className="flex-col" style={{color: 'var(--dollar-green)'}}>
@@ -6456,9 +6542,9 @@ function App() {
             <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '15px', fontSize: '0.9rem', color: '#33ff33'}}>
               <div>
                 <strong style={{color: 'var(--crt-text)'}}>WALUTY I KARTKI (netto/s):</strong>
-                <div style={{marginTop: '5px'}}>Złotówki: <span style={{color: plnRate >= 0 ? '#33ff33' : 'var(--prl-red)'}}>{plnRate >= 0 ? '+' : ''}{plnRate.toFixed(2)} zł/s</span></div>
-                <div>Dolary: <span style={{color: 'var(--dollar-green)'}}>+{dollarsRate.toFixed(3)} $/s</span></div>
-                <div>Kartki: <span style={{color: 'var(--prl-yellow)'}}>+{kartkiRate.toFixed(3)} szt/s</span></div>
+                <div style={{marginTop: '5px'}}>Złotówki: <span style={{color: plnRate >= 0 ? '#33ff33' : 'var(--prl-red)'}}>{plnRate >= 0 ? '+' : ''}{fmtNum(plnRate, 2)} zł/s</span></div>
+                <div>Dolary: <span style={{color: 'var(--dollar-green)'}}>+{fmtNum(dollarsRate, 3)} $/s</span></div>
+                <div>Kartki: <span style={{color: 'var(--prl-yellow)'}}>+{fmtNum(kartkiRate, 3)} szt/s</span></div>
               </div>
               <div>
                 <strong style={{color: 'var(--crt-text)'}}>TOWARY (szt./sek):</strong>
@@ -6469,7 +6555,7 @@ function App() {
                     const shortName = name.replace(/ \(.*\)/, '').replace(/"/g, '');
                     return (
                       <div key={itemId} style={{fontSize: '0.8rem'}}>
-                        {shortName}: +{rate.toFixed(4)}
+                        {shortName}: +{fmtNum(rate, 4)}
                       </div>
                     );
                   })}
@@ -6483,45 +6569,45 @@ function App() {
              <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', fontSize: '0.9rem', color: '#33ff33'}}>
                <div>
                  <strong style={{color: 'var(--crt-text)'}}>PASYWNY PRZYCHÓD (PLN/s):</strong>
-                 <div style={{marginTop: '5px'}}>Biznesy (Szklarnie itp.): <span style={{color: '#33ff33'}}>+{businessPlnRate.toFixed(2)} zł/s</span></div>
+                 <div style={{marginTop: '5px'}}>Biznesy (Szklarnie itp.): <span style={{color: '#33ff33'}}>+{fmtNum(businessPlnRate, 2)} zł/s</span></div>
                  {state.mediaUnlocked && (
-                   <div>Wolne Media (Reklamy): <span style={{color: '#33ff33'}}>+{mediaPlnRate.toFixed(2)} zł/s</span></div>
+                   <div>Wolne Media (Reklamy): <span style={{color: '#33ff33'}}>+{fmtNum(mediaPlnRate, 2)} zł/s</span></div>
                  )}
                  {state.fazaSUnlocked && (
                    <>
-                     <div>Portal Dot-Com (AdSense): <span style={{color: '#33ff33'}}>+{dotcomPlnRate.toFixed(2)} zł/s</span></div>
-                     <div>Emigracja (Zmywak UK): <span style={{color: '#33ff33'}}>+{zmywakPlnRate.toFixed(2)} zł/s</span></div>
+                     <div>Portal Dot-Com (AdSense): <span style={{color: '#33ff33'}}>+{fmtNum(dotcomPlnRate, 2)} zł/s</span></div>
+                     <div>Emigracja (Zmywak UK): <span style={{color: '#33ff33'}}>+{fmtNum(zmywakPlnRate, 2)} zł/s</span></div>
                    </>
                  )}
                  {state.fazaMUnlocked && (
-                   <div>Dywidendy NFI: <span style={{color: '#33ff33'}}>+{nfiPlnRate.toFixed(2)} zł/s</span></div>
+                   <div>Dywidendy NFI: <span style={{color: '#33ff33'}}>+{fmtNum(nfiPlnRate, 2)} zł/s</span></div>
                  )}
                  {state.gpwUnlocked && (
-                   <div>Dywidendy GPW (śr): <span style={{color: '#33ff33'}}>+{gpwPlnRate.toFixed(2)} zł/s</span></div>
+                   <div>Dywidendy GPW (śr): <span style={{color: '#33ff33'}}>+{fmtNum(gpwPlnRate, 2)} zł/s</span></div>
                  )}
-                 <div style={{borderTop: '1px dashed #33ff33', marginTop: '8px', paddingTop: '5px'}}>Suma Przychodów (Realne PLN): <strong>+{totalPassiveIncome.toFixed(2)} zł/s</strong></div>
+                 <div style={{borderTop: '1px dashed #33ff33', marginTop: '8px', paddingTop: '5px'}}>Suma Przychodów (Realne PLN): <strong>+{fmtNum(totalPassiveIncome, 2)} zł/s</strong></div>
                  {vatCarouselPlnRate > 0 && (
-                   <div style={{marginTop: '5px', color: 'var(--prl-yellow)'}}>Należności VAT: <strong>+{vatCarouselPlnRate.toFixed(2)} zł/s</strong> (oczekujące)</div>
+                   <div style={{marginTop: '5px', color: 'var(--prl-yellow)'}}>Należności VAT: <strong>+{fmtNum(vatCarouselPlnRate, 2)} zł/s</strong> (oczekujące)</div>
                  )}
                </div>
                <div>
                  <strong style={{color: 'var(--prl-red)'}}>PASYWNE KOSZTY (PLN/s):</strong>
-                 <div style={{marginTop: '5px', color: '#ff6666'}}>Prowizje cinkciarza: <span>-{Math.abs(cinkciarzPlnRate).toFixed(2)} zł/s</span></div>
+                 <div style={{marginTop: '5px', color: '#ff6666'}}>Prowizje cinkciarza: <span>-{fmtNum(Math.abs(cinkciarzPlnRate), 2)} zł/s</span></div>
                  {state.fazaNUnlocked && (
-                   <div style={{color: '#ff6666'}}>Utrzymanie gangu: <span>-{gangPlnCost.toFixed(2)} zł/s</span></div>
+                   <div style={{color: '#ff6666'}}>Utrzymanie gangu: <span>-{fmtNum(gangPlnCost, 2)} zł/s</span></div>
                  )}
                  {state.fazaSUnlocked && chfPlnCost > 0 && (
-                   <div style={{color: '#ff6666'}}>Spłata kredytów CHF: <span>-{chfPlnCost.toFixed(2)} zł/s</span></div>
+                   <div style={{color: '#ff6666'}}>Spłata kredytów CHF: <span>-{fmtNum(chfPlnCost, 2)} zł/s</span></div>
                  )}
                  {state.fazaSUnlocked && lobbyBribeCost > 0 && (
-                   <div style={{color: '#ff6666'}}>Koszty lobbingu rządowego: <span>-{lobbyBribeCost.toFixed(2)} zł/s</span></div>
+                   <div style={{color: '#ff6666'}}>Koszty lobbingu rządowego: <span>-{fmtNum(lobbyBribeCost, 2)} zł/s</span></div>
                  )}
-                 <div style={{borderTop: '1px dashed var(--prl-red)', marginTop: '8px', paddingTop: '5px', color: 'var(--prl-red)'}}>Suma Kosztów: <strong>-{totalPassiveExpenses.toFixed(2)} zł/s</strong></div>
+                 <div style={{borderTop: '1px dashed var(--prl-red)', marginTop: '8px', paddingTop: '5px', color: 'var(--prl-red)'}}>Suma Kosztów: <strong>-{fmtNum(totalPassiveExpenses, 2)} zł/s</strong></div>
                </div>
                <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', borderLeft: '1px dashed var(--prl-yellow)', paddingLeft: '15px'}}>
                  <strong style={{color: 'var(--prl-yellow)'}}>BILANS NETTO:</strong>
                  <div style={{fontSize: '1.4rem', color: plnRate >= 0 ? '#33ff33' : 'var(--prl-red)', fontWeight: 'bold', marginTop: '10px'}}>
-                   {plnRate >= 0 ? '+' : ''}{plnRate.toFixed(2)} zł/s
+                   {plnRate >= 0 ? '+' : ''}{fmtNum(plnRate, 2)} zł/s
                  </div>
                  {plnRate < 0 && (
                    <div style={{fontSize: '0.75rem', color: 'var(--prl-red)', marginTop: '8px', textAlign: 'center', lineHeight: '1.3'}}>
@@ -6533,15 +6619,15 @@ function App() {
           ) : (
              <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px 25px', fontSize: '0.9rem', color: '#33ff33'}}>
                 <div>
-                   <div>Łączne PLN: <span style={{color: 'var(--crt-text)'}}>{Math.floor(state.stats.totalPlnEarned).toLocaleString()} zł</span></div>
-                   <div>Łączne Dolary: <span style={{color: 'var(--dollar-green)'}}>${Math.floor(state.stats.totalDollarsEarned).toLocaleString()}</span></div>
-                   <div>Max PLN w ręku: <span style={{color: 'var(--crt-text)'}}>{Math.floor(state.stats.maxPlnHeld).toLocaleString()} zł</span></div>
-                   <div>Czas w kolejce: <span style={{color: 'var(--prl-yellow)'}}>{Math.floor(state.stats.totalTimeQueued).toLocaleString()} s</span></div>
+                   <div>Łączne PLN: <span style={{color: 'var(--crt-text)'}}>{Math.floor(state.stats.totalPlnEarned).toLocaleString('pl-PL')} zł</span></div>
+                   <div>Łączne Dolary: <span style={{color: 'var(--dollar-green)'}}>${Math.floor(state.stats.totalDollarsEarned).toLocaleString('pl-PL')}</span></div>
+                   <div>Max PLN w ręku: <span style={{color: 'var(--crt-text)'}}>{Math.floor(state.stats.maxPlnHeld).toLocaleString('pl-PL')} zł</span></div>
+                   <div>Czas w kolejce: <span style={{color: 'var(--prl-yellow)'}}>{Math.floor(state.stats.totalTimeQueued).toLocaleString('pl-PL')} s</span></div>
                 </div>
                 <div>
-                   <div>Sprzedane towary: <span style={{color: 'var(--crt-text)'}}>{state.stats.totalItemsSold.toLocaleString()} szt.</span></div>
+                   <div>Sprzedane towary: <span style={{color: 'var(--crt-text)'}}>{state.stats.totalItemsSold.toLocaleString('pl-PL')} szt.</span></div>
                    <div>Wymiany u Cinkciarza: <span style={{color: 'var(--crt-text)'}}>{state.stats.totalCinkciarzExchanges}</span></div>
-                   <div>Wydatki na łapówki: <span style={{color: 'var(--prl-red)'}}>{state.stats.totalBribesPaidPln.toLocaleString()} zł</span></div>
+                   <div>Wydatki na łapówki: <span style={{color: 'var(--prl-red)'}}>{state.stats.totalBribesPaidPln.toLocaleString('pl-PL')} zł</span></div>
                    <div>Naloty Milicji: <span style={{color: 'var(--prl-red)'}}>{state.stats.totalConfiscations}</span></div>
                 </div>
                 <div>
@@ -6604,15 +6690,15 @@ function App() {
                 <div style={{ flex: 2, minWidth: '300px', backgroundColor: '#34495e', padding: '15px', borderRadius: '4px', border: '1px solid #7f8c8d', display: 'flex', flexDirection: 'column', justifyContent: 'space-around' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#2c3e50', padding: '10px', borderRadius: '4px' }}>
                     <span style={{ fontSize: '0.9em', color: '#bdc3c7' }}>Kurs CHF/PLN:</span>
-                    <strong style={{ fontSize: '1.2em', color: state.chfExchangeRate > 3.0 ? '#e74c3c' : '#2ecc71' }}>{state.chfExchangeRate.toFixed(2)} PLN</strong>
+                    <strong style={{ fontSize: '1.2em', color: state.chfExchangeRate > 3.0 ? '#e74c3c' : '#2ecc71' }}>{fmtNum(state.chfExchangeRate, 2)} PLN</strong>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#2c3e50', padding: '10px', borderRadius: '4px' }}>
                     <span style={{ fontSize: '0.9em', color: '#bdc3c7' }}>Dług w CHF:</span>
-                    <strong style={{ fontSize: '1.2em', color: '#e74c3c' }}>{state.chfDebt.toLocaleString()} CHF</strong>
+                    <strong style={{ fontSize: '1.2em', color: '#e74c3c' }}>{state.chfDebt.toLocaleString('pl-PL')} CHF</strong>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#2c3e50', padding: '10px', borderRadius: '4px' }}>
                     <span style={{ fontSize: '0.9em', color: '#bdc3c7' }}>Gotówka:</span>
-                    <strong style={{ fontSize: '1.2em', color: '#2ecc71' }}>{state.pln.toLocaleString()} PLN</strong>
+                    <strong style={{ fontSize: '1.2em', color: '#2ecc71' }}>{state.pln.toLocaleString('pl-PL')} PLN</strong>
                   </div>
                 </div>
               </div>
@@ -6660,7 +6746,7 @@ function App() {
                             
                             {!active ? (
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
-                                <span style={{ fontSize: '0.85em', color: '#ecf0f1' }}>Wkład własny: <strong>{costOwn.toLocaleString()} PLN</strong></span>
+                                <span style={{ fontSize: '0.85em', color: '#ecf0f1' }}>Wkład własny: <strong>{costOwn.toLocaleString('pl-PL')} PLN</strong></span>
                                 <button onClick={() => startEuProject(proj.id)} disabled={!canBuy} style={{ padding: '6px 12px', fontSize: '0.85em', backgroundColor: '#3498db', color: '#fff', border: 'none', borderRadius: '4px', cursor: canBuy ? 'pointer' : 'not-allowed', fontWeight: 'bold' }}>
                                   Wyślij Wniosek ({proj.durationSec}s)
                                 </button>
@@ -6671,7 +6757,7 @@ function App() {
                                 <div style={{ width: '100%', height: '6px', backgroundColor: '#2c3e50', borderRadius: '3px', overflow: 'hidden' }}>
                                   <div style={{ width: `${Math.max(0, 100 - (active.timeLeft / proj.durationSec) * 100)}%`, height: '100%', backgroundColor: '#f1c40f' }} />
                                 </div>
-                                <div style={{ fontSize: '0.75em', color: '#bdc3c7', marginTop: '3px', textAlign: 'right' }}>{active.timeLeft.toFixed(1)}s</div>
+                                <div style={{ fontSize: '0.75em', color: '#bdc3c7', marginTop: '3px', textAlign: 'right' }}>{fmtNum(active.timeLeft, 1)}s</div>
                               </div>
                             )}
                           </div>
@@ -6709,11 +6795,11 @@ function App() {
                     <div style={{ backgroundColor: '#2c3e50', padding: '15px', borderRadius: '6px', border: '1px solid #465c71', marginBottom: '20px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
                         <span style={{ color: '#bdc3c7' }}>Aktywni Użytkownicy:</span>
-                        <strong style={{ color: '#2ecc71', fontSize: '1.2em' }}>{state.dotcomUsers.toLocaleString()}</strong>
+                        <strong style={{ color: '#2ecc71', fontSize: '1.2em' }}>{state.dotcomUsers.toLocaleString('pl-PL')}</strong>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
                         <span style={{ color: '#bdc3c7' }}>Pojemność Serwerów:</span>
-                        <strong style={{ color: '#fff' }}>{state.dotcomServerCapacity.toLocaleString()}</strong>
+                        <strong style={{ color: '#fff' }}>{state.dotcomServerCapacity.toLocaleString('pl-PL')}</strong>
                       </div>
                       <div style={{ width: '100%', height: '8px', backgroundColor: '#34495e', borderRadius: '4px', overflow: 'hidden' }}>
                         <div style={{ width: `${Math.min(100, (state.dotcomUsers / state.dotcomServerCapacity) * 100)}%`, height: '100%', backgroundColor: state.dotcomUsers >= state.dotcomServerCapacity ? '#e74c3c' : '#2ecc71' }} />
@@ -6735,7 +6821,7 @@ function App() {
                               <span style={{ fontSize: '0.8em', color: '#2ecc71', fontWeight: 'bold' }}>POSIADASZ</span>
                             ) : (
                               <button onClick={() => buyDotcomUpgrade(upg.id)} disabled={!canBuy} style={{ padding: '6px 12px', fontSize: '0.8em', backgroundColor: '#2ecc71', color: '#fff', border: 'none', borderRadius: '4px', cursor: canBuy ? 'pointer' : 'not-allowed', fontWeight: 'bold' }}>
-                                Kup ({upg.costPln.toLocaleString()} PLN)
+                                Kup ({upg.costPln.toLocaleString('pl-PL')} PLN)
                               </button>
                             )}
                           </div>
@@ -6761,7 +6847,7 @@ function App() {
                           <div key={proj.id} style={{ padding: '15px', backgroundColor: '#2c3e50', borderRadius: '6px', border: '1px solid #465c71' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <strong style={{ fontSize: '1.1em', color: '#fff' }}>{proj.name}</strong>
-                              <span style={{ fontSize: '0.85em', color: '#2ecc71', fontWeight: 'bold' }}>Sprzedaż: {proj.sellRevenuePln.toLocaleString()} PLN</span>
+                              <span style={{ fontSize: '0.85em', color: '#2ecc71', fontWeight: 'bold' }}>Sprzedaż: {proj.sellRevenuePln.toLocaleString('pl-PL')} PLN</span>
                             </div>
                             <div style={{ fontSize: '0.85em', color: '#bdc3c7', margin: '8px 0' }}>{proj.desc}</div>
                             
@@ -6769,9 +6855,9 @@ function App() {
                               <span style={{ fontSize: '0.85em', color: '#ecf0f1' }}>Posiadasz: <strong>{owned} szt.</strong></span>
                               <div style={{ display: 'flex', gap: '8px' }}>
                                 <button onClick={() => buyRealEstate(proj.id, false)} disabled={!canBuyCash} style={{ padding: '6px 12px', fontSize: '0.8em', backgroundColor: '#2ecc71', color: '#fff', border: 'none', borderRadius: '4px', cursor: canBuyCash ? 'pointer' : 'not-allowed', fontWeight: 'bold' }}>
-                                  Kup ({proj.costPln.toLocaleString()} PLN)
+                                  Kup ({proj.costPln.toLocaleString('pl-PL')} PLN)
                                 </button>
-                                <button onClick={() => buyRealEstate(proj.id, true)} style={{ padding: '6px 12px', fontSize: '0.8em', backgroundColor: '#e74c3c', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }} title={`Pobierze ${neededChf.toLocaleString()} CHF kredytu`}>
+                                <button onClick={() => buyRealEstate(proj.id, true)} style={{ padding: '6px 12px', fontSize: '0.8em', backgroundColor: '#e74c3c', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }} title={`Pobierze ${neededChf.toLocaleString('pl-PL')} CHF kredytu`}>
                                   Kredyt CHF
                                 </button>
                                 <button onClick={() => sellRealEstate(proj.id)} disabled={owned <= 0} style={{ padding: '6px 12px', fontSize: '0.8em', backgroundColor: '#3498db', color: '#fff', border: 'none', borderRadius: '4px', cursor: owned > 0 ? 'pointer' : 'not-allowed', fontWeight: 'bold' }}>
@@ -6831,7 +6917,7 @@ function App() {
                             </div>
                             <div style={{ fontSize: '0.75em', color: '#bdc3c7', margin: '4px 0' }}>{opt.desc}</div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '5px' }}>
-                              <span style={{ fontSize: '0.8em', color: '#bdc3c7' }}>Premia: <strong>{opt.premiumPln === 0 ? 'DARMOWA*' : `${opt.premiumPln.toLocaleString()} PLN`}</strong></span>
+                              <span style={{ fontSize: '0.8em', color: '#bdc3c7' }}>Premia: <strong>{opt.premiumPln === 0 ? 'DARMOWA*' : `${opt.premiumPln.toLocaleString('pl-PL')} PLN`}</strong></span>
                               <button onClick={() => buyCurrencyOption(opt.id)} disabled={!canBuy} style={{ padding: '4px 10px', fontSize: '0.75em', backgroundColor: '#9b59b6', color: '#fff', border: 'none', borderRadius: '4px', cursor: canBuy ? 'pointer' : 'not-allowed', fontWeight: 'bold' }}>
                                 Kup ({opt.durationSec}s)
                               </button>
@@ -6847,8 +6933,8 @@ function App() {
                         <div style={{ display: 'grid', gap: '5px', marginTop: '8px', maxHeight: '150px', overflowY: 'auto' }}>
                           {state.currencyOptions.map(opt => (
                             <div key={opt.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#2c3e50', padding: '6px', borderRadius: '4px', borderLeft: '3px solid #9b59b6', fontSize: '0.8em' }}>
-                              <span>{opt.type.toUpperCase()} ({opt.amountChf.toLocaleString()} CHF @ {opt.strikeRate.toFixed(2)})</span>
-                              <span style={{ color: '#f1c40f', fontWeight: 'bold' }}>{opt.timeLeft.toFixed(1)}s</span>
+                              <span>{opt.type.toUpperCase()} ({opt.amountChf.toLocaleString('pl-PL')} CHF @ {fmtNum(opt.strikeRate, 2)})</span>
+                              <span style={{ color: '#f1c40f', fontWeight: 'bold' }}>{fmtNum(opt.timeLeft, 1)}s</span>
                             </div>
                           ))}
                         </div>
@@ -6873,7 +6959,7 @@ function App() {
                                 <div key={proj.id} style={{ padding: '10px', backgroundColor: '#2c3e50', borderRadius: '6px', border: '1px solid #465c71' }}>
                                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <strong style={{ fontSize: '0.9em', color: '#fff' }}>{proj.name}</strong>
-                                    <span style={{ fontSize: '0.8em', color: '#e67e22', fontWeight: 'bold' }}>Syndyk: {proj.buyCostPln.toLocaleString()} PLN</span>
+                                    <span style={{ fontSize: '0.8em', color: '#e67e22', fontWeight: 'bold' }}>Syndyk: {proj.buyCostPln.toLocaleString('pl-PL')} PLN</span>
                                   </div>
                                   <div style={{ fontSize: '0.75em', color: '#bdc3c7', margin: '4px 0' }}>{proj.desc}</div>
                                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '5px' }}>
@@ -6894,7 +6980,7 @@ function App() {
                       )}
 
                       {/* Zarządzanie posiadanymi nieruchomościami kryzysowymi */}
-                      {Object.entries(state.crisisRealEstateOwned).some(([_, count]) => count > 0) && (
+                      {Object.values(state.crisisRealEstateOwned).some(count => count > 0) && (
                         <div style={{ borderTop: '1px solid #465c71', paddingTop: '10px' }}>
                           <strong style={{ fontSize: '0.85em', color: '#fff' }}>Zarządzaj budowami kryzysowymi:</strong>
                           <div style={{ display: 'grid', gap: '10px', marginTop: '10px' }}>
@@ -6937,14 +7023,14 @@ function App() {
                     <h3 style={{ margin: '0 0 15px 0', color: '#f1c40f' }}>Agencja Pracy: Bilet do Londynu</h3>
                     <p style={{ color: '#bdc3c7', fontSize: '1.05em' }}>Polska w UE to otwarte granice! Wyślij rodaków do pracy w UK lub Irlandii. Pobierasz drobną prowizję od ich zarobków w funtach (GBP).</p>
                     <div style={{ margin: '20px 0', fontSize: '1.2em', color: '#ecf0f1' }}>
-                      Wysłanych pracowników: <strong style={{ color: '#f1c40f', fontSize: '1.5em' }}>{state.zmywakWorkers.toLocaleString()}</strong>
+                      Wysłanych pracowników: <strong style={{ color: '#f1c40f', fontSize: '1.5em' }}>{state.zmywakWorkers.toLocaleString('pl-PL')}</strong>
                     </div>
                     <div style={{ marginBottom: '20px', fontSize: '0.9em', color: '#2ecc71' }}>
-                      Pasywny przychód: <strong>+{Math.floor(state.zmywakWorkers * 5 * 0.15 * 6).toLocaleString()} PLN/s</strong>
+                      Pasywny przychód: <strong>+{Math.floor(state.zmywakWorkers * 5 * 0.15 * 6).toLocaleString('pl-PL')} PLN/s</strong>
                     </div>
                     
                     <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-                      <button onClick={() => sendWorkerToZmywak(1)} disabled={state.pln < 2000} style={{ padding: '10px 20px', backgroundColor: '#3498db', color: '#fff', border: 'none', borderRadius: '4px', cursor: state.pln >= 2000 ? 'pointer' : 'not-allowed', fontWeight: 'bold' }}>Wyslij 1 osobę (2 000 PLN)</button>
+                      <button onClick={() => sendWorkerToZmywak(1)} disabled={state.pln < 2000} style={{ padding: '10px 20px', backgroundColor: '#3498db', color: '#fff', border: 'none', borderRadius: '4px', cursor: state.pln >= 2000 ? 'pointer' : 'not-allowed', fontWeight: 'bold' }}>Wyślij 1 osobę (2 000 PLN)</button>
                       <button onClick={() => sendWorkerToZmywak(100)} disabled={state.pln < 200000} style={{ padding: '10px 20px', backgroundColor: '#2980b9', color: '#fff', border: 'none', borderRadius: '4px', cursor: state.pln >= 200000 ? 'pointer' : 'not-allowed', fontWeight: 'bold' }}>Wyślij 100 osób (200 tys. PLN)</button>
                     </div>
                   </div>
@@ -6968,7 +7054,7 @@ function App() {
                                 Efekt: {bill.effectDesc}
                               </div>
                               <div style={{ fontSize: '0.8em', color: '#e74c3c', marginTop: '2px' }}>
-                                Koszt: -{bill.bribeCostPerSec.toLocaleString()} PLN/s | Korupcja: +{bill.corruptionPerSec}%/s
+                                Koszt: -{bill.bribeCostPerSec.toLocaleString('pl-PL')} PLN/s | Korupcja: +{bill.corruptionPerSec}%/s
                               </div>
                             </div>
                             <button
@@ -7047,12 +7133,12 @@ function App() {
                     {/* Control Panel */}
                     <div style={{ backgroundColor: '#2c3e50', padding: '15px', borderRadius: '6px', border: '1px solid #465c71', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
                       <div>
-                        <div>Roszczenie o zwrot VAT: <strong style={{ color: '#2ecc71', fontSize: '1.2em' }}>{Math.floor(state.vatRefundClaimed || 0).toLocaleString()} PLN</strong></div>
+                        <div>Roszczenie o zwrot VAT: <strong style={{ color: '#2ecc71', fontSize: '1.2em' }}>{Math.floor(state.vatRefundClaimed || 0).toLocaleString('pl-PL')} PLN</strong></div>
                         <div style={{ fontSize: '0.8em', color: '#bdc3c7', marginTop: '2px' }}>
                           Status deklaracji: {state.vatRefundStatus === 'none' ? 'Brak deklaracji' :
                                              state.vatRefundStatus === 'pending' ? `Weryfikacja w toku (${Math.ceil(state.vatRefundTimer || 0)}s)` :
                                              state.vatRefundStatus === 'approved' ? 'Zwrócono pomyślnie' : 'Odrzucono (Kontrola)'}
-                          {state.vatRefundStatus === 'pending' && ` (${Math.floor(state.vatRefundPendingAmount).toLocaleString()} PLN)`}
+                          {state.vatRefundStatus === 'pending' && ` (${Math.floor(state.vatRefundPendingAmount).toLocaleString('pl-PL')} PLN)`}
                         </div>
                       </div>
                       <div style={{ display: 'flex', gap: '10px' }}>
@@ -7122,7 +7208,7 @@ function App() {
                             <p style={{ fontSize: '0.8em', color: '#bdc3c7', margin: '5px 0' }}>{goods?.desc}</p>
                             
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', backgroundColor: '#34495e', padding: '10px', borderRadius: '4px' }}>
-                              <div>Kapitał obrotowy: <strong style={{ color: '#fff' }}>{comp.capital.toLocaleString()} PLN</strong></div>
+                              <div>Kapitał obrotowy: <strong style={{ color: '#fff' }}>{comp.capital.toLocaleString('pl-PL')} PLN</strong></div>
                               <div style={{ display: 'flex', gap: '5px' }}>
                                 <button onClick={() => addCompanyCapital(comp.id, 50000)} disabled={comp.status === 'inspected' || state.pln < 50000} style={{ padding: '4px 8px', fontSize: '0.75em', cursor: 'pointer', fontWeight: 'bold' }}>+50k PLN</button>
                                 <button onClick={() => addCompanyCapital(comp.id, 100000)} disabled={comp.status === 'inspected' || state.pln < 100000} style={{ padding: '4px 8px', fontSize: '0.75em', cursor: 'pointer', fontWeight: 'bold' }}>+100k PLN</button>
@@ -7158,7 +7244,7 @@ function App() {
                             />
                             <select
                               value={newCompanyGoods}
-                              onChange={(e) => setNewCompanyGoods(e.target.value as any)}
+                              onChange={(e) => setNewCompanyGoods(e.target.value as 'electronics' | 'steel' | 'fuel')}
                               style={{ flex: 1, padding: '8px', borderRadius: '4px', border: '1px solid #7f8c8d', backgroundColor: '#34495e', color: '#fff' }}
                             >
                               <option value="steel">Stal zbrojeniowa</option>
@@ -7218,7 +7304,7 @@ function App() {
                       <div style={{ backgroundColor: '#34495e', padding: '10px', borderRadius: '4px', textAlign: 'center', marginBottom: '15px' }}>
                         <span>Środki na Cyprze:</span>
                         <div style={{ fontSize: '1.4em', color: '#1abc9c', fontWeight: 'bold', marginTop: '5px' }}>
-                          {Math.floor(state.offshoreCyprusBalance || 0).toLocaleString()} PLN
+                          {Math.floor(state.offshoreCyprusBalance || 0).toLocaleString('pl-PL')} PLN
                         </div>
                       </div>
 
@@ -7355,7 +7441,8 @@ function App() {
                           <div>
                              <span>{item.name}</span>
                              <div style={{fontSize: '0.8rem', color: 'var(--prl-gray)'}}>
-                                Koszt: {cost} zł {item.kartkiCost ? `+ ${isKartkiRequired(item) ? item.kartkiCost : 0} kartek` : ''}
+                                {/* [Claude] naprawa odmiany: "1 kartek" -> "1 kartka", "2 kartki" itd. */}
+                                Koszt: {cost} zł {item.kartkiCost ? `+ ${isKartkiRequired(item) ? item.kartkiCost : 0} ${pluralPL(isKartkiRequired(item) ? item.kartkiCost : 0, 'kartka', 'kartki', 'kartek')}` : ''}
                                 {!isKartkiRequired(item) && item.kartkiCost && <span style={{color: 'var(--dollar-green)', marginLeft: '5px'}}>(BEZ KARTKI!)</span>}
                                 {state.activeEvent === 'podwyzki' && <span style={{color: 'var(--prl-red)', marginLeft: '5px'}}>(PODWYŻKA!)</span>}
                              </div>
@@ -7374,12 +7461,12 @@ function App() {
                         </div>
                         {activeQueue === item.id && (
                           <div style={{width: '100%', height: '10px', background: '#222', marginTop: '5px'}}>
-                            <div style={{width: `${queueProgress}%`, height: '100%', background: '#33ff33'}} />
+                            <div style={{width: `${queueProgress}%`, height: '100%', background: '#33ff33', transition: 'width 0.2s linear'}} />
                           </div>
                         )}
                         {activeQueue2 === item.id && (
                           <div style={{width: '100%', height: '10px', background: '#222', marginTop: '5px'}}>
-                            <div style={{width: `${queueProgress2}%`, height: '100%', background: '#ff33ff'}} />
+                            <div style={{width: `${queueProgress2}%`, height: '100%', background: '#ff33ff', transition: 'width 0.2s linear'}} />
                           </div>
                         )}
                       </div>
@@ -7655,7 +7742,7 @@ function App() {
                             <strong>Obligacje PRL (Nominalne)</strong>
                             <button onClick={buyBondPRL} style={{padding: '2px 5px', fontSize: '0.75rem'}}>Kup ({Math.floor(50000 * (1 + state.inflationPercent/100))} zł)</button>
                           </div>
-                          <span style={{fontSize: '0.75rem', color: 'var(--prl-gray)'}}>Masz: {state.bondPrlCount || 0} szt. | Zysk: +{((state.bondPrlCount || 0) * 2000).toLocaleString()} zł/s</span>
+                          <span style={{fontSize: '0.75rem', color: 'var(--prl-gray)'}}>Masz: {state.bondPrlCount || 0} szt. | Zysk: +{((state.bondPrlCount || 0) * 2000).toLocaleString('pl-PL')} zł/s</span>
                         </div>
                         <div className="flex-col">
                           <div className="flex justify-between items-center">
@@ -7665,10 +7752,10 @@ function App() {
                               <button onClick={() => buyBondSolidarnos('dollars')} style={{padding: '2px 5px', fontSize: '0.75rem'}}>100$</button>
                             </div>
                           </div>
-                          <span style={{fontSize: '0.75rem', color: 'var(--prl-gray)'}}>Masz: {state.bondSolCount || 0} szt. | Oprocentowanie: +{(state.inflationPercent + 5).toFixed(1)}%/s</span>
+                          <span style={{fontSize: '0.75rem', color: 'var(--prl-gray)'}}>Masz: {state.bondSolCount || 0} szt. | Oprocentowanie: +{fmtNum((state.inflationPercent + 5), 1)}%/s</span>
                           {state.bondSolCount > 0 && (
                             <div className="flex justify-between items-center style-button" style={{marginTop: '5px', background: 'rgba(255, 215, 0, 0.1)', padding: '5px'}}>
-                              <span>Wartość: {Math.floor(state.bondSolValue || 0).toLocaleString()} zł</span>
+                              <span>Wartość: {Math.floor(state.bondSolValue || 0).toLocaleString('pl-PL')} zł</span>
                               <button onClick={redeemSolidarnosBonds} style={{padding: '2px 5px', fontSize: '0.75rem', borderColor: '#ffd700', color: '#ffd700'}}>Wykup</button>
                             </div>
                           )}
@@ -7912,7 +7999,7 @@ function App() {
                    {state.blackMarketOffers.map(offer => {
                       const costDesc = offer.costPln !== undefined ? `${offer.costPln} zł` :
                                        offer.costTalony !== undefined ? `${offer.costTalony} Talonów` :
-                                       `${offer.costRuble} Rubli`;
+                                       `${offer.costRuble} ${pluralPL(offer.costRuble || 0, 'rubel', 'ruble', 'rubli')}`;
                                        
                       const isAffordable = offer.costPln !== undefined ? state.pln >= offer.costPln :
                                            offer.costTalony !== undefined ? state.talony >= offer.costTalony :
@@ -8149,7 +8236,7 @@ function App() {
                             </div>
                             {activeSmuggle === r.id && (
                               <div style={{width: '100%', height: '10px', background: '#222', marginTop: '5px'}}>
-                                <div style={{width: `${smuggleProgress}%`, height: '100%', background: 'var(--dollar-green)'}} />
+                                <div style={{width: `${smuggleProgress}%`, height: '100%', background: 'var(--dollar-green)', transition: 'width 0.2s linear'}} />
                               </div>
                             )}
                           </div>
@@ -8206,7 +8293,8 @@ function App() {
                               </button>
                             </div>
                             <span style={{fontSize: '0.8rem', color: 'var(--prl-gray)'}}>
-                              {h.desc} ({parseFloat((h.ratePerTick * helperMult * upgradeMult * (1 + passiveGen)).toFixed(4))}/sek)
+                              {/* [Claude] naprawa: parseFloat(toFixed()) dawało kropkę dziesiętną; fmtNum daje polski przecinek */}
+                              {h.desc} ({fmtNum(h.ratePerTick * helperMult * upgradeMult * (1 + passiveGen), 4, true)}/sek)
                             </span>
                             {count > 0 && upgradeInfo && (
                               <div className="flex justify-between items-center mt-1" style={{paddingLeft: '10px'}}>
@@ -8337,7 +8425,7 @@ function App() {
                             </div>
                             {state.activeSeaSmuggle === r.id && (
                               <div style={{width: '100%', height: '10px', background: '#222', marginTop: '5px'}}>
-                                <div style={{width: `${state.seaSmuggleProgress}%`, height: '100%', background: 'var(--prl-yellow)'}} />
+                                <div style={{width: `${state.seaSmuggleProgress}%`, height: '100%', background: 'var(--prl-yellow)', transition: 'width 0.2s linear'}} />
                               </div>
                             )}
                           </div>
@@ -8428,7 +8516,7 @@ function App() {
                            <div className="flex-col">
                              <span style={{fontSize: '0.8rem', color: 'var(--prl-gray)'}}>PODEJRZENIE SB:</span>
                              <span style={{fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--prl-red)', textShadow: '0 0 5px rgba(255,0,0,0.5)'}}>
-                               {(state.sbSuspicion || 0).toFixed(1)}%
+                               {fmtNum((state.sbSuspicion || 0), 1)}%
                              </span>
                            </div>
                            <button 
@@ -8495,7 +8583,7 @@ function App() {
                                    marginTop: '15px'
                                  }}
                                >
-                                 Załóż spółkę (Zarejestruj: {comp.costPln.toLocaleString()} zł)
+                                 Załóż spółkę (Zarejestruj: {comp.costPln.toLocaleString('pl-PL')} zł)
                                </button>
                              </div>
                            );
@@ -8523,11 +8611,11 @@ function App() {
                          if (comp.generateType === 'pln') {
                            const inflationFactor = 1 + (state.inflationPercent / 100);
                            const plnAmount = Math.floor(comp.baseRate * rateMult * inflationFactor);
-                           revenueDisplay = `+${plnAmount.toLocaleString()} zł/s`;
+                           revenueDisplay = `+${plnAmount.toLocaleString('pl-PL')} zł/s`;
                          } else if (comp.generateType === 'dollars') {
                            revenueDisplay = `+$${Math.floor(comp.baseRate * rateMult)} USD/s`;
                          } else if (comp.generateType === 'autos') {
-                           revenueDisplay = `Montaż aut: poz. ${rateMult.toFixed(1)} (czas śr: ${Math.round(60/rateMult)}s)`;
+                           revenueDisplay = `Montaż aut: poz. ${fmtNum(rateMult, 1)} (czas śr: ${Math.round(60/rateMult)}s)`;
                          } else if (comp.generateType === 'special') {
                            revenueDisplay = `+${Math.floor(comp.baseRate * rateMult)} rubli/s, +${Math.floor(2 * rateMult)} bonów/s`;
                          }
@@ -8568,7 +8656,7 @@ function App() {
                                      backgroundColor: 'transparent'
                                    }}
                                  >
-                                   Kup ({nextLeasingCost.toLocaleString()} zł)
+                                   Kup ({nextLeasingCost.toLocaleString('pl-PL')} zł)
                                  </button>
                                </div>
 
@@ -8848,7 +8936,7 @@ function App() {
                     <h3 style={{color: '#e63946', marginTop: 0}}>★ OKRĄGŁY STÓŁ (Alternatywne Zwycięstwo)</h3>
                     <p style={{fontSize: '0.85rem', marginBottom: '10px'}}>
                       Wymagania: <strong>1 000 kartek</strong> i <strong>100 000 zł</strong><br/>
-                      Posiadasz: {Math.floor(state.kartki)} kartek | {Math.floor(state.pln).toLocaleString()} zł
+                      Posiadasz: {Math.floor(state.kartki)} {pluralPL(state.kartki, 'kartkę', 'kartki', 'kartek')} | {Math.floor(state.pln).toLocaleString('pl-PL')} zł
                     </p>
                     {state.okraglyStolVictory ? (
                       <div style={{color: '#e63946', fontWeight: 'bold', fontSize: '1.1rem'}}>★ HISTORIA DOKONANA! OKRĄGŁY STÓŁ PODPISANY!</div>
@@ -8916,7 +9004,7 @@ function App() {
                       
                       {state.isPrinting && (
                         <div style={{width: '100%', height: '10px', background: '#222', border: '1px solid var(--crt-border)'}}>
-                          <div style={{width: `${state.printProgress}%`, height: '100%', background: 'var(--crt-text)'}} />
+                          <div style={{width: `${state.printProgress}%`, height: '100%', background: 'var(--crt-text)', transition: 'width 0.2s linear'}} />
                         </div>
                       )}
                     </div>
@@ -9235,12 +9323,12 @@ function App() {
                           >
                             <div className="flex-col">
                               <span style={{fontWeight: 'bold', color: isSelected ? '#39ff14' : 'var(--crt-text)'}}>{stock.name}</span>
-                              <span style={{fontSize: '0.75rem', color: 'var(--prl-gray)'}}>Dywidenda: {(stock.dividendRate * 100).toFixed(1)}% co 30s | Posiadasz: {owned}</span>
+                              <span style={{fontSize: '0.75rem', color: 'var(--prl-gray)'}}>Dywidenda: {fmtNum((stock.dividendRate * 100), 1)}% co 30s | Posiadasz: {owned}</span>
                             </div>
                             <div style={{textAlign: 'right'}} className="flex-col">
                               <span style={{fontSize: '1.1rem', fontWeight: 'bold'}}>{price} zł</span>
                               <span style={{fontSize: '0.8rem', color: baseDiff >= 0 ? '#39ff14' : 'var(--prl-red)'}}>
-                                {baseDiff >= 0 ? '+' : ''}{baseDiff.toFixed(1)}%
+                                {baseDiff >= 0 ? '+' : ''}{fmtNum(baseDiff, 1)}%
                               </span>
                             </div>
                           </div>
@@ -9303,7 +9391,7 @@ function App() {
                         <span>Wycena portfela: <strong>{totalValue} zł</strong></span>
                         <span>Zysk / Strata: 
                           <strong style={{color: profitLoss >= 0 ? '#39ff14' : 'var(--prl-red)', marginLeft: '5px'}}>
-                            {profitLoss >= 0 ? '+' : ''}{profitLoss} zł ({profitLossPercent >= 0 ? '+' : ''}{profitLossPercent.toFixed(1)}%)
+                            {profitLoss >= 0 ? '+' : ''}{profitLoss} zł ({profitLossPercent >= 0 ? '+' : ''}{fmtNum(profitLossPercent, 1)}%)
                           </strong>
                         </span>
                       </div>
@@ -9492,11 +9580,11 @@ function App() {
                    <div className="flex gap-4">
                      <div className="flex-col text-right" style={{background: 'rgba(255,215,0,0.05)', padding: '10px 20px', borderRadius: '4px', border: '1px solid rgba(255,215,0,0.2)'}}>
                        <span style={{fontSize: '0.75rem', color: '#8fa9c4'}}>SALDO PLN (OFFSHORE)</span>
-                       <span style={{fontSize: '1.4rem', fontWeight: 'bold', color: 'gold'}}>{(state.swissBalancePln || 0).toLocaleString()} zł</span>
+                       <span style={{fontSize: '1.4rem', fontWeight: 'bold', color: 'gold'}}>{(state.swissBalancePln || 0).toLocaleString('pl-PL')} zł</span>
                      </div>
                      <div className="flex-col text-right" style={{background: 'rgba(0,225,217,0.05)', padding: '10px 20px', borderRadius: '4px', border: '1px solid rgba(0,225,217,0.2)'}}>
                        <span style={{fontSize: '0.75rem', color: '#8fa9c4'}}>SALDO USD (DEWIZY)</span>
-                       <span style={{fontSize: '1.4rem', fontWeight: 'bold', color: '#00e1d9'}}>${(state.swissBalanceUsd || 0).toLocaleString()}</span>
+                       <span style={{fontSize: '1.4rem', fontWeight: 'bold', color: '#00e1d9'}}>${(state.swissBalanceUsd || 0).toLocaleString('pl-PL')}</span>
                      </div>
                    </div>
                  </div>
@@ -9505,7 +9593,7 @@ function App() {
                  <div style={{marginTop: '20px', borderTop: '1px solid #1a324f', paddingTop: '15px'}}>
                    <div className="flex justify-between items-center mb-1">
                      <span style={{fontSize: '0.8rem', color: 'var(--prl-red)'}}>🚨 MONITORING OPERACJI FINANSOWYCH (INTERPOL)</span>
-                     <span style={{fontSize: '1rem', fontWeight: 'bold', color: 'var(--prl-red)'}}>{(state.interpolSuspicion || 0).toFixed(1)}%</span>
+                     <span style={{fontSize: '1rem', fontWeight: 'bold', color: 'var(--prl-red)'}}>{fmtNum((state.interpolSuspicion || 0), 1)}%</span>
                    </div>
                    <div style={{background: '#111', height: '10px', borderRadius: '3px', overflow: 'hidden'}}>
                      <div style={{
@@ -9539,26 +9627,26 @@ function App() {
 
                    {state.offshoreCreditTaken <= 0 ? (
                      <div className="flex-col gap-2">
-                       <div style={{fontSize: '0.85rem'}}>Twój majątek krajowy pozwala na pożyczenie do: <strong style={{color: '#00e1d9'}}>${maxUsdCredit.toLocaleString()} USD</strong></div>
+                       <div style={{fontSize: '0.85rem'}}>Twój majątek krajowy pozwala na pożyczenie do: <strong style={{color: '#00e1d9'}}>${maxUsdCredit.toLocaleString('pl-PL')} USD</strong></div>
                        <button 
                          disabled={maxUsdCredit <= 0 || isInterpolLockdown}
                          onClick={takeOffshoreCredit}
                          style={{width: '100%', padding: '10px', borderColor: maxUsdCredit > 0 ? '#00e1d9' : 'var(--prl-gray)', color: maxUsdCredit > 0 ? '#00e1d9' : 'var(--prl-gray)', backgroundColor: 'transparent'}}
                        >
-                         Zaciągnij kredyt dewizowy (${maxUsdCredit.toLocaleString()} USD)
+                         Zaciągnij kredyt dewizowy (${maxUsdCredit.toLocaleString('pl-PL')} USD)
                        </button>
                      </div>
                    ) : (
                      <div className="flex-col gap-2">
-                       <div style={{color: 'var(--prl-yellow)', fontWeight: 'bold'}}>Aktywny kredyt: ${state.offshoreCreditTaken.toLocaleString()} USD</div>
+                       <div style={{color: 'var(--prl-yellow)', fontWeight: 'bold'}}>Aktywny kredyt: ${state.offshoreCreditTaken.toLocaleString('pl-PL')} USD</div>
                        <div style={{fontSize: '0.85rem'}}>Pozostało czasu na spłatę: <strong style={{color: 'var(--prl-red)'}}>{Math.floor(state.offshoreCreditTimeLeft)}s</strong></div>
-                       <div style={{fontSize: '0.85rem'}}>Koszt spłaty (kredyt + 10% prowizji): <strong style={{color: '#00e1d9'}}>${Math.round(state.offshoreCreditTaken * 1.10).toLocaleString()} USD</strong></div>
+                       <div style={{fontSize: '0.85rem'}}>Koszt spłaty (kredyt + 10% prowizji): <strong style={{color: '#00e1d9'}}>${Math.round(state.offshoreCreditTaken * 1.10).toLocaleString('pl-PL')} USD</strong></div>
                        <button 
                          disabled={state.swissBalanceUsd < Math.round(state.offshoreCreditTaken * 1.10) || isInterpolLockdown}
                          onClick={payOffshoreCredit}
                          style={{width: '100%', padding: '10px', borderColor: 'var(--prl-yellow)', color: 'var(--prl-yellow)', backgroundColor: 'transparent', marginTop: '10px'}}
                        >
-                         Spłać kredyt z konta szwajcarskiego (${Math.round(state.offshoreCreditTaken * 1.10).toLocaleString()} USD)
+                         Spłać kredyt z konta szwajcarskiego (${Math.round(state.offshoreCreditTaken * 1.10).toLocaleString('pl-PL')} USD)
                        </button>
                      </div>
                    )}
@@ -9655,13 +9743,13 @@ function App() {
                          <div style={{maxHeight: '250px', overflowY: 'auto', marginTop: '5px'}}>
                            {(state.activeWireTransfers || []).map(w => (
                              <div key={w.id} className="flex justify-between items-center" style={{fontSize: '0.75rem', padding: '3px 0'}}>
-                               <span>⚡ SWIFT: {w.amount.toLocaleString()} {w.currency === 'pln' ? 'zł' : 'USD'}</span>
+                               <span>⚡ SWIFT: {w.amount.toLocaleString('pl-PL')} {w.currency === 'pln' ? 'zł' : 'USD'}</span>
                                <span style={{color: 'gold'}}>Księgowanie: {Math.round(w.timeLeft)}s</span>
                              </div>
                            ))}
                            {(state.activeCouriers || []).map(c => (
                              <div key={c.id} className="flex justify-between items-center" style={{fontSize: '0.75rem', padding: '3px 0'}}>
-                               <span>🏃 Kurier: {c.amount.toLocaleString()} {c.currency === 'pln' ? 'zł' : 'USD'}</span>
+                               <span>🏃 Kurier: {c.amount.toLocaleString('pl-PL')} {c.currency === 'pln' ? 'zł' : 'USD'}</span>
                                <span style={{color: 'var(--prl-yellow)'}}>W podróży: {Math.round(c.timeLeft)}s</span>
                              </div>
                            ))}
@@ -9700,7 +9788,7 @@ function App() {
                  <div className="flex-col gap-4">
                    <div className="panel flex-col gap-2">
                      <h3>3. KANTOR DEWIZOWY W ZURYCHU</h3>
-                     <p style={{fontSize: '0.75rem', color: 'var(--prl-gray)'}}>Bezpieczna i szybka wymiana walut offshore. Kurs: <strong style={{color: 'gold'}}>1 USD = {currentMarketRate.toLocaleString()} PLN</strong>.</p>
+                     <p style={{fontSize: '0.75rem', color: 'var(--prl-gray)'}}>Bezpieczna i szybka wymiana walut offshore. Kurs: <strong style={{color: 'gold'}}>1 USD = {currentMarketRate.toLocaleString('pl-PL')} PLN</strong>.</p>
                      
                      <div className="flex gap-2 items-center" style={{marginTop: '10px'}}>
                        <input 
@@ -9794,7 +9882,7 @@ function App() {
                              const type = OFFSHORE_DEPOSITS.find(t => t.id === d.depositTypeId);
                              return (
                                <div key={d.id} className="flex justify-between items-center" style={{fontSize: '0.75rem', padding: '3px 0'}}>
-                                 <span>📈 {type?.name || 'Lokata'}: {d.amount.toLocaleString()} {d.currency === 'pln' ? 'zł' : 'USD'}</span>
+                                 <span>📈 {type?.name || 'Lokata'}: {d.amount.toLocaleString('pl-PL')} {d.currency === 'pln' ? 'zł' : 'USD'}</span>
                                  <span style={{color: 'gold'}}>Czas: {Math.round(d.timeLeft)}s</span>
                                </div>
                              );
@@ -9839,7 +9927,7 @@ function App() {
                 <div className="flex justify-between items-center mb-2">
                   <h2 style={{color: '#c0392b', margin: 0}}>SYNDYKAT EKSPORTOWY</h2>
                   <div style={{fontSize: '1.2rem', color: '#39ff14'}}>
-                    Nielegalne Zyski: <span style={{fontWeight: 'bold'}}>{(state.cocomProceedsPln || 0).toLocaleString()} zł</span>
+                    Nielegalne Zyski: <span style={{fontWeight: 'bold'}}>{(state.cocomProceedsPln || 0).toLocaleString('pl-PL')} zł</span>
                   </div>
                 </div>
 
@@ -9884,7 +9972,7 @@ function App() {
                                 disabled={!canAfford || !hasRank}
                                 style={{padding: '5px 15px', backgroundColor: canAfford && hasRank ? '#00e1d9' : 'transparent', color: canAfford && hasRank ? '#000' : 'var(--crt-text)'}}
                               >
-                                {hasRank ? `Kup: $${item.costUsd.toLocaleString()}` : `Wymaga: ${item.requiredPartyRank?.toUpperCase()}`}
+                                {hasRank ? `Kup: $${item.costUsd.toLocaleString('pl-PL')}` : `Wymaga: ${item.requiredPartyRank?.toUpperCase()}`}
                               </button>
                             </div>
                           </div>
@@ -10073,7 +10161,7 @@ function App() {
                          <div className="flex justify-between items-center">
                            <span>Pojemność: {v.capacity}szt. | Kamuflaż: {v.stealthBonus > 0 ? '+'+v.stealthBonus : v.stealthBonus}%</span>
                            <button onClick={() => buyCocomVehicle(v.id)} style={{padding: '5px 10px', fontSize: '0.75rem'}}>
-                             Kup: {v.costPln > 0 ? `${v.costPln.toLocaleString()} PLN` : `$${v.costUsd.toLocaleString()}`}
+                             Kup: {v.costPln > 0 ? `${v.costPln.toLocaleString('pl-PL')} PLN` : `$${v.costUsd.toLocaleString('pl-PL')}`}
                            </button>
                          </div>
                        </div>
@@ -10090,9 +10178,9 @@ function App() {
                          </div>
                          <div style={{color: '#aaa', marginBottom: '5px'}}>{p.desc}</div>
                          <div className="flex justify-between items-center">
-                           <span>Pensja: {p.salaryPerRunPln.toLocaleString()} PLN | Kamuflaż: +{p.stealthBonus}%</span>
+                           <span>Pensja: {p.salaryPerRunPln.toLocaleString('pl-PL')} PLN | Kamuflaż: +{p.stealthBonus}%</span>
                            <button onClick={() => hireCocomPersonnel(p.id)} style={{padding: '5px 10px', fontSize: '0.75rem'}}>
-                             Werbuj: {p.costPln > 0 ? `${p.costPln.toLocaleString()} PLN` : `$${p.costUsd.toLocaleString()}`}
+                             Werbuj: {p.costPln > 0 ? `${p.costPln.toLocaleString('pl-PL')} PLN` : `$${p.costUsd.toLocaleString('pl-PL')}`}
                            </button>
                          </div>
                        </div>
@@ -10163,7 +10251,7 @@ function App() {
                 <div style={{ textAlign: 'right', display: 'flex', gap: '20px' }}>
                   <div>
                     <div style={{ fontSize: '0.8em', textTransform: 'uppercase' }}>Łącznie Głosów</div>
-                    <div style={{ fontSize: '1.5em', fontWeight: 'bold' }}>{totalVotes.toLocaleString()}</div>
+                    <div style={{ fontSize: '1.5em', fontWeight: 'bold' }}>{totalVotes.toLocaleString('pl-PL')}</div>
                   </div>
                   <div>
                     <div style={{ fontSize: '0.8em', textTransform: 'uppercase' }}>Propaganda TVP</div>
@@ -10184,7 +10272,7 @@ function App() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
                     <div style={{ padding: '10px', backgroundColor: '#f1f2f6', borderRadius: '4px', width: '45%' }}>
                       <div style={{ fontSize: '0.8em', color: '#7f8fa6' }}>Fundusz Wyborczy PLN</div>
-                      <div style={{ fontSize: '1.2em', fontWeight: 'bold' }}>{state.electionFundsPln.toLocaleString()} zł</div>
+                      <div style={{ fontSize: '1.2em', fontWeight: 'bold' }}>{state.electionFundsPln.toLocaleString('pl-PL')} zł</div>
                       <div style={{ display: 'flex', gap: '5px', marginTop: '5px' }}>
                         <button onClick={() => transferToCampaign(100000, 'pln')} style={{ flex: 1, padding: '2px', fontSize: '0.7em' }}>+100k</button>
                         <button onClick={() => transferToCampaign(1000000, 'pln')} style={{ flex: 1, padding: '2px', fontSize: '0.7em' }}>+1M</button>
@@ -10192,7 +10280,7 @@ function App() {
                     </div>
                     <div style={{ padding: '10px', backgroundColor: '#f1f2f6', borderRadius: '4px', width: '45%' }}>
                       <div style={{ fontSize: '0.8em', color: '#7f8fa6' }}>Fundusz Dewizowy USD</div>
-                      <div style={{ fontSize: '1.2em', fontWeight: 'bold', color: '#44bd32' }}>${state.electionFundsUsd.toLocaleString()}</div>
+                      <div style={{ fontSize: '1.2em', fontWeight: 'bold', color: '#44bd32' }}>${state.electionFundsUsd.toLocaleString('pl-PL')}</div>
                       <div style={{ display: 'flex', gap: '5px', marginTop: '5px' }}>
                         <button onClick={() => transferToCampaign(1000, 'usd')} style={{ flex: 1, padding: '2px', fontSize: '0.7em' }}>+$1k</button>
                         <button onClick={() => transferToCampaign(10000, 'usd')} style={{ flex: 1, padding: '2px', fontSize: '0.7em' }}>+$10k</button>
@@ -10204,14 +10292,14 @@ function App() {
                     <h4 style={{ margin: '0 0 5px 0', fontSize: '0.9em' }}>Drukarnia Centralna</h4>
                     <div style={{ display: 'flex', gap: '10px', fontSize: '0.9em' }}>
                       <div style={{ flex: 1, padding: '5px', border: '1px solid #dcdde1', textAlign: 'center' }}>
-                        Papier: <strong>{typeof state.paperStocks === 'number' ? Number(state.paperStocks.toFixed(2)) : state.paperStocks}</strong> ryz
+                        Papier: <strong>{fmtShort(state.paperStocks)}</strong> ryz
                         <div style={{ display: 'flex', gap: '2px', marginTop: '5px' }}>
                           <button onClick={() => buyPrintingSupplies('paper', 'pln')} style={{ flex: 1, fontSize: '0.8em' }}>Kup (5k zł)</button>
                           <button onClick={() => buyPrintingSupplies('paper', 'usd')} style={{ flex: 1, fontSize: '0.8em' }}>Kup ($50)</button>
                         </div>
                       </div>
                       <div style={{ flex: 1, padding: '5px', border: '1px solid #dcdde1', textAlign: 'center' }}>
-                        Tusz: <strong>{typeof state.inkStocks === 'number' ? Number(state.inkStocks.toFixed(2)) : state.inkStocks}</strong> l.
+                        Tusz: <strong>{fmtShort(state.inkStocks)}</strong> l.
                         <div style={{ display: 'flex', gap: '2px', marginTop: '5px' }}>
                           <button onClick={() => buyPrintingSupplies('ink', 'pln')} style={{ flex: 1, fontSize: '0.8em' }}>Kup (8k zł)</button>
                           <button onClick={() => buyPrintingSupplies('ink', 'usd')} style={{ flex: 1, fontSize: '0.8em' }}>Kup ($80)</button>
@@ -10279,13 +10367,13 @@ function App() {
                                 disabled={state.electionFundsPln < region.committeeCostPln}
                                 style={{ width: '100%', padding: '5px', backgroundColor: '#2f3640', color: '#fff', border: 'none', borderRadius: '3px' }}
                               >
-                                Otwórz Komitet ({region.committeeCostPln.toLocaleString()} zł)
+                                Otwórz Komitet ({region.committeeCostPln.toLocaleString('pl-PL')} zł)
                               </button>
                             </div>
                           ) : (
                             <div>
                               <div style={{ fontSize: '1.2em', fontWeight: 'bold', marginBottom: '5px' }}>
-                                {votes.toLocaleString()} <span style={{ fontSize: '0.6em', fontWeight: 'normal', color: '#7f8fa6' }}>głosów</span>
+                                {votes.toLocaleString('pl-PL')} <span style={{ fontSize: '0.6em', fontWeight: 'normal', color: '#7f8fa6' }}>głosów</span>
                               </div>
                               <div style={{ display: 'flex', gap: '5px' }}>
                                 <div style={{ fontSize: '0.7em', padding: '2px 4px', backgroundColor: '#eee', borderRadius: '2px' }}>Rob: {region.workerWeight * 100}%</div>
@@ -10601,14 +10689,14 @@ function App() {
                                 disabled={!canBuy}
                                 style={{ flex: 1, padding: '8px', fontSize: '0.9em', backgroundColor: '#c0392b', color: '#fff', border: 'none', borderRadius: '4px', cursor: canBuy ? 'pointer' : 'not-allowed', fontWeight: 'bold' }}
                               >
-                                Kup (Hurt: {buyP.toLocaleString()} zł)
+                                Kup (Hurt: {buyP.toLocaleString('pl-PL')} zł)
                               </button>
                               <button 
                                 onClick={() => sellBazarItem(item.id, 1)}
                                 disabled={qty < 1}
                                 style={{ flex: 1, padding: '8px', fontSize: '0.9em', backgroundColor: '#27ae60', color: '#fff', border: 'none', borderRadius: '4px', cursor: qty >= 1 ? 'pointer' : 'not-allowed', fontWeight: 'bold' }}
                               >
-                                Sprzedaj ({finalSellPrice.toLocaleString()} zł)
+                                Sprzedaj ({finalSellPrice.toLocaleString('pl-PL')} zł)
                               </button>
                             </div>
                             <div style={{ display: 'flex', gap: '10px', marginTop: '5px' }}>
@@ -10646,7 +10734,7 @@ function App() {
                             
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
                               <div style={{ fontSize: '0.8em', color: '#fff' }}>
-                                Koszt: <strong>{costPln.toLocaleString()} zł</strong> + <strong>${route.costUsd}</strong>
+                                Koszt: <strong>{costPln.toLocaleString('pl-PL')} zł</strong> + <strong>${route.costUsd}</strong>
                               </div>
                               <button
                                 onClick={() => dispatchBazarTransport(route.id)}
@@ -10661,7 +10749,7 @@ function App() {
                             {active.map(t => (
                               <div key={t.id} style={{ marginTop: '8px', padding: '6px', backgroundColor: '#34495e', borderRadius: '4px', fontSize: '0.8em', borderLeft: '4px solid #f1c40f', display: 'flex', justifyContent: 'space-between' }}>
                                 <span>🚚 Transport w drodze...</span>
-                                <strong>{t.timeLeft.toFixed(1)}s pozostało</strong>
+                                <strong>{fmtNum(t.timeLeft, 1)}s pozostało</strong>
                               </div>
                             ))}
                           </div>
@@ -10683,7 +10771,7 @@ function App() {
                           disabled={(state.activeBazarTransports || []).length === 0 || state.pln < Math.floor(2000000 * (state.isDenominated ? 1 : state.plzInflationMult))}
                           style={{ padding: '6px 12px', fontSize: '0.85em', backgroundColor: '#3498db', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
                         >
-                          Bribe ({(Math.floor(2000000 * (state.isDenominated ? 1 : state.plzInflationMult))).toLocaleString()} zł)
+                          Bribe ({(Math.floor(2000000 * (state.isDenominated ? 1 : state.plzInflationMult))).toLocaleString('pl-PL')} zł)
                         </button>
                       </div>
 
@@ -10707,7 +10795,7 @@ function App() {
                                 disabled={!canBuy}
                                 style={{ padding: '6px 12px', fontSize: '0.85em', backgroundColor: '#9b59b6', color: '#fff', border: 'none', borderRadius: '4px', cursor: canBuy ? 'pointer' : 'not-allowed', fontWeight: 'bold' }}
                               >
-                                Kup ({costPln.toLocaleString()} zł)
+                                Kup ({costPln.toLocaleString('pl-PL')} zł)
                               </button>
                             )}
                           </div>
@@ -10794,7 +10882,7 @@ function App() {
                                 <div style={{ display: 'flex', justifyContent: 'space-between', backgroundColor: '#334155', padding: '6px', borderRadius: '4px' }}>
                                   <span>Zysk z dywidendy:</span>
                                   <strong style={{ color: status.strikeActive ? '#ef4444' : '#10b981' }}>
-                                    {status.strikeActive ? '0 zł/s (ZABLOKOWANY)' : `+${currentDividend.toLocaleString()} zł/s`}
+                                    {status.strikeActive ? '0 zł/s (ZABLOKOWANY)' : `+${currentDividend.toLocaleString('pl-PL')} zł/s`}
                                   </strong>
                                 </div>
 
@@ -10829,7 +10917,7 @@ function App() {
                                 {/* ZATRUDNIENIE */}
                                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8em', color: '#cbd5e1' }}>
                                   <span>Zatrudnienie:</span>
-                                  <strong>{status.employment.toLocaleString()} robotników</strong>
+                                  <strong>{status.employment.toLocaleString('pl-PL')} robotników</strong>
                                 </div>
 
                                 {/* PRZYCISKI ZATRUDNIANIA/ZWALNIANIA */}
@@ -10843,11 +10931,11 @@ function App() {
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.85em', borderTop: '1px solid #465c71', paddingTop: '8px', marginBottom: '15px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                   <span>Bazowa Dywidenda:</span>
-                                  <strong style={{ color: '#2ecc71' }}>+{currentDividend.toLocaleString()} zł/s</strong>
+                                  <strong style={{ color: '#2ecc71' }}>+{currentDividend.toLocaleString('pl-PL')} zł/s</strong>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                   <span>Zatrudnienie:</span>
-                                  <span>{comp.baseEmployment.toLocaleString()} robotników</span>
+                                  <span>{comp.baseEmployment.toLocaleString('pl-PL')} robotników</span>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                   <span>Wymagane kupony NFI:</span>
@@ -10866,7 +10954,7 @@ function App() {
                                   disabled={state.pln < modCost}
                                   style={{ padding: '6px', fontSize: '0.85em', backgroundColor: '#f59e0b', color: '#000', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
                                 >
-                                  Modernizacja maszyn (-{modCost.toLocaleString()} zł)
+                                  Modernizacja maszyn (-{modCost.toLocaleString('pl-PL')} zł)
                                 </button>
                                 
                                 <button 
@@ -10874,7 +10962,7 @@ function App() {
                                   disabled={state.pln < negoCost}
                                   style={{ padding: '6px', fontSize: '0.85em', backgroundColor: '#10b981', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
                                 >
-                                  Podwyżki / Negocjacje (-{negoCost.toLocaleString()} zł)
+                                  Podwyżki / Negocjacje (-{negoCost.toLocaleString('pl-PL')} zł)
                                 </button>
                                 
                                 <button 
@@ -10882,7 +10970,7 @@ function App() {
                                   disabled={state.pln < pacifyCost}
                                   style={{ padding: '6px', fontSize: '0.85em', backgroundColor: '#7f1d1d', color: '#fca5a5', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
                                 >
-                                  Pacyfikacja siłowa strajku (-{pacifyCost.toLocaleString()} zł)
+                                  Pacyfikacja siłowa strajku (-{pacifyCost.toLocaleString('pl-PL')} zł)
                                 </button>
                               </div>
                             ) : (
@@ -10927,7 +11015,7 @@ function App() {
                         disabled={state.pln < Math.floor(15000000 * (state.isDenominated ? 1 : state.plzInflationMult))}
                         style={{ padding: '15px 30px', fontSize: '1.2em', fontWeight: 'bold', backgroundColor: '#f1c40f', color: '#000', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
                       >
-                        KUP PROMESĘ KONCESYJNĄ KRRiT ({(Math.floor(15000000 * (state.isDenominated ? 1 : state.plzInflationMult))).toLocaleString()} zł)
+                        KUP PROMESĘ KONCESYJNĄ KRRiT ({(Math.floor(15000000 * (state.isDenominated ? 1 : state.plzInflationMult))).toLocaleString('pl-PL')} zł)
                       </button>
                     </div>
                   ) : (
@@ -10950,7 +11038,7 @@ function App() {
                             disabled={state.pln < Math.floor(5000000 * (state.isDenominated ? 1 : state.plzInflationMult)) || (state.mediaKrritBribeDiscount || 1.0) <= 0.6}
                             style={{ padding: '6px 12px', backgroundColor: '#e74c3c', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.85em', fontWeight: 'bold' }}
                           >
-                            Wręcz Kopertę Rady ({(Math.floor(5000000 * (state.isDenominated ? 1 : state.plzInflationMult))).toLocaleString()} zł)
+                            Wręcz Kopertę Rady ({(Math.floor(5000000 * (state.isDenominated ? 1 : state.plzInflationMult))).toLocaleString('pl-PL')} zł)
                           </button>
                         </div>
 
@@ -10964,17 +11052,16 @@ function App() {
                             const slots = state.activeMediaPrograms[station.id] || { rano: null, poludnie: null, wieczor: null };
                             const trust = state.mediaTrust[station.id] !== undefined ? state.mediaTrust[station.id] : 100;
                             
+                            // [Claude] usunięto nieużywany licznik activeCount (martwy kod)
                             // Calculate current rating of station
                             let rating = station.baseRating;
                             let incomeMult = 0;
-                            let activeCount = 0;
                             Object.values(slots).forEach(progId => {
                               if (progId) {
                                 const p = MEDIA_PROGRAMS.find(pr => pr.id === progId);
                                 if (p) {
                                   rating += p.ratingBonus;
                                   incomeMult += p.incomeMult;
-                                  activeCount++;
                                 }
                               }
                             });
@@ -10992,8 +11079,8 @@ function App() {
                                   <span style={{ fontSize: '0.85em', color: '#bdc3c7', textTransform: 'uppercase', fontWeight: 'bold' }}>{station.type}</span>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85em', marginTop: '5px', color: '#ecf0f1' }}>
-                                  <span>Oglądalność: <strong>{rating.toLocaleString()} tys. widzów</strong></span>
-                                  <span>Pasywny przychód: <strong>{(rating * 8 * incomeMult).toLocaleString()} zł/s</strong></span>
+                                  <span>Oglądalność: <strong>{rating.toLocaleString('pl-PL')} tys. widzów</strong></span>
+                                  <span>Pasywny przychód: <strong>{(rating * 8 * incomeMult).toLocaleString('pl-PL')} zł/s</strong></span>
                                 </div>
 
                                 {/* TRUST PROGRESS BAR */}
@@ -11108,7 +11195,7 @@ function App() {
                                     disabled={!canBuy}
                                     style={{ padding: '6px 10px', fontSize: '0.8em', backgroundColor: '#9b59b6', color: '#fff', border: 'none', borderRadius: '4px', cursor: canBuy ? 'pointer' : 'not-allowed', fontWeight: 'bold' }}
                                   >
-                                    Kup ({costPln.toLocaleString()} zł)
+                                    Kup ({costPln.toLocaleString('pl-PL')} zł)
                                   </button>
                                 )}
                               </div>
@@ -11131,7 +11218,7 @@ function App() {
                                   {isOwned ? (
                                     <span style={{ color: '#2ecc71', fontSize: '0.8em' }}>ZAKUPIONO</span>
                                   ) : (
-                                    <span style={{ color: '#fff', fontSize: '0.8em' }}>{costPln.toLocaleString()} zł</span>
+                                    <span style={{ color: '#fff', fontSize: '0.8em' }}>{costPln.toLocaleString('pl-PL')} zł</span>
                                   )}
                                 </div>
                                 <div style={{ fontSize: '0.75em', color: '#bdc3c7', margin: '3px 0' }}>{prog.desc}</div>
@@ -11174,7 +11261,7 @@ function App() {
                                     disabled={!canBuy}
                                     style={{ padding: '6px 10px', fontSize: '0.8em', backgroundColor: '#3498db', color: '#fff', border: 'none', borderRadius: '4px', cursor: canBuy ? 'pointer' : 'not-allowed', fontWeight: 'bold' }}
                                   >
-                                    Buduj ({costPln.toLocaleString()} zł)
+                                    Buduj ({costPln.toLocaleString('pl-PL')} zł)
                                   </button>
                                 )}
                               </div>
@@ -11220,7 +11307,7 @@ function App() {
                                 disabled={!canBuy}
                                 style={{ padding: '8px 15px', fontSize: '0.85em', backgroundColor: '#e74c3c', color: '#fff', border: 'none', borderRadius: '4px', cursor: canBuy ? 'pointer' : 'not-allowed', fontWeight: 'bold' }}
                               >
-                                Kup ({costPln.toLocaleString()} zł)
+                                Kup ({costPln.toLocaleString('pl-PL')} zł)
                               </button>
                             )}
                           </div>
@@ -11341,7 +11428,7 @@ function App() {
                   </div>
                   <div>
                     <div style={{ fontSize: '0.8em', textTransform: 'uppercase' }}>Koszty Utrzymania</div>
-                    <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: '#c0392b' }}>-{currentUpkeep.toLocaleString()} zł/s</div>
+                    <div style={{ fontSize: '1.5em', fontWeight: 'bold', color: '#c0392b' }}>-{currentUpkeep.toLocaleString('pl-PL')} zł/s</div>
                   </div>
                 </div>
               </div>
@@ -11366,7 +11453,7 @@ function App() {
                               disabled={state.pln < cost}
                               style={{ padding: '5px 10px', backgroundColor: '#e74c3c', color: '#fff', border: 'none', borderRadius: '3px', cursor: state.pln >= cost ? 'pointer' : 'not-allowed' }}
                             >
-                              Werbuj ({cost.toLocaleString()} zł)
+                              Werbuj ({cost.toLocaleString('pl-PL')} zł)
                             </button>
                           </div>
                         );
@@ -11391,7 +11478,7 @@ function App() {
                               disabled={state.pln < costPln || state.dollars < w.costUsd}
                               style={{ padding: '5px 10px', backgroundColor: '#f39c12', color: '#fff', border: 'none', borderRadius: '3px' }}
                             >
-                              Kup ({costPln.toLocaleString()} zł{w.costUsd > 0 ? ` + ${w.costUsd}$` : ''})
+                              Kup ({costPln.toLocaleString('pl-PL')} zł{w.costUsd > 0 ? ` + ${w.costUsd}$` : ''})
                             </button>
                           </div>
                         );
@@ -11410,19 +11497,19 @@ function App() {
                         <div key={dist.id} style={{ backgroundColor: '#111', padding: '15px', borderRadius: '4px', border: '1px solid #333' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
                             <strong style={{ fontSize: '1.2em' }}>{dist.name}</strong>
-                            <span style={{ color: '#2ecc71', fontWeight: 'bold' }}>+{income.toLocaleString()} zł/s</span>
+                            <span style={{ color: '#2ecc71', fontWeight: 'bold' }}>+{income.toLocaleString('pl-PL')} zł/s</span>
                           </div>
                           <div style={{ fontSize: '0.85em', color: '#aaa', marginBottom: '10px' }}>{dist.desc}</div>
                           
                           <div style={{ display: 'flex', height: '20px', borderRadius: '10px', overflow: 'hidden', border: '1px solid #555' }}>
                             <div style={{ width: `${ctrl.player}%`, backgroundColor: '#8e44ad', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7em', fontWeight: 'bold' }}>
-                              {ctrl.player > 5 ? `${ctrl.player.toFixed(1)}%` : ''}
+                              {ctrl.player > 5 ? `${fmtNum(ctrl.player, 1)}%` : ''}
                             </div>
                             <div style={{ width: `${ctrl.pruszkow}%`, backgroundColor: '#e67e22', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7em', fontWeight: 'bold' }}>
-                              {ctrl.pruszkow > 5 ? `${ctrl.pruszkow.toFixed(1)}% (P)` : ''}
+                              {ctrl.pruszkow > 5 ? `${fmtNum(ctrl.pruszkow, 1)}% (P)` : ''}
                             </div>
                             <div style={{ width: `${ctrl.wolomin}%`, backgroundColor: '#c0392b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7em', fontWeight: 'bold' }}>
-                              {ctrl.wolomin > 5 ? `${ctrl.wolomin.toFixed(1)}% (W)` : ''}
+                              {ctrl.wolomin > 5 ? `${fmtNum(ctrl.wolomin, 1)}% (W)` : ''}
                             </div>
                           </div>
                         </div>

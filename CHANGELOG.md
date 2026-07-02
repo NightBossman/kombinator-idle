@@ -4,6 +4,39 @@ Wszystkie istotne zmiany i wydania projektu będą dokumentowane w tym pliku.
 
 ---
 
+## [4.1.1] - 2026-07-02
+Przegląd i naprawa kodu wykonana przez Claude (Anthropic). Wszystkie zmiany w kodzie
+oznaczone komentarzami `[Claude]` z uzasadnieniem. Rady na przyszłość: `docs/KIERUNEK.md`.
+
+### Naprawiono
+- **Faza T (Wielka Recesja 2008) była w całości martwa (Krytyczny)**:
+  - Zdarzenia `lehman_recession` i `toxic_options_scandal` były obsługiwane w pętli gry, ale nie istniały na liście `HISTORY_EVENTS` — recesja nie miała żadnego działającego wyzwalacza. Dodano oba zdarzenia (losują się w erze Lat 2000.).
+  - `recessionTimer` był ustawiany, ale nigdy nie odliczany — raz rozpoczęta recesja trwałaby wiecznie. Dodano odliczanie i komunikat końca recesji (180 s).
+  - Opcje walutowe (PUT/CALL/toksyczne) dawało się kupić, ale nigdy nie były rozliczane — gracz płacił premię i nic nie otrzymywał. Dodano pełne rozliczenie przy wygaśnięciu, zgodne z opisami kontraktów.
+- **Polonez z FSO przepadał bez śladu**: spółka Inter-Viag produkowała auta `polonez`, których nie było na żadnej liście sprzedaży Bazaru. Dodano FSO Polonez do towarów (cena 2 500 000 zł).
+- **Dwa sprzeczne systemy kursu dolara**: autozapis co 2 s losowo zmieniał kurs (±10, widełki 50–500) i walczył z wahaniami z pętli gry (co 10 s, widełki 80–150). Zostawiono wyłącznie system z pętli gry.
+- **Bonus Solidarności ≥9000 (+25% pomocników) nie działał na bieżąco**: pętla gry używała wartości z momentu montażu efektu (deklarowanej ~5200 linii niżej). Mnożnik liczony jest teraz świeżo w każdym ticku.
+- **Kupno Kawy Jacobs nie skracało trwającej kolejki**: brakująca zależność `baltonaUpgrades` w efektach obu kolejek.
+- **Ikona gry (favicon) zwracała 404**: `index.html` wskazywał nieistniejący `/vite.svg` zamiast `/favicon.svg`; przy okazji `lang="en"` → `lang="pl"` i tytuł strony zaktualizowany do pełnej nazwy gry.
+
+### Zmieniono (dostosowanie do polskiego gracza)
+- Nowy moduł `src/utils/format.ts`: wszystkie liczby dziesiętne wyświetlane z polskim przecinkiem (np. „3,50 PLN/CHF" zamiast „3.50") — zastąpiono 36 wywołań `toFixed()`.
+- 128 wywołań `toLocaleString()` związano na stałe z lokalizacją `pl-PL` (dotąd zależały od ustawień przeglądarki).
+- Poprawna odmiana rzeczowników po liczebnikach (funkcja `pluralPL`): „1 kartka / 2 kartki / 5 kartek", „22 ruble", „3 Bony Towarowe", „1 osobę / 100 osób".
+- Literówki: „Wyslij" → „Wyślij", „Alpejski Przełęcz" → „Alpejska Przełęcz", „bakem" → „bakiem", „Kukurudźnik" → „Kukuruźnik".
+
+### Wydajność
+- Paski postępu (kolejki, przemyt, druk bibuły, rejsy) tykały co 50–100 ms, wymuszając do ~60 pełnych re-renderów całej aplikacji na sekundę. Tick zmniejszony do 200 ms, a płynność zachowana przez animację CSS na paskach.
+- Autozapis (serializacja całego stanu do localStorage) co 5 s zamiast co 2 s.
+
+### Usunięto (martwy kod)
+- `COCOM_NODES` + pole stanu `unlockedCocomNodes` (mapa węzłów przemytniczych nigdy nie powstała w UI).
+- Flaga `devFreezeVatRisk` (czytana w pętli, ale nigdy nie ustawiana).
+- Martwe `void DEBATE_OPTIONS; void ELECTION_UPGRADES;` (stałe są od dawna używane), nieużywany licznik `activeCount`, nieużywane pliki `src/assets/` (react.svg, vite.svg, hero.png).
+- Porządki ESLint: `npm run lint` przechodzi teraz bez błędów (typy zamiast `any` w symulacji offline, `prefer-const`, puste bloki `catch`).
+
+---
+
 ## [4.1.0] - 2026-07-01
 ### Dodano
 - **Faza T: Wielka Recesja 2008**:

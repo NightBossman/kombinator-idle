@@ -161,6 +161,24 @@ export const HISTORY_EVENTS: HistoryEvent[] = [
     name: 'Czarny Wtorek (Panika Walutowa)',
     desc: 'Panika na rynku walutowym! Kurs dolara na czarnym rynku rośnie o +100% przez 60 sekund.',
     durationSec: 60
+  },
+  // [Claude] naprawa: pętla gry w App.tsx obsługiwała zdarzenia 'lehman_recession' i 'toxic_options_scandal'
+  // (start recesji z Fazy T), ale zdarzenia NIE ISTNIAŁY na tej liście - cała Wielka Recesja 2008 była martwa,
+  // bo recessionActive nie miało żadnego działającego wyzwalacza. Oba zdarzenia mają era: 'lata2000',
+  // więc losują się dopiero po odblokowaniu Fazy S (fazaSUnlocked).
+  {
+    id: 'lehman_recession',
+    name: 'Upadek Lehman Brothers (2008)',
+    desc: 'Globalny krach finansowy! Frank szwajcarski gwałtownie drożeje, GPW nurkuje o 6% na tick, dywidendy wstrzymane, a rynek nieruchomości zamarza na czas recesji (180 sekund). Syndycy wyprzedają niedokończone budowy za bezcen!',
+    durationSec: 180,
+    era: 'lata2000'
+  },
+  {
+    id: 'toxic_options_scandal',
+    name: 'Afera Opcji Toksycznych',
+    desc: 'Media ujawniają skalę toksycznych opcji walutowych w polskich firmach! Panika kosztuje Cię 15% posiadanej gotówki PLN.',
+    durationSec: 60,
+    era: 'lata2000'
   }
 ];
 
@@ -258,7 +276,11 @@ export interface ProducedItem { id: string; name: string; sellPricePln?: number;
 export const PRODUCED_ITEMS: ProducedItem[] = [
   { id: 'gozdziki', name: 'Krajowe Goździki', sellPricePln: 150 },
   { id: 'czesci', name: 'Części Zamienne', sellPricePln: 600 },
-  { id: 'wyroby_hutnicze', name: 'Wyroby Hutnicze', sellPriceDollars: 10 }
+  { id: 'wyroby_hutnicze', name: 'Wyroby Hutnicze', sellPriceDollars: 10 },
+  // [Claude] naprawa: spółka Inter-Viag (FSO) produkowała 'polonez' do ekwipunku, ale Polonez nie widniał
+  // na żadnej liście sprzedaży (Bazar pokazuje tylko QUEUE_ITEMS + PRODUCED_ITEMS) - auta znikały w niewidzialnym
+  // magazynie bez możliwości spieniężenia. Cena między Fiatem 125p (2 mln) a Ursusem (8 mln).
+  { id: 'polonez', name: 'FSO Polonez', sellPricePln: 2500000 }
 ];
 
 export interface LuxuryItem {
@@ -597,21 +619,9 @@ export const ELECTION_UPGRADES: ElectionUpgrade[] = [
 
 // ===== FAZA L: Globalne Imperium Przemytnicze =====
 
-export interface CocomNode {
-  id: string;
-  name: string;
-  desc: string;
-  costPln: number;
-  unlockedByDefault: boolean;
-}
-
-export const COCOM_NODES: CocomNode[] = [
-  { id: 'warszawa', name: 'Warszawa', desc: 'Centrala operacyjna i główny punkt startowy wszystkich ładunków.', costPln: 0, unlockedByDefault: true },
-  { id: 'berlin', name: 'Berlin Zachodni', desc: 'Główny zachodni punkt zbytu. Szybki obrót elektroniką.', costPln: 100000, unlockedByDefault: false },
-  { id: 'wieden', name: 'Wiedeń', desc: 'Centrum handlowe i gniazdo szpiegowskie Europy Środkowej.', costPln: 250000, unlockedByDefault: false },
-  { id: 'zurych', name: 'Zurych', desc: 'Szwajcarskie banki i bezpieczne depozyty walutowe.', costPln: 500000, unlockedByDefault: false },
-  { id: 'moskwa', name: 'Moskwa', desc: 'Rynek radziecki. Słaby zysk w USD, ale gigantyczny popyt na towary dual-use.', costPln: 150000, unlockedByDefault: false }
-];
+// [Claude] usunięto martwy kod: interfejs CocomNode i stała COCOM_NODES nie były nigdzie importowane,
+// a powiązane pole stanu unlockedCocomNodes nie było czytane w żadnym miejscu UI ani logiki
+// (mapa węzłów przemytniczych nigdy nie powstała - trasy COCOM_SMUGGLING_ROUTES działają bez niej).
 
 export interface CocomSmugglingRoute {
   id: string;
@@ -628,7 +638,7 @@ export interface CocomSmugglingRoute {
 export const COCOM_SMUGGLING_ROUTES: CocomSmugglingRoute[] = [
   { id: 'warszawa_berlin', name: 'Szosa Poznańska (Świecko)', fromNodeId: 'warszawa', toNodeId: 'berlin', baseTravelTimeSec: 60, baseRiskPercent: 20, borderPatrolName: 'Świecko (Drogowe)', desc: 'Standardowa trasa ciężarowa do Berlina. Średnie ryzyko, przyzwoita płatność.', payoutMultiplier: 1.25 },
   { id: 'warszawa_wieden', name: 'Magistrala Południowa (Cieszyn)', fromNodeId: 'warszawa', toNodeId: 'wieden', baseTravelTimeSec: 90, baseRiskPercent: 30, borderPatrolName: 'Cieszyn (Drogowe)', desc: 'Górzysta trasa na południe. Czesi i Austriacy wnikliwie kontrolują bagaże.', payoutMultiplier: 1.5 },
-  { id: 'wieden_zurych', name: 'Alpejski Przełęcz (Vaduz)', fromNodeId: 'wieden', toNodeId: 'zurych', baseTravelTimeSec: 120, baseRiskPercent: 15, borderPatrolName: 'Szwajcarska Straż Graniczna', desc: 'Bezpieczna, górska trasa tranzytowa. Wymaga uprzedniego odblokowania Wiednia.', payoutMultiplier: 1.7 },
+  { id: 'wieden_zurych', name: 'Alpejska Przełęcz (Vaduz)', fromNodeId: 'wieden', toNodeId: 'zurych', baseTravelTimeSec: 120, baseRiskPercent: 15, borderPatrolName: 'Szwajcarska Straż Graniczna', desc: 'Bezpieczna, górska trasa tranzytowa. Wymaga uprzedniego odblokowania Wiednia.', payoutMultiplier: 1.7 },
   { id: 'warszawa_moskwa', name: 'Kolej Transsyberyjska (Terespol)', fromNodeId: 'warszawa', toNodeId: 'moskwa', baseTravelTimeSec: 45, baseRiskPercent: 10, borderPatrolName: 'Terespol (Kolejowe)', desc: 'Szybki przerzut pociągiem na Wschód. Niskie ryzyko wpadki, ale gorszy zarobek.', payoutMultiplier: 1.1 },
   { id: 'warszawa_zurych_direct', name: 'Lot Czarterowy LOT (Okęcie)', fromNodeId: 'warszawa', toNodeId: 'zurych', baseTravelTimeSec: 30, baseRiskPercent: 60, borderPatrolName: 'Okęcie (Kontrola Lotnicza)', desc: 'Błyskawiczny transport lotniczy dla najcenniejszych towarów. Ekstremalnie wysokie ryzyko wpadki.', payoutMultiplier: 2.1 }
 ];
@@ -645,11 +655,11 @@ export interface CocomVehicle {
 }
 
 export const COCOM_VEHICLES: CocomVehicle[] = [
-  { id: 'fiat_126p', name: 'Maluch (Fiat 126p) ze skrytką', desc: 'Mały, niepozorny samochód z przerobionym bakem. Mieści niewiele, ale rzadko go podejrzewają.', costPln: 25000, costUsd: 0, capacity: 1, speedMult: 1.1, stealthBonus: 15 },
+  { id: 'fiat_126p', name: 'Maluch (Fiat 126p) ze skrytką', desc: 'Mały, niepozorny samochód z przerobionym bakiem. Mieści niewiele, ale rzadko go podejrzewają.', costPln: 25000, costUsd: 0, capacity: 1, speedMult: 1.1, stealthBonus: 15 },
   { id: 'polonez_caro', name: 'Polonez Caro (Wzmocniony)', desc: 'Klasyczna limuzyna PRL ze wzmocnionym zawieszeniem do przewozu cięższego sprzętu.', costPln: 80000, costUsd: 0, capacity: 2, speedMult: 0.95, stealthBonus: 5 },
   { id: 'star_200', name: 'Star 200 (Chłodnia plandeka)', desc: 'Ciężarówka średniej wielkości. Idealna do średniej skali szmuglu w pudłach po owocach.', costPln: 250000, costUsd: 0, capacity: 5, speedMult: 1.3, stealthBonus: -5 },
   { id: 'jelcz_tir', name: 'Jelcz 317 (TIR z podwójnym dnem)', desc: 'Prawdziwy król szos. Przemysłowa skala szmuglu, ale rzuca się w oczy na granicy.', costPln: 600000, costUsd: 1000, capacity: 15, speedMult: 1.2, stealthBonus: -15 },
-  { id: 'an2_plane', name: 'Kukurudźnik (An-2) — cichy przelot', desc: 'Dwupłatowiec lecący tuż nad drzewami. Całkowite ominięcie drogowych przejść granicznych.', costPln: 0, costUsd: 25000, capacity: 8, speedMult: 0.5, stealthBonus: 25 }
+  { id: 'an2_plane', name: 'Kukuruźnik (An-2) — cichy przelot', desc: 'Dwupłatowiec lecący tuż nad drzewami. Całkowite ominięcie drogowych przejść granicznych.', costPln: 0, costUsd: 25000, capacity: 8, speedMult: 0.5, stealthBonus: 25 }
 ];
 
 export interface CocomPersonnel {

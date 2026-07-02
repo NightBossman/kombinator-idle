@@ -3,24 +3,32 @@
 let audioCtx: AudioContext | null = null;
 let soundEnabled = true;
 
+// [Claude] porządki: puste "catch (e) {}" z nieużywaną zmienną -> "catch { ... }" z komentarzem,
+// a rzutowanie "as any" dla webkitAudioContext zastąpione konkretnym typem.
 try {
   const saved = localStorage.getItem('kombinator_sound_enabled');
   if (saved !== null) {
     soundEnabled = saved === 'true';
   }
-} catch (e) {}
+} catch {
+  // localStorage może być niedostępny (tryb prywatny) - zostaje domyślne włączone
+}
 
 export const isSoundEnabled = () => soundEnabled;
 export const setSoundEnabled = (enabled: boolean) => {
   soundEnabled = enabled;
   try {
     localStorage.setItem('kombinator_sound_enabled', String(enabled));
-  } catch (e) {}
+  } catch {
+    // brak zapisu ustawienia nie przeszkadza w działaniu gry
+  }
 };
 
 const getAudioContext = () => {
   if (!audioCtx) {
-    audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const Ctor = window.AudioContext
+      || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    audioCtx = new Ctor!();
   }
   return audioCtx;
 };
@@ -45,7 +53,7 @@ export const playBeep = (freq: number = 440, type: OscillatorType = 'square', du
     
     osc.start();
     osc.stop(ctx.currentTime + duration);
-  } catch (e) {
+  } catch {
     // Ignoruj błędy audio (np. brak interakcji użytkownika na starcie)
   }
 };
