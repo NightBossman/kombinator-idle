@@ -6,6 +6,11 @@ w kodzie komentarzami `[Claude]` z wyjaśnieniem *dlaczego* — szczegółowa li
 jest w `CHANGELOG.md` (wersja 4.1.1). Poniżej to, czego **nie** naprawiłem, bo wymaga
 decyzji lub większej przebudowy — w kolejności od najważniejszego.
 
+**Stan realizacji (2026-07-02, wersja 4.1.2):** punkt 1.1 (silnik gry) i 7.1 (testy) —
+✅ zrobione przez Claude w PR #6; punkt 5 (skrócone formatowanie wielkich liczb) —
+✅ zrobione przez Gemini (`fmtShort` w `format.ts`, dołączone do PR #5).
+Zrobione punkty są odhaczone poniżej w treści.
+
 ---
 
 ## 1. App.tsx ma ~11 600 linii — to główne źródło przyszłych bugów
@@ -18,13 +23,11 @@ zauważyć, że jakiś kawałek stanu nie ma domknięcia.
 
 Proponowana kolejność przebudowy (można robić etapami, gra cały czas działa):
 
-1. **Wydzielić pętlę gry do `src/game/engine.ts`** jako czystą funkcję
-   `tick(state, deltaSec) -> { nextState, zdarzenia }`. Zdarzenia (alerty, dźwięki,
-   toasty) zwracać jako listę, a nie odpalać `setTimeout` w środku aktualizacji stanu.
-   Korzyści: można pisać testy („po 180 s recesja się kończy"), znika problem
-   podwójnych alertów w trybie deweloperskim (React StrictMode celowo wywołuje
-   aktualizacje stanu dwukrotnie — obecne `setTimeout(...)` w środku updaterów
-   podwajają wtedy komunikaty).
+1. ✅ **ZROBIONE (Claude, PR #6, 4.1.2)** — pętla gry wydzielona do `src/game/engine.ts`
+   jako czysta funkcja `tick(state, deltaSec, ctx) -> { state, events }`. Zdarzenia
+   (alerty, dźwięki, toasty, postęp C64) wracają jako lista i są odtwarzane przez
+   App po aktualizacji stanu; podwójne alerty ze StrictMode zniknęły. Logika
+   przeniesiona 1:1 — porządkowanie wnętrza silnika to dalszy krok.
 2. **Podzielić UI na komponent na zakładkę** (`TabPraca.tsx`, `TabBazar.tsx`, ...)
    i owinąć w `React.memo`. Dziś każdy tick renderuje od nowa całość; po podziale
    renderuje się tylko aktywna zakładka i nagłówek.
@@ -52,12 +55,11 @@ Vite ostrzega przy buildzie. Po podziale na komponenty per zakładka można doda
 `React.lazy`/dynamic import dla późnych er (Lata 90., Lata 2000.) — gracz w PRL-u
 nie musi pobierać kodu GPW i karuzeli VAT. Niekrytyczne, gra ładuje się raz.
 
-## 5. Duże liczby — skrócone formatowanie
+## 5. ✅ ZROBIONE — duże liczby, skrócone formatowanie
 
-W późnej grze kwoty sięgają setek milionów („150 000 000 zł" rozpycha panele).
-Jest już centralny moduł `src/utils/format.ts` — łatwo dodać `fmtShort()`:
-1 234 567 → „1,23 mln zł", 2 500 000 000 → „2,5 mld zł". Rekomendacja: stosować
-od ~1 mln w panelach bocznych, pełną liczbę zostawić w tooltipach/statystykach.
+Zrobione przez Gemini: `fmtShort()` w `src/utils/format.ts` (tys./mln/mld z polskim
+przecinkiem), zastosowane w UI Drukarni Centralnej. Jeśli w innych panelach kwoty
+zaczną rozpychać układ, wystarczy użyć tej samej funkcji.
 
 ## 6. Rozliczenie opcji walutowych — dobrane wartości do przejrzenia
 
@@ -78,8 +80,10 @@ budowy nieruchomości — dobre zadanie na osobną, małą fazę.
 
 ## 7. Drobiazgi warte zrobienia przy okazji
 
-- **Testy silnika**: po wydzieleniu `engine.ts` dodać `vitest` i kilka testów
-  scenariuszowych (recesja, denominacja, offline 24 h — czy nie ma NaN).
+- ✅ **ZROBIONE (Claude, PR #6)** — testy silnika: `vitest` + 9 testów scenariuszowych
+  w `src/game/engine.test.ts` (`npm test`): recesja, krach GPW, opcje walutowe,
+  denominacja, pomocnicy, bonus Solidarności, godzina ticków bez NaN. Przy zmianach
+  w `engine.ts` należy dopisywać kolejne testy (patrz `.agents/AGENTS.md`).
 - **Efekt CRT**: pełnoekranowa animacja `flicker` (0,15 s, nieskończona) działa
   stale nawet w tle. Na słabszych komputerach warto dodać przełącznik „Wyłącz
   efekt CRT" w ustawieniach (sama animacja zmienia tylko `opacity`, więc jest
