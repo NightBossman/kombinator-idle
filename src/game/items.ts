@@ -1116,3 +1116,18 @@ export const VAT_UPGRADES: VatUpgradeInfo[] = [
   { id: 'naczelnik_us', name: 'Przekupny Naczelnik US', desc: 'Naczelnik Urzędu Skarbowego przymyka oko. Zmniejsza bazowe ryzyko kontroli o kolejne 30%.', costUsd: 100000 },
   { id: 'holding_cypryjski', name: 'Cypryjska Spółka Matka', desc: 'Optymalizacja offshore. Zmniejsza prowizję za transfer środków na Cypr z 10% do 2%.', costUsd: 250000 }
 ];
+
+// [Claude] KIERUNEK 1.2: przeniesione z App.tsx - dane (koszty ulepszen pomocnikow),
+// nie logika komponentu; zakladki importuja je bez cyklu z App.
+export const HELPER_UPGRADE_COSTS: Record<string, { resource: string; label: string }> = {
+  wladyslaw: { resource: 'gozdziki', label: 'Goździki' },
+  kolega: { resource: 'czesci', label: 'Części' },
+  halinka: { resource: 'gozdziki', label: 'Goździki' },
+  basia: { resource: 'czesci', label: 'Części' },
+  spekulant: { resource: 'gozdziki', label: 'Goździki' },
+  staszek: { resource: 'czesci', label: 'Części' },
+  zygmunt: { resource: 'wyroby_hutnicze', label: 'Wyroby Hutnicze' },
+  cinkciarz: { resource: 'wyroby_hutnicze', label: 'Wyroby Hutnicze' },
+  widmo: { resource: 'wyroby_hutnicze', label: 'Wyroby Hutnicze' },
+  konspiracja: { resource: 'czesci', label: 'Części' },
+};

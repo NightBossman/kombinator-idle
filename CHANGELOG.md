@@ -4,6 +4,43 @@ Wszystkie istotne zmiany i wydania projektu będą dokumentowane w tym pliku.
 
 ---
 
+## [4.2.0] - 2026-07-02
+Dokończenie refaktoryzacji architektury z KIERUNEK.md (punkty 1.2, 1.3, 7.2, 7.3) — Claude.
+Mechanika gry bez zmian (poza opisanymi niżej naprawami rozjazdów wyświetlania), zapisy kompatybilne.
+
+### Zmieniono (architektura)
+- **13 zakładek UI wydzielonych z App.tsx do osobnych komponentów** w `src/tabs/` (TabPraca,
+  TabBazar, TabCzarnyRynek, TabPrzemyt, TabPartia, TabOdznaczenia, TabGpw, TabOffshore,
+  TabSyndykat, TabWybory, TabLata90, TabMiasto, TabLata2000), każdy w `React.memo`.
+  Dane i akcje przepływają przez kontekst `GameApi` z jawnym interfejsem
+  (`src/tabs/GameApiContext.tsx`) — TypeScript pilnuje zgodności App ↔ zakładki.
+  App.tsx zmalał z ~9,8 tys. do ~5,2 tys. linii; JSX zakładek przeniesiony 1:1.
+- **Wspólne wzory mnożników w `src/game/formulas.ts`**: tempo pomocników i biznesów,
+  czas kolejki, kurs cinkciarza, ceny sprzedaży na Bazarze (zł i $). Jedno źródło prawdy
+  dla silnika gry, symulacji offline i wszystkich paneli UI + testy w `formulas.test.ts`.
+- Losowość i identyfikatory przez `src/utils/rng.ts` (uniqueId/chance) — cała losowość gry
+  przechodzi przez jeden moduł (w przyszłości łatwo dodać ziarno/seed do testów);
+  usunięto wszystkie wyciszenia `eslint-disable react-hooks/purity` (6 sztuk).
+
+### Dodano
+- **Przełącznik „Efekt CRT (scanlines)" w ustawieniach** — wyłącza linie ekranu
+  kineskopowego i migotanie na słabszych komputerach; wybór zapamiętywany w localStorage.
+- 6 testów wzorów (`formulas.test.ts`) — razem 15 testów w `npm test`.
+
+### Naprawiono (rozjazdy wyświetlania wykryte przy ujednolicaniu wzorów)
+- **Kalkulator Casio zaniżał wskazania**: pomijał Magnetofon Grundig (+40% pomocników),
+  Ustawę Wilczka i Prywatny Import, a kurs cinkciarza pokazywał bez inflacji
+  i Czarnego Wtorku. Teraz Casio pokazuje dokładnie to, co liczy silnik.
+- **Bazar w dolarach obiecywał bonus Uwolnienia Cen (×2,5), którego sprzedaż nigdy
+  nie wypłacała** — przycisk pokazuje teraz prawdziwą kwotę.
+- **Wypłata ze sprzedaży x10/x100 = dokładnie cena z przycisku razy sztuki**
+  (wcześniej różnice zaokrągleń mogły dać o parę złotych inną kwotę).
+- Licznik ważności ofert czarnego rynku liczony z zegara gry (bez `Date.now()` w renderze).
+- Efekty kolejek nie restartują się już co sekundę (zależą od wyliczonego czasu,
+  a nie od klonowanych co tick obiektów stanu).
+
+---
+
 ## [4.1.2] - 2026-07-02
 Refaktoryzacja architektury wykonana przez Claude (KIERUNEK.md, punkty 1.1 i 7.1).
 Zero zmian w mechanice gry - logika przeniesiona 1:1, zapisy w pełni kompatybilne.

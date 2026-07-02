@@ -1,0 +1,59 @@
+// [Claude] testy wspólnych wzorów (KIERUNEK 1.3) - pilnują, żeby mnożniki
+// nie rozjechały się ponownie między silnikiem, symulacją offline i UI.
+import { describe, it, expect } from 'vitest';
+import { helperSpeedMult, businessProductionMult, queueTimeMs, cinkciarzRate, bazarPlnUnitPrice, bazarUsdUnitPrice, generalProductionMult } from './formulas';
+import { INITIAL_STATE } from '../hooks/useGameState';
+import type { GameState } from '../hooks/useGameState';
+
+const freshState = (patch: Partial<GameState> = {}): GameState => ({
+  ...structuredClone(INITIAL_STATE),
+  ...patch,
+});
+
+describe('wzory mnożników (formulas.ts)', () => {
+  it('stan początkowy daje neutralne mnożniki', () => {
+    const s = freshState();
+    expect(generalProductionMult(s)).toBe(1);
+    expect(helperSpeedMult(s)).toBe(1);
+    expect(businessProductionMult(s, 'pln')).toBe(1);
+    expect(queueTimeMs(1000, s)).toBe(1000);
+  });
+
+  it('helperSpeedMult: Grundig i Wilczek liczone tak samo jak w silniku', () => {
+    const s = freshState({
+      baltonaUpgrades: { grundig: true },
+      activeEvent: 'reforma_wilczka',
+    });
+    expect(helperSpeedMult(s)).toBeCloseTo(1.4, 10);                          // offline: bez zdarzeń
+    expect(helperSpeedMult(s, { zZdarzeniami: true })).toBeCloseTo(1.4 * 1.5, 10); // online: z Wilczkiem
+  });
+
+  it('businessProductionMult: Prywatny Import tylko dla PLN/USD, nie dla towarów', () => {
+    const s = freshState({ baltonaUpgrades: { import: true } });
+    expect(businessProductionMult(s, 'pln')).toBeCloseTo(1.35, 10);
+    expect(businessProductionMult(s, 'dollars')).toBeCloseTo(1.35, 10);
+    expect(businessProductionMult(s, 'gozdziki')).toBe(1);
+  });
+
+  it('queueTimeMs: modyfikatory kumulują się (Toblerone + Kryzys Paliwowy)', () => {
+    const s = freshState({
+      pewexItems: { ...structuredClone(INITIAL_STATE.pewexItems), toblerone: true },
+      activeEvent: 'kryzys',
+    });
+    expect(queueTimeMs(10000, s)).toBeCloseTo(10000 * 0.85 * 1.20, 6);
+  });
+
+  it('cinkciarzRate: inflacja i Czarny Wtorek podbijają kurs', () => {
+    const s = freshState({ exchangeRate: 100, inflationPercent: 100 });
+    expect(cinkciarzRate(s)).toBe(200); // 100 zł * (1 + 100%)
+    const wtorek = freshState({ exchangeRate: 100, inflationPercent: 0, activeEvent: 'czarny_wtorek' });
+    expect(cinkciarzRate(wtorek)).toBe(200); // podwojenie z paniki
+  });
+
+  it('bazar: cena PLN rośnie przy Uwolnieniu Cen, cena USD celowo nie', () => {
+    const zwykly = freshState();
+    const uwolnienie = freshState({ activeEvent: 'uwolnienie_cen' });
+    expect(bazarPlnUnitPrice(100, 'mydlo', uwolnienie)).toBe(Math.floor(bazarPlnUnitPrice(100, 'mydlo', zwykly) * 2.5));
+    expect(bazarUsdUnitPrice(10, 'wyroby_hutnicze', uwolnienie)).toBe(bazarUsdUnitPrice(10, 'wyroby_hutnicze', zwykly));
+  });
+});

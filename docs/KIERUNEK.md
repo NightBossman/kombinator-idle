@@ -6,10 +6,11 @@ w kodzie komentarzami `[Claude]` z wyjaśnieniem *dlaczego* — szczegółowa li
 jest w `CHANGELOG.md` (wersja 4.1.1). Poniżej to, czego **nie** naprawiłem, bo wymaga
 decyzji lub większej przebudowy — w kolejności od najważniejszego.
 
-**Stan realizacji (2026-07-02, wersja 4.1.2):** punkt 1.1 (silnik gry) i 7.1 (testy) —
-✅ zrobione przez Claude w PR #6; punkt 5 (skrócone formatowanie wielkich liczb) —
-✅ zrobione przez Gemini (`fmtShort` w `format.ts`, dołączone do PR #5).
-Zrobione punkty są odhaczone poniżej w treści.
+**Stan realizacji (2026-07-02, wersja 4.2.0):** sekcja 1 (architektura) — ✅ W CAŁOŚCI zrobiona
+(1.1 silnik: PR #6; 1.2 zakładki i 1.3 wspólne wzory: PR #7). Sekcja 7: 7.1 testy ✅ (PR #6),
+7.2 przełącznik CRT ✅ i 7.3 koniec wyciszeń purity ✅ (PR #7). Punkt 5 (wielkie liczby) ✅ Gemini.
+Do wzięcia pozostają: sekcja 2 (wersjonowanie zapisu), 3 (kolejka modali), 4 (podział paczki JS),
+uwaga z sekcji 6 (wyzwalacz recesji po Mikroapartamentach — odłożone u Gemini) i kosmetyka stopki z 7.
 
 ---
 
@@ -28,13 +29,15 @@ Proponowana kolejność przebudowy (można robić etapami, gra cały czas dział
    (alerty, dźwięki, toasty, postęp C64) wracają jako lista i są odtwarzane przez
    App po aktualizacji stanu; podwójne alerty ze StrictMode zniknęły. Logika
    przeniesiona 1:1 — porządkowanie wnętrza silnika to dalszy krok.
-2. **Podzielić UI na komponent na zakładkę** (`TabPraca.tsx`, `TabBazar.tsx`, ...)
-   i owinąć w `React.memo`. Dziś każdy tick renderuje od nowa całość; po podziale
-   renderuje się tylko aktywna zakładka i nagłówek.
-3. **Wydzielić wspólne wzory mnożników** (helperMult, mnożniki bazaru itd.) do
-   jednego modułu. Dziś te same wzory są skopiowane w 3 miejscach: pętla gry,
-   symulacja offline w `useGameState.ts` i panel Casio. Tak właśnie zepsuł się
-   bonus Solidarności (+25% pomocników) — jedna kopia była nieświeża.
+2. ✅ **ZROBIONE (Claude, PR #7, 4.2.0)** — 13 zakładek wydzielonych do `src/tabs/`
+   (TabPraca, TabBazar, ..., TabLata2000), każda w `React.memo`. Dane i akcje płyną
+   z kontekstu `GameApi` (jawny interfejs w `GameApiContext.tsx` — tsc pilnuje zgodności
+   App ↔ zakładki). App.tsx zmalał z ~9,8 tys. do ~5,2 tys. linii; JSX przeniesiony 1:1.
+3. ✅ **ZROBIONE (Claude, PR #7, 4.2.0)** — wspólne wzory w `src/game/formulas.ts`
+   (tempo pomocników i biznesów, czas kolejki, kurs cinkciarza, ceny Bazaru) + testy
+   w `formulas.test.ts`. Ujednolicenie wykryło i naprawiło rozjazdy: Casio pomijał
+   Grundiga/Wilczka/inflację kursu, a Bazar w dolarach obiecywał na przycisku bonus
+   Uwolnienia Cen, którego sprzedaż nigdy nie wypłacała.
 
 ## 2. Wersjonowanie zapisu gry
 
@@ -84,13 +87,12 @@ budowy nieruchomości — dobre zadanie na osobną, małą fazę.
   w `src/game/engine.test.ts` (`npm test`): recesja, krach GPW, opcje walutowe,
   denominacja, pomocnicy, bonus Solidarności, godzina ticków bez NaN. Przy zmianach
   w `engine.ts` należy dopisywać kolejne testy (patrz `.agents/AGENTS.md`).
-- **Efekt CRT**: pełnoekranowa animacja `flicker` (0,15 s, nieskończona) działa
-  stale nawet w tle. Na słabszych komputerach warto dodać przełącznik „Wyłącz
-  efekt CRT" w ustawieniach (sama animacja zmienia tylko `opacity`, więc jest
-  tania, ale scanline-gradient + flicker razem potrafią obciążyć zintegrowane GPU).
-- **`react-hooks/purity`**: sześć wyciszeń `eslint-disable` w App.tsx to fałszywe
-  alarmy nowej reguły (losowanie w handlerach kliknięć, nie w renderze). Po
-  wydzieleniu silnika te funkcje i tak zmienią miejsce — wtedy wyciszenia znikną.
+- ✅ **ZROBIONE (Claude, PR #7)** — przełącznik „Efekt CRT (scanlines)" w ustawieniach;
+  wybór trwały w localStorage, klasa `.crt-off` wyłącza scanlines i migotanie.
+- ✅ **ZROBIONE (Claude, PR #7)** — zero wyciszeń `react-hooks/purity`: identyfikatory
+  i rzuty kością idą przez `src/utils/rng.ts` (uniqueId/chance — przy okazji cała losowość
+  gry przechodzi przez jeden moduł, gotowy na przyszłe ziarno/seed do testów), a licznik
+  ofert czarnego rynku czyta zegar ze stanu (realTime) zamiast Date.now() w renderze.
 - **Ikony walut w stopce**: skróty „Rub", „bon." są niejednolite z resztą
   (szt./zł/$) — kosmetyka.
 

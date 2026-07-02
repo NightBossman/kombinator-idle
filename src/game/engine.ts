@@ -10,6 +10,9 @@
 import type { GameState } from '../hooks/useGameState';
 import { generateBlackMarketOffers } from '../hooks/useGameState';
 import { fmtNum } from '../utils/format';
+// [Claude] KIERUNEK 1.3: wspolne wzory mnoznikow - jedno zrodlo prawdy dla silnika,
+// symulacji offline (useGameState) i paneli UI (Casio, Bazar)
+import { helperSpeedMult, businessProductionMult, cinkciarzRate, queueTimeMs } from './formulas';
 import {
   QUEUE_ITEMS, HELPERS, BUSINESSES, HISTORY_EVENTS, ACHIEVEMENTS, LUXURY_ITEMS,
   GPW_STOCKS, GPW_EVENTS, NOMENKLATURA_COMPANIES, OFFSHORE_DEPOSITS, COCOM_ITEMS,
@@ -501,30 +504,9 @@ export function tick(s: GameState, deltaSec: number, ctx: TickContext): { state:
         nextState.nextAuctionIn = Math.max(0, nextAuctionIn);
         nextState.auction = auction;
 
-        const nrfMult = (s.activeDestination === 'nrf' || s.activeDestination === null) 
-          ? (1 + (s.prestigePoints * 0.10)) 
-          : 1.0;
-        const ngPlusCount = s.prestigeCount || 0;
-        const ngPlusMult = ngPlusCount >= 5 ? 1 + (ngPlusCount - 4) * 0.05 : 1.0;
-        const generalProductionMult = nrfMult * ngPlusMult;
-
-        const rubleMult = 1 + (s.ruble * 0.005);
-        const helperSpeedAchMult = (s.unlockedAchievements?.['pres_points'] ? 1.10 : 1) * (s.unlockedAchievements?.['pol_rank_4'] ? 1.25 : 1);
-        const baltonaGrundigMult = s.baltonaUpgrades?.['grundig'] ? 1.4 : 1.0;
-        const wilczekMult = s.activeEvent === 'reforma_wilczka' ? 1.5 : 1.0;
-        // [Claude] naprawa: pętla używała solidarityHelperSpeedMult zadeklarowanego ~5200 linii NIŻEJ,
-        // w ciele komponentu. Efekt (useEffect) łapał wartość z ostatniego renderu, przy którym się
-        // zamontował - po przekroczeniu 9000 Solidarności bonus +25% NIE działał, dopóki gracz nie
-        // zmienił kolejki/ustawień (restart efektu). Teraz liczymy świeżo z "s" jak resztę mnożników.
-        const solidarityHelperSpeedMultTick = s.solidarnos >= 9000 ? 1.25 : 1.0;
-        const helperMult = (s.pewexItems['lego'] ? 1.3 : 1)
-                         * (s.pewexItems['sanyo'] ? 1.5 : 1)
-                         * baltonaGrundigMult
-                         * generalProductionMult
-                         * rubleMult
-                         * helperSpeedAchMult
-                         * solidarityHelperSpeedMultTick
-                         * wilczekMult;
+        // [Claude] KIERUNEK 1.3: tempo pomocnikow ze wspolnego wzoru (formulas.ts);
+        // zZdarzeniami: true dolicza Ustawe Wilczka, jak dotychczas w petli online
+        const helperMult = helperSpeedMult(s, { zZdarzeniami: true });
                           
         // Helpers processing
         HELPERS.forEach(h => {
@@ -534,16 +516,8 @@ export function tick(s: GameState, deltaSec: number, ctx: TickContext): { state:
             const upgradeMult = 1 + level * 0.5;
             const amount = count * h.ratePerTick * deltaSec * helperMult * upgradeMult;
             if (h.id === 'cinkciarz') {
-              const baseRate = s.activeEvent === 'drozyzna' ? Math.floor(s.exchangeRate * 1.30) : s.exchangeRate;
-              const solidarityBonus = s.solidarnos >= 1000 ? 0.95 : 1.0;
-              const cinkciarzAchRateMult = (s.unlockedAchievements?.['eco_cinkciarz_1'] ? 0.98 : 1) * (s.unlockedAchievements?.['eco_cinkciarz_2'] ? 0.95 : 1) * solidarityBonus;
-              
-              // Faza F (Hiperinflacja) i Czarny Wtorek
-              let inflationMult = 1 + (nextState.inflationPercent / 100);
-              if (s.activeEvent === 'czarny_wtorek') {
-                inflationMult *= 2;
-              }
-              const currentRate = Math.floor(baseRate * cinkciarzAchRateMult * inflationMult);
+              // [Claude] KIERUNEK 1.3: kurs ze wspolnego wzoru; inflacja z biezacego ticku
+              const currentRate = cinkciarzRate(s, nextState.inflationPercent);
               const cost = amount * currentRate;
               if (s.pln >= cost) {
                 nextState.pln -= cost;
@@ -574,13 +548,8 @@ export function tick(s: GameState, deltaSec: number, ctx: TickContext): { state:
         BUSINESSES.forEach(b => {
           const count = s.businesses[b.id] || 0;
           if (count > 0) {
-            const rubinMult = s.pewexItems['rubin'] ? 2.0 : 1.0;
-            const biuroMult = s.partyRank === 'biuro' ? 3.0 : 1.0;
-            const businessAchMult = s.unlockedAchievements?.['eco_usd_1'] ? 1.10 : 1;
-            const transformMult = s.unlockedAchievements?.['pres_transform'] ? 1.50 : 1.0;
-            const importMult = s.baltonaUpgrades?.['import'] ? 1.35 : 1.0;
-            const wilczekMult = s.activeEvent === 'reforma_wilczka' ? 1.5 : 1.0;
-            const amount = count * b.ratePerTick * deltaSec * rubinMult * biuroMult * businessAchMult * transformMult * generalProductionMult * (b.generateType === 'pln' || b.generateType === 'dollars' ? importMult : 1.0) * wilczekMult;
+            // [Claude] KIERUNEK 1.3: tempo biznesow ze wspolnego wzoru (formulas.ts)
+            const amount = count * b.ratePerTick * deltaSec * businessProductionMult(s, b.generateType, { zZdarzeniami: true });
             if (b.generateType === 'pln') {
                // Faza F (Hiperinflacja) i Automat Pewex
                const baseRate = s.activeEvent === 'drozyzna' ? Math.floor(s.exchangeRate * 1.30) : s.exchangeRate;
@@ -1651,17 +1620,8 @@ export function tick(s: GameState, deltaSec: number, ctx: TickContext): { state:
         if (s.pewexItems['c64'] && activeQueue) {
           const c64Item = QUEUE_ITEMS.find(i => i.id === activeQueue);
           if (c64Item) {
-            let timeToBuy = c64Item.timeToBuyMs;
-            if (s.pewexItems['toblerone']) timeToBuy *= 0.85;
-            if (s.plnUpgrades['kozuch']) timeToBuy *= 0.90;
-            if (s.pewexItems['cola']) timeToBuy *= 0.8;
-            if (s.pewexItems['maluch']) timeToBuy *= 0.6;
-            if (s.baltonaUpgrades?.['jacobs']) timeToBuy *= 0.90;
-            if (s.activeEvent === 'kryzys') timeToBuy *= 1.20; // Kryzys Paliwowy (+20% czasu)
-            if (s.activeDestination === 'austria') timeToBuy *= 0.90; // Austria: -10% czasu
-            if (s.solidarnos >= 2000) timeToBuy *= 0.95; // Łącznik: -5% czasu
-            const queueTimeAchMult = (s.unlockedAchievements?.['eco_queue_1'] ? 0.95 : 1) * (s.unlockedAchievements?.['eco_queue_2'] ? 0.85 : 1);
-            timeToBuy *= queueTimeAchMult;
+            // [Claude] KIERUNEK 1.3: czas kolejki ze wspolnego wzoru (formulas.ts)
+            const timeToBuy = queueTimeMs(c64Item.timeToBuyMs, s);
             // Dolicza mniej więcej 50 ms postępu na sekundę (jak dotychczas)
             events.push({ kind: 'c64Progress', incrementPercent: (50 / timeToBuy) * 100 });
           }

@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { HELPERS, BUSINESSES, GPW_STOCKS, NOMENKLATURA_COMPANIES, OFFSHORE_DEPOSITS, COCOM_PERSONNEL } from '../game/items';
+// [Claude] KIERUNEK 1.3: symulacja offline liczy mnozniki tym samym wzorem co silnik
+// (bez opcji zZdarzeniami - zdarzenia historyczne celowo nie dzialaja offline, jak dotad)
+import { helperSpeedMult, businessProductionMult } from '../game/formulas';
 import type { AuctionState } from '../game/items';
 
 export interface BlackMarketOffer {
@@ -804,27 +807,8 @@ export function useGameState(isPaused: boolean = false) {
            if (timeDiffSec > 10) {
               const offlineSec = Math.min(86400, timeDiffSec); // Limit 24h
               
-              // 1. Zmienne globalne i mnożniki
-              const rubleMult = 1 + (merged.ruble * 0.005);
-              const helperSpeedAchMult = (merged.unlockedAchievements?.['pres_points'] ? 1.10 : 1) 
-                                       * (merged.unlockedAchievements?.['pol_rank_4'] ? 1.25 : 1);
-              
-              const nrfMult = (merged.activeDestination === 'nrf' || merged.activeDestination === null) 
-                 ? (1 + (merged.prestigePoints * 0.10)) 
-                 : 1.0;
-              const ngPlusCount = merged.prestigeCount || 0;
-              const ngPlusMult = ngPlusCount >= 5 ? 1 + (ngPlusCount - 4) * 0.05 : 1.0;
-              const generalProductionMult = nrfMult * ngPlusMult;
-
-              const solidarityHelperSpeedMult = merged.solidarnos >= 9000 ? 1.25 : 1.0;
-              const baltonaGrundigMult = merged.baltonaUpgrades?.['grundig'] ? 1.4 : 1.0;
-              const helperMult = (merged.pewexItems['lego'] ? 1.3 : 1) 
-                               * (merged.pewexItems['sanyo'] ? 1.5 : 1) 
-                               * baltonaGrundigMult
-                               * generalProductionMult
-                               * rubleMult
-                               * helperSpeedAchMult
-                               * solidarityHelperSpeedMult;
+              // 1. Mnozniki - wspolny wzor z formulas.ts (KIERUNEK 1.3)
+              const helperMult = helperSpeedMult(merged);
                                
               // 2. Pomocnicy
               HELPERS.forEach(h => {
@@ -851,17 +835,10 @@ export function useGameState(isPaused: boolean = false) {
               });
               
               // 3. Biznesy
-              const businessAchMult = merged.unlockedAchievements?.['eco_usd_1'] ? 1.10 : 1;
-              const transformMult = merged.unlockedAchievements?.['pres_transform'] ? 1.50 : 1.0;
-              const rubinMult = merged.pewexItems['rubin'] ? 2.0 : 1.0;
-              const biuroMult = merged.partyRank === 'biuro' ? 3.0 : 1.0;
-              const importMult = merged.baltonaUpgrades?.['import'] ? 1.35 : 1.0;
-              
               BUSINESSES.forEach(b => {
                 const count = merged.businesses[b.id] || 0;
                 if (count > 0) {
-                  const currentImportMult = (b.generateType === 'pln' || b.generateType === 'dollars') ? importMult : 1.0;
-                  const amount = count * b.ratePerTick * offlineSec * rubinMult * biuroMult * businessAchMult * transformMult * efficiency * generalProductionMult * currentImportMult;
+                  const amount = count * b.ratePerTick * offlineSec * efficiency * businessProductionMult(merged, b.generateType);
                   
                   if (b.generateType === 'pln') {
                      merged.pln += amount;
