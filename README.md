@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://github.com/NightBossman/kombinator-idle/blob/main/CHANGELOG.md">
-    <img src="https://img.shields.io/badge/wersja-v4.2.0-brightgreen.svg" alt="Wersja gry" />
+    <img src="https://img.shields.io/badge/wersja-v4.3.0-brightgreen.svg" alt="Wersja gry" />
   </a>
   <img src="https://img.shields.io/badge/status-grywalna-blue.svg" alt="Status projektu" />
   <img src="https://img.shields.io/badge/technologia-React%20%7C%20TS%20%7C%20Vite-blueviolet.svg" alt="Technologia" />

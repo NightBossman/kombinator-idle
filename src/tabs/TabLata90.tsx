@@ -829,3 +829,6 @@ export const TabLata90 = memo(function TabLata90() {
           );
         })();
 });
+
+// [Claude] KIERUNEK 4: default export dla React.lazy (podzial paczki JS per zakladka)
+export default TabLata90;

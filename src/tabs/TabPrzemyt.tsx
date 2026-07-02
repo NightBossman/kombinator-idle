@@ -583,3 +583,6 @@ export const TabPrzemyt = memo(function TabPrzemyt() {
            </div>
   );
 });
+
+// [Claude] KIERUNEK 4: default export dla React.lazy (podzial paczki JS per zakladka)
+export default TabPrzemyt;

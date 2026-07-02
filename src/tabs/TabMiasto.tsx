@@ -170,3 +170,6 @@ export const TabMiasto = memo(function TabMiasto() {
           );
         })();
 });
+
+// [Claude] KIERUNEK 4: default export dla React.lazy (podzial paczki JS per zakladka)
+export default TabMiasto;
