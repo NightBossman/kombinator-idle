@@ -4,6 +4,30 @@ Wszystkie istotne zmiany i wydania projektu będą dokumentowane w tym pliku.
 
 ---
 
+## [4.1.2] - 2026-07-02
+Refaktoryzacja architektury wykonana przez Claude (KIERUNEK.md, punkty 1.1 i 7.1).
+Zero zmian w mechanice gry - logika przeniesiona 1:1, zapisy w pełni kompatybilne.
+
+### Zmieniono
+- **Silnik gry wydzielony z App.tsx do `src/game/engine.ts`**: cała logika ticku (dawniej ~1900 linii
+  wewnątrz komponentu Reacta) jest teraz czystą funkcją `tick(stan, deltaSec, kontekst)`, która zwraca
+  nowy stan oraz listę zdarzeń (dźwięki, alerty, toasty, postęp auto-pchacza C64). App.tsx zmalał
+  z ~11,7 tys. do ~9,8 tys. linii i tylko odtwarza zdarzenia po aktualizacji stanu.
+- Komunikaty z pętli gry nie używają już `setTimeout` wewnątrz updatera stanu - dzięki temu
+  **w trybie deweloperskim zniknęły podwójne alerty i dźwięki** (React StrictMode celowo wywołuje
+  updatery dwukrotnie; bufor zdarzeń z identyfikatorem ticku usuwa duplikaty).
+
+### Dodano
+- **Testy silnika (vitest, `npm test`)** - 9 testów scenariuszowych: odliczanie i koniec recesji 2008,
+  krach GPW (-6%/tick), rozliczenie opcji CALL i toksycznej, zamrożenie inflacji po denominacji,
+  dewaluacja gotówki przed denominacją, produkcja pomocników, bonus Solidarności +25%
+  oraz godzina ticków z odblokowanymi fazami bez ani jednego NaN/Infinity w stanie gry.
+
+### Naprawiono
+- Martwy warunek pauzy w ticku lobbingu (sprawdzał `settingsOpen`, choć pętla i tak nie działa w pauzie).
+
+---
+
 ## [4.1.1] - 2026-07-02
 Przegląd i naprawa kodu wykonana przez Claude (Anthropic). Wszystkie zmiany w kodzie
 oznaczone komentarzami `[Claude]` z uzasadnieniem. Rady na przyszłość: `docs/KIERUNEK.md`.
