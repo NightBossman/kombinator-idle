@@ -4,7 +4,7 @@ import { QUEUE_ITEMS, HELPERS, PEWEX_ITEMS, PARTY_RANKS, PLN_UPGRADES, BUSINESSE
 import { playClick, playSuccess, playError, playAlert, isSoundEnabled, setSoundEnabled } from './utils/audio';
 // [Claude] fmtNum/pluralPL: polskie formatowanie liczb (przecinek dziesiętny) i odmiana rzeczowników po liczebnikach.
 // Usunięto też martwe "void DEBATE_OPTIONS; void ELECTION_UPGRADES;" - obie stałe są od dawna używane w zakładce Wyborów.
-import { fmtNum, pluralPL } from './utils/format';
+import { fmtNum, pluralPL, fmtShort } from './utils/format';
 
 type TabId = 'praca' | 'bazar' | 'przemyt' | 'partia' | 'czarnyRynek' | 'odznaczenia' | 'gpw' | 'offshore' | 'syndykat' | 'wybory' | 'lata90' | 'miasto' | 'lata2000';
 
@@ -10292,14 +10292,14 @@ function App() {
                     <h4 style={{ margin: '0 0 5px 0', fontSize: '0.9em' }}>Drukarnia Centralna</h4>
                     <div style={{ display: 'flex', gap: '10px', fontSize: '0.9em' }}>
                       <div style={{ flex: 1, padding: '5px', border: '1px solid #dcdde1', textAlign: 'center' }}>
-                        Papier: <strong>{fmtNum(state.paperStocks, 2, true)}</strong> ryz
+                        Papier: <strong>{fmtShort(state.paperStocks)}</strong> ryz
                         <div style={{ display: 'flex', gap: '2px', marginTop: '5px' }}>
                           <button onClick={() => buyPrintingSupplies('paper', 'pln')} style={{ flex: 1, fontSize: '0.8em' }}>Kup (5k zł)</button>
                           <button onClick={() => buyPrintingSupplies('paper', 'usd')} style={{ flex: 1, fontSize: '0.8em' }}>Kup ($50)</button>
                         </div>
                       </div>
                       <div style={{ flex: 1, padding: '5px', border: '1px solid #dcdde1', textAlign: 'center' }}>
-                        Tusz: <strong>{fmtNum(state.inkStocks, 2, true)}</strong> l.
+                        Tusz: <strong>{fmtShort(state.inkStocks)}</strong> l.
                         <div style={{ display: 'flex', gap: '2px', marginTop: '5px' }}>
                           <button onClick={() => buyPrintingSupplies('ink', 'pln')} style={{ flex: 1, fontSize: '0.8em' }}>Kup (8k zł)</button>
                           <button onClick={() => buyPrintingSupplies('ink', 'usd')} style={{ flex: 1, fontSize: '0.8em' }}>Kup ($80)</button>

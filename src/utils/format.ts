@@ -28,6 +28,14 @@ export const fmtNum = (value: number, decimals: number = 0, trim: boolean = fals
   return getFormatter(trim ? 0 : decimals, decimals).format(value);
 };
 
+
+export const fmtShort = (value: number): string => {
+  if (!Number.isFinite(value)) return '0';
+  if (value >= 1e9) return getFormatter(2, 2).format(value / 1e9) + ' mld';
+  if (value >= 1e6) return getFormatter(2, 2).format(value / 1e6) + ' mln';
+  if (value >= 1e4) return getFormatter(1, 1).format(value / 1e3) + ' tys.';
+  return getFormatter(0, 2).format(value);
+};
 /**
  * Odmiana rzeczownika po liczebniku (polskie reguły):
  * pluralPL(1, 'kartka', 'kartki', 'kartek') -> "kartka"
