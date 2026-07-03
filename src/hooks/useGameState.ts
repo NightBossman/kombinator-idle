@@ -301,12 +301,14 @@ export interface GameState {
   chfDebt: number;
   chfExchangeRate: number;
   realEstateOwned: Record<string, number>;
+  realEstateUnderConstruction: { id: string; timeLeft: number; financedWithChf: boolean; uuid: string }[];
   zmywakWorkers: number;
   euAuditRisk: number;
 
   // Faza T: Wielka Recesja 2008
   recessionActive: boolean;
   recessionTimer: number;
+  recessionTriggered: boolean;
   currencyOptions: { id: string; type: 'call' | 'put' | 'toxic'; strikeRate: number; amountChf: number; durationSec: number; timeLeft: number; premiumPln: number }[];
   crisisRealEstateOwned: Record<string, number>;
   bankAdvisors: number;
@@ -584,12 +586,14 @@ export const INITIAL_STATE: GameState = {
   chfDebt: 0,
   chfExchangeRate: 2.50,
   realEstateOwned: {},
+  realEstateUnderConstruction: [],
   zmywakWorkers: 0,
   euAuditRisk: 0,
 
   // Faza T: Wielka Recesja 2008
   recessionActive: false,
   recessionTimer: 0,
+  recessionTriggered: false,
   currencyOptions: [],
   crisisRealEstateOwned: {},
   bankAdvisors: 0,

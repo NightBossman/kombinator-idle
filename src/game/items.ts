@@ -161,24 +161,6 @@ export const HISTORY_EVENTS: HistoryEvent[] = [
     name: 'Czarny Wtorek (Panika Walutowa)',
     desc: 'Panika na rynku walutowym! Kurs dolara na czarnym rynku rośnie o +100% przez 60 sekund.',
     durationSec: 60
-  },
-  // [Claude] naprawa: pętla gry w App.tsx obsługiwała zdarzenia 'lehman_recession' i 'toxic_options_scandal'
-  // (start recesji z Fazy T), ale zdarzenia NIE ISTNIAŁY na tej liście - cała Wielka Recesja 2008 była martwa,
-  // bo recessionActive nie miało żadnego działającego wyzwalacza. Oba zdarzenia mają era: 'lata2000',
-  // więc losują się dopiero po odblokowaniu Fazy S (fazaSUnlocked).
-  {
-    id: 'lehman_recession',
-    name: 'Upadek Lehman Brothers (2008)',
-    desc: 'Globalny krach finansowy! Frank szwajcarski gwałtownie drożeje, GPW nurkuje o 6% na tick, dywidendy wstrzymane, a rynek nieruchomości zamarza na czas recesji (180 sekund). Syndycy wyprzedają niedokończone budowy za bezcen!',
-    durationSec: 180,
-    era: 'lata2000'
-  },
-  {
-    id: 'toxic_options_scandal',
-    name: 'Afera Opcji Toksycznych',
-    desc: 'Media ujawniają skalę toksycznych opcji walutowych w polskich firmach! Panika kosztuje Cię 15% posiadanej gotówki PLN.',
-    durationSec: 60,
-    era: 'lata2000'
   }
 ];
 

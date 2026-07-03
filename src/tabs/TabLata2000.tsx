@@ -5,6 +5,7 @@ import { CRISIS_REAL_ESTATE, CURRENCY_OPTION_PRESETS, DOTCOM_UPGRADES, EU_PROJEC
 import { fmtNum } from '../utils/format';
 import { playClick } from '../utils/audio';
 import { useGameApi } from './GameApiContext';
+import { realEstateCostPln } from '../game/formulas';
 
 export const TabLata2000 = memo(function TabLata2000() {
   const { addCompanyCapital, bribeEuAuditor, buyCrisisRealEstate, buyCurrencyOption, buyDotcomUpgrade, buyRealEstate, buyTeczkaIPN, buyVatUpgrade, claimVatRefund, finishCrisisRealEstate, hireBankAdvisor, lata2000SubTab, newCompanyGoods, newCompanyName, registerShellCompany, resolveVatAudit, restructureChfDebt, sellCrisisRealEstate, sellRealEstate, sendWorkerToZmywak, setLata2000SubTab, setNewCompanyGoods, setNewCompanyName, setVatOffshoreAmountInput, startEuProject, state, takeChfMortgage, toggleCompanyActive, toggleLobbyBill, toggleVatCarousel, transferToOffshore, vatOffshoreAmountInput, withdrawFromOffshore } = useGameApi();
@@ -171,8 +172,12 @@ export const TabLata2000 = memo(function TabLata2000() {
                     <div style={{ display: 'grid', gap: '15px' }}>
                       {REAL_ESTATE_PROJECTS.map(proj => {
                         const owned = state.realEstateOwned[proj.id] || 0;
-                        const canBuyCash = state.pln >= proj.costPln;
-                        const neededChf = Math.ceil(proj.costPln / state.chfExchangeRate);
+                        const building = state.realEstateUnderConstruction?.filter(x => x.id === proj.id) || [];
+                        const count = owned + building.length;
+                        
+                        const actualCostPln = realEstateCostPln(proj.costPln, count);
+                        const canBuyCash = state.pln >= actualCostPln;
+                        const neededChf = Math.ceil(actualCostPln / state.chfExchangeRate);
                         // Kredyt bierzemy "w ciemno"
                         
                         return (
@@ -184,10 +189,15 @@ export const TabLata2000 = memo(function TabLata2000() {
                             <div style={{ fontSize: '0.85em', color: '#bdc3c7', margin: '8px 0' }}>{proj.desc}</div>
                             
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
-                              <span style={{ fontSize: '0.85em', color: '#ecf0f1' }}>Posiadasz: <strong>{owned} szt.</strong></span>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <span style={{ fontSize: '0.85em', color: '#ecf0f1' }}>Posiadasz: <strong>{owned} szt.</strong></span>
+                                {building.length > 0 && (
+                                  <span style={{ fontSize: '0.8em', color: '#f39c12' }}>W budowie: {building.map(b => `${Math.ceil(b.timeLeft)}s`).join(', ')}</span>
+                                )}
+                              </div>
                               <div style={{ display: 'flex', gap: '8px' }}>
                                 <button onClick={() => buyRealEstate(proj.id, false)} disabled={!canBuyCash} style={{ padding: '6px 12px', fontSize: '0.8em', backgroundColor: '#2ecc71', color: '#fff', border: 'none', borderRadius: '4px', cursor: canBuyCash ? 'pointer' : 'not-allowed', fontWeight: 'bold' }}>
-                                  Kup ({proj.costPln.toLocaleString('pl-PL')} PLN)
+                                  Kup ({actualCostPln.toLocaleString('pl-PL')} PLN)
                                 </button>
                                 <button onClick={() => buyRealEstate(proj.id, true)} style={{ padding: '6px 12px', fontSize: '0.8em', backgroundColor: '#e74c3c', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }} title={`Pobierze ${neededChf.toLocaleString('pl-PL')} CHF kredytu`}>
                                   Kredyt CHF

@@ -26,7 +26,7 @@ const TabMiasto = lazy(() => import('./tabs/TabMiasto'));
 import { GameApiContext } from './tabs/GameApiContext';
 import type { GameApi } from './tabs/GameApiContext';
 // [Claude] KIERUNEK 1.3: wspolne wzory - panel Casio i Bazar pokazuja to, co liczy silnik
-import { helperSpeedMult, businessProductionMult, cinkciarzRate, queueTimeMs, bazarPlnUnitPrice, bazarUsdUnitPrice } from './game/formulas';
+import { helperSpeedMult, businessProductionMult, cinkciarzRate, queueTimeMs, bazarPlnUnitPrice, bazarUsdUnitPrice, realEstateCostPln, realEstateBuildTimeSec } from './game/formulas';
 // [Claude] silnik gry (KIERUNEK.md pkt 1.1) - czysta pętla + zdarzenia; stamtąd też calculateLuxurySuspicionReduction
 import { tick, calculateLuxurySuspicionReduction } from './game/engine';
 import type { GameEvent, SoundId } from './game/engine';
@@ -2385,25 +2385,29 @@ function App() {
     const proj = REAL_ESTATE_PROJECTS.find(p => p.id === projectId);
     if (!proj) return;
     
+    const count = (state.realEstateOwned[projectId] || 0) + (state.realEstateUnderConstruction.filter(x => x.id === projectId).length);
+    const actualCostPln = realEstateCostPln(proj.costPln, count);
+    const actualBuildTime = realEstateBuildTimeSec(proj.buildTimeSec, count);
+
     if (useChf) {
       if (state.chfDebt > 0 && state.pln < 1000000) { playError(); return; }
-      const neededChf = Math.ceil(proj.costPln / state.chfExchangeRate);
+      const neededChf = Math.ceil(actualCostPln / state.chfExchangeRate);
       updateState(s => ({
         ...s,
         chfDebt: s.chfDebt + neededChf,
-        realEstateOwned: { ...s.realEstateOwned, [projectId]: (s.realEstateOwned[projectId] || 0) + 1 }
+        realEstateUnderConstruction: [...s.realEstateUnderConstruction, { id: projectId, timeLeft: actualBuildTime, financedWithChf: true, uuid: uniqueId('build') }]
       }));
       playSuccess();
-      addToast('DEWELOPERKA', `Sfinansowano "${proj.name}" kredytem CHF.`);
+      addToast('DEWELOPERKA', `Rozpoczęto budowę "${proj.name}" (kredyt CHF).`);
     } else {
-      if (state.pln < proj.costPln) { playError(); return; }
+      if (state.pln < actualCostPln) { playError(); return; }
       updateState(s => ({
         ...s,
-        pln: s.pln - proj.costPln,
-        realEstateOwned: { ...s.realEstateOwned, [projectId]: (s.realEstateOwned[projectId] || 0) + 1 }
+        pln: s.pln - actualCostPln,
+        realEstateUnderConstruction: [...s.realEstateUnderConstruction, { id: projectId, timeLeft: actualBuildTime, financedWithChf: false, uuid: uniqueId('build') }]
       }));
       playSuccess();
-      addToast('DEWELOPERKA', `Zakupiono "${proj.name}" za gotówkę.`);
+      addToast('DEWELOPERKA', `Rozpoczęto budowę "${proj.name}".`);
     }
   };
 

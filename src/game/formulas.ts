@@ -142,3 +142,10 @@ export const calculateLuxuryPrestigeBonus = (ownedLuxuryItems: Record<string, bo
   });
   return bonus;
 };
+
+
+/** Koszt deweloperki: rośnie o 15% z każdą kolejną inwestycją tego samego typu. */
+export const realEstateCostPln = (baseCost: number, count: number): number => baseCost * Math.pow(1.15, count);
+
+/** Czas budowy deweloperki: rośnie o 10% z każdą kolejną inwestycją tego samego typu. */
+export const realEstateBuildTimeSec = (baseTime: number, count: number): number => baseTime * Math.pow(1.10, count);
