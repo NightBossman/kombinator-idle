@@ -672,13 +672,12 @@ export function useGameState(isPaused: boolean = false) {
           merged.lastMarketRefresh = Date.now();
         }
         
-        // Zaawansowana symulacja produkcji offline
+        // Zaawansowana symulacja produkcji offline (dostępna domyślnie, zyskuje na wydajności dzięki M3 i Willi)
         const hasM3 = merged.pewexItems.m3;
         const hasWilla = merged.pewexItems.willa;
-        if (hasM3 || hasWilla) {
-           const efficiency = hasWilla ? 1.0 : 0.5;
-           const timeDiffSec = (Date.now() - merged.lastSave) / 1000;
-           if (timeDiffSec > 10) {
+        const efficiency = hasWilla ? 1.0 : (hasM3 ? 0.5 : 0.25);
+        const timeDiffSec = (Date.now() - merged.lastSave) / 1000;
+        if (timeDiffSec > 10) {
               const offlineSec = Math.min(86400, timeDiffSec); // Limit 24h
               
               const offlineRep = {
@@ -1002,7 +1001,6 @@ export function useGameState(isPaused: boolean = false) {
               merged.offlineReport = offlineRep;
             }
           }
-        }
         // Inicjalizacja giełdy w załadowanym stanie, jeśli pusta
         GPW_STOCKS.forEach(stock => {
           if (!merged.stockPrices[stock.id]) {
