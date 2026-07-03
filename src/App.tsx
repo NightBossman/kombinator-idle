@@ -1889,7 +1889,11 @@ function App() {
       pln: s.pln - costPln,
       dollars: s.dollars - costUsd,
       gangWeapons: { ...s.gangWeapons, [weaponId]: (s.gangWeapons[weaponId] || 0) + qty },
-      gangRespect: s.gangRespect + (5 * qty)
+      gangRespect: s.gangRespect + (5 * qty),
+      stats: {
+        ...s.stats,
+        totalBlackMarketPurchases: (s.stats.totalBlackMarketPurchases || 0) + qty
+      }
     }));
     playSuccess();
   };
@@ -3624,13 +3628,10 @@ function App() {
     
     playSuccess();
     updateState(s => {
+       const stats = { ...s.stats, totalBlackMarketPurchases: (s.stats.totalBlackMarketPurchases || 0) + 1 };
        const suspAchMult = (s.unlockedAchievements?.['pol_rank_1'] ? 0.95 : 1) * (s.unlockedAchievements?.['pol_rank_2'] ? 0.90 : 1);
        const luxurySuspMult = 1 - calculateLuxurySuspicionReduction(s.ownedLuxuryItems);
        const suspicionAdd = s.partyRank === 'minister' || s.activeEvent === 'odwilz' ? 0 : Math.max(1, Math.floor(Math.floor(originalItem.costPln / 50) * suspAchMult * luxurySuspMult));
-       const stats = {
-         ...s.stats,
-         totalBlackMarketPurchases: (s.stats.totalBlackMarketPurchases || 0) + 1
-       };
        return {
          ...s,
          pln: s.pln - finalCost,
