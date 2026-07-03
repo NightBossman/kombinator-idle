@@ -74,6 +74,19 @@ describe('opcje walutowe (Faza T)', () => {
     expect(events.some(e => e.kind === 'toast' && e.title === 'OPCJA ROZLICZONA')).toBe(true);
   });
 
+  it('PUT wypłaca różnicę strike ponad kurs razy wolumen', () => {
+    const start = freshState({
+      pln: 0,
+      chfExchangeRate: 2.5,
+      lastMarketRefresh: NOW,
+      currencyOptions: [{ id: 'o1', type: 'put', strikeRate: 3.5, amountChf: 1000, durationSec: 60, timeLeft: 0.5, premiumPln: 100 }],
+    });
+    const { state, events } = runTicks(start, 1);
+    expect(state.currencyOptions).toHaveLength(0);
+    expect(state.pln).toBe(1000); // (3.50 - 2.50) * 1000
+    expect(events.some(e => e.kind === 'toast' && e.title === 'OPCJA ROZLICZONA')).toBe(true);
+  });
+
   it('opcja toksyczna karze podwójnie powyżej kursu wykonania', () => {
     const start = freshState({
       pln: 2000,
@@ -178,5 +191,27 @@ describe('stabilność liczbowa', () => {
     znajdzNaN(state, 'state', bledy);
     expect(bledy).toEqual([]);
     expect(state.stats.totalTimePlayed).toBeCloseTo(3600, 0);
+  });
+});
+
+describe('kredyty CHF (Faza S)', () => {
+  it('spłaca kredyt CHF zgodnie z ratą z formulas.ts', () => {
+    const start = freshState({
+      pln: 1000000,
+      chfDebt: 500000,
+      chfExchangeRate: 4.0,
+      fazaSUnlocked: true,
+      lastMarketRefresh: NOW,
+    });
+    // 500000 * 0.0005 = 250 CHF/s raty
+    // 250 CHF * 4.0 PLN = 1000 PLN kosztu na s
+    // 250 CHF * 0.8 = 200 CHF spłaty kapitału na s
+    // Dot-com generuje pasywny przychód 140 PLN (100 użytkowników * 1.4 PLN/użytkownika/s)
+    // Pasywna dewaluacja gotówki zabiera 100 PLN (0.01% z 1M PLN)
+    // Koszt raty CHF wynosi 1000 PLN (250 CHF * 4.0 PLN/CHF)
+    // Wynik netto gotówki: 1000000 - 1000 - 100 + 140 = 999040 PLN
+    const { state } = runTicks(start, 1);
+    expect(state.pln).toBe(999040);
+    expect(state.chfDebt).toBe(500000 - 200);
   });
 });
