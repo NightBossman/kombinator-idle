@@ -997,10 +997,10 @@ export function useGameState(isPaused: boolean = false) {
                 }
               });
               merged.activeCocomSmugglingRuns = remainingSmugglingRuns;
-              
-              merged.offlineReport = offlineRep;
-            }
-          }
+            } // end if (merged.syndicateUnlocked)
+            
+            merged.offlineReport = offlineRep;
+          } // end if (timeDiffSec > 10)
         // Inicjalizacja giełdy w załadowanym stanie, jeśli pusta
         GPW_STOCKS.forEach(stock => {
           if (!merged.stockPrices[stock.id]) {
