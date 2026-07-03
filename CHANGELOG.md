@@ -4,6 +4,35 @@ Wszystkie istotne zmiany i wydania projektu będą dokumentowane w tym pliku.
 
 ---
 
+## [4.3.0] - 2026-07-03
+Domknięcie WSZYSTKICH punktów `docs/KIERUNEK.md` (2, 3, 4, 7.4) + rzadszy autozapis — Claude.
+Mechanika gry bez zmian, stare zapisy wczytują się bez utraty czegokolwiek.
+
+### Zmieniono
+- **Wersjonowanie zapisu gry (KIERUNEK 2)**: ~180 ręcznych linii „backward compat"
+  zastąpione głębokim scalaniem zapisu z `INITIAL_STATE` (`mergeSavedState` + pole
+  `saveVersion` z miejscem na migracje). Dynamiczne klucze zapisu zostają, brakujące pola
+  dostają wartości domyślne, martwe pola starych zapisów wypadają. Nowe pole stanu wymaga
+  odtąd tylko wpisu w `GameState` + `INITIAL_STATE`. Do tego 5 testów scalania.
+- **Autozapis co 60 sekund** (wcześniej co 5 s) — serializacja całego stanu to najdroższa
+  cykliczna operacja poza renderem. Nic nie ginie: gra dodatkowo **zapisuje się natychmiast
+  przy zamknięciu strony i przy ukryciu karty** (przełączenie okna, telefon).
+- Stan początkowy jest klonowany przy wczytaniu i resecie — rozgrywka nie może już po cichu
+  zmutować `INITIAL_STATE` (współdzielone zagnieżdżone obiekty).
+- **Podział paczki JS (KIERUNEK 4)**: wszystkie 13 zakładek ładuje się przez `React.lazy`
+  dopiero przy pierwszym wejściu (retro-komunikat „WCZYTYWANIE MODUŁU..." na czas dogrywania).
+  Główna paczka zmalała z ~628 kB do ~352 kB; ostrzeżenie Vite o rozmiarze zniknęło.
+
+### Dodano
+- **Kolejka modali (KIERUNEK 3)**: gdy kilka zdarzeń wypadnie naraz, komunikaty czekają
+  w kolejce („ZROZUMIANO" pokazuje następny) zamiast się nadpisywać. Identyczna treść nie
+  dubluje się, limit 8 okien, pod przyciskami licznik „+N kolejnych komunikatów w kolejce".
+
+### Naprawiono
+- Pasek zasobów: skrót „Rub" ujednolicony do „rub." (spójnie z szt./bon./oz) — KIERUNEK 7.4.
+
+---
+
 ## [4.2.0] - 2026-07-02
 Dokończenie refaktoryzacji architektury z KIERUNEK.md (punkty 1.2, 1.3, 7.2, 7.3) — Claude.
 Mechanika gry bez zmian (poza opisanymi niżej naprawami rozjazdów wyświetlania), zapisy kompatybilne.

@@ -1,9 +1,14 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { HELPERS, BUSINESSES, GPW_STOCKS, NOMENKLATURA_COMPANIES, OFFSHORE_DEPOSITS, COCOM_PERSONNEL } from '../game/items';
 // [Claude] KIERUNEK 1.3: symulacja offline liczy mnozniki tym samym wzorem co silnik
 // (bez opcji zZdarzeniami - zdarzenia historyczne celowo nie dzialaja offline, jak dotad)
 import { helperSpeedMult, businessProductionMult } from '../game/formulas';
 import type { AuctionState } from '../game/items';
+
+// [Claude] KIERUNEK 2: wersja formatu zapisu. Podbij TYLKO, gdy zmienia sie ZNACZENIE
+// istniejacego pola (i dopisz migracje w mergeSavedState). Samo dodanie nowego pola
+// nie wymaga niczego - glebokie scalenie z INITIAL_STATE uzupelni je automatycznie.
+export const SAVE_VERSION = 1;
 
 export interface BlackMarketOffer {
   id: string;
@@ -86,6 +91,7 @@ export interface ShellCompany {
 }
 
 export interface GameState {
+  saveVersion: number; // [Claude] KIERUNEK 2 - patrz SAVE_VERSION i mergeSavedState
   pln: number;
   dollars: number;
   exchangeRate: number;
@@ -330,6 +336,7 @@ export interface GameState {
 }
 
 export const INITIAL_STATE: GameState = {
+  saveVersion: SAVE_VERSION,
   pln: 5,
   dollars: 0,
   exchangeRate: 100,
@@ -610,187 +617,48 @@ export const INITIAL_STATE: GameState = {
   vatUpgrades: {}
 };
 
+const isPlainObject = (v: unknown): v is Record<string, unknown> =>
+  v !== null && typeof v === 'object' && !Array.isArray(v);
+
+// [Claude] KIERUNEK 2: to zastepuje ~180 recznych linii "backward compat" (osobna linijka
+// na kazde pole - przy kazdej nowej fazie latwo bylo ktoras pominac). Reguly scalania:
+//  - poziom najwyzszy: TYLKO pola znane w INITIAL_STATE (martwe pola starych zapisow wypadaja),
+//  - poziomy nizsze: klucze z zapisu zostaja (dynamiczne id: ekwipunek, spolki, akcje...),
+//    a brakujace wartosci domyslne sa dokladane,
+//  - tablice i prymitywy: wartosc z zapisu wygrywa, jesli istnieje,
+//  - domyslne sa KLONOWANE, zeby rozgrywka nigdy nie mutowala INITIAL_STATE.
+export function mergeSavedState(parsed: unknown): GameState {
+  if (!isPlainObject(parsed)) return structuredClone(INITIAL_STATE);
+
+  const loadedVersion = typeof parsed.saveVersion === 'number' ? parsed.saveVersion : 0;
+  // Miejsce na przyszle migracje, np.:
+  // if (loadedVersion < 2) { parsed.polePoNowemu = przeksztalc(parsed.polePoStaremu); }
+  void loadedVersion;
+
+  const merge = (defaults: unknown, savedVal: unknown, topLevel: boolean): unknown => {
+    if (isPlainObject(defaults)) {
+      if (!isPlainObject(savedVal)) return structuredClone(defaults);
+      const out: Record<string, unknown> = topLevel ? {} : { ...savedVal };
+      for (const key of Object.keys(defaults)) {
+        out[key] = merge(defaults[key], savedVal[key], false);
+      }
+      return out;
+    }
+    return savedVal === undefined ? structuredClone(defaults) : savedVal;
+  };
+
+  const merged = merge(INITIAL_STATE, parsed, true) as GameState;
+  merged.saveVersion = SAVE_VERSION;
+  return merged;
+}
+
 export function useGameState(isPaused: boolean = false) {
   const [state, setState] = useState<GameState>(() => {
     const saved = localStorage.getItem('kombinator-save');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        const merged = { 
-          ...INITIAL_STATE, 
-          ...parsed, 
-          inventory: { ...INITIAL_STATE.inventory, ...(parsed.inventory || {}) }, 
-          helpers: { ...INITIAL_STATE.helpers, ...(parsed.helpers || {}) }, 
-          businesses: { ...INITIAL_STATE.businesses, ...(parsed.businesses || {}) },
-          pewexItems: { ...INITIAL_STATE.pewexItems, ...(parsed.pewexItems || {}) },
-          plnUpgrades: { ...INITIAL_STATE.plnUpgrades, ...(parsed.plnUpgrades || {}) },
-          blackMarketOffers: parsed.blackMarketOffers || [],
-          activeEvent: parsed.activeEvent !== undefined ? parsed.activeEvent : null,
-          eventTimeLeft: parsed.eventTimeLeft !== undefined ? parsed.eventTimeLeft : 0,
-          nextEventIn: parsed.nextEventIn !== undefined ? parsed.nextEventIn : 120,
-          stats: { ...INITIAL_STATE.stats, ...(parsed.stats || {}) },
-          unlockedAchievements: parsed.unlockedAchievements || {},
-          // Faza T backward compat
-          recessionActive: parsed.recessionActive !== undefined ? parsed.recessionActive : false,
-          recessionTimer: parsed.recessionTimer !== undefined ? parsed.recessionTimer : 0,
-          currencyOptions: parsed.currencyOptions || [],
-          crisisRealEstateOwned: parsed.crisisRealEstateOwned || {},
-          bankAdvisors: parsed.bankAdvisors !== undefined ? parsed.bankAdvisors : 0,
-          devStateBackup: parsed.devStateBackup !== undefined ? parsed.devStateBackup : null,
-          
-          // Faza U backward compat
-          lobbyActiveBills: parsed.lobbyActiveBills || {},
-          lobbyCorruption: parsed.lobbyCorruption !== undefined ? parsed.lobbyCorruption : 0,
-          commissionActive: parsed.commissionActive !== undefined ? parsed.commissionActive : false,
-          commissionAggression: parsed.commissionAggression !== undefined ? parsed.commissionAggression : 0,
-          commissionEvidence: parsed.commissionEvidence !== undefined ? parsed.commissionEvidence : 0,
-          commissionQuestionIndex: parsed.commissionQuestionIndex !== undefined ? parsed.commissionQuestionIndex : 0,
-          teczkiCount: parsed.teczkiCount !== undefined ? parsed.teczkiCount : 0,
-          prisonSentenceRemaining: parsed.prisonSentenceRemaining !== undefined ? parsed.prisonSentenceRemaining : 0,
-          // Faza E backward compat
-          solidarnos: parsed.solidarnos !== undefined ? parsed.solidarnos : 0,
-          okraglyStolKartki: parsed.okraglyStolKartki !== undefined ? parsed.okraglyStolKartki : 0,
-          okraglyStolPln: parsed.okraglyStolPln !== undefined ? parsed.okraglyStolPln : 0,
-          okraglyStolStartDay: parsed.okraglyStolStartDay !== undefined ? parsed.okraglyStolStartDay : -1,
-          okraglyStolVictory: parsed.okraglyStolVictory !== undefined ? parsed.okraglyStolVictory : false,
-          // Faza F backward compat
-          prestigeCount: parsed.prestigeCount !== undefined ? parsed.prestigeCount : 0,
-          activeDestination: parsed.activeDestination !== undefined ? parsed.activeDestination : null,
-          timeInCurrentLoop: parsed.timeInCurrentLoop !== undefined ? parsed.timeInCurrentLoop : 0,
-          speedrunActive: parsed.speedrunActive !== undefined ? parsed.speedrunActive : false,
-          speedrunTime: parsed.speedrunTime !== undefined ? parsed.speedrunTime : 0,
-          speedrunHistory: parsed.speedrunHistory !== undefined ? parsed.speedrunHistory : [],
-          // Faza A (Rozszerzenie) backward compat
-          helperUpgrades: parsed.helperUpgrades || {},
-          // Faza B backward compat
-          ownedLuxuryItems: parsed.ownedLuxuryItems || {},
-          auction: parsed.auction !== undefined ? parsed.auction : null,
-          nextAuctionIn: parsed.nextAuctionIn !== undefined ? parsed.nextAuctionIn : 600,
-          // Faza C backward compat
-          bibulaPaper: parsed.bibulaPaper !== undefined ? parsed.bibulaPaper : 0,
-          bibulaInk: parsed.bibulaInk !== undefined ? parsed.bibulaInk : 0,
-          bibulaPisma: parsed.bibulaPisma !== undefined ? parsed.bibulaPisma : 0,
-          bibulaLockdownRemaining: parsed.bibulaLockdownRemaining !== undefined ? parsed.bibulaLockdownRemaining : 0,
-          isPrinting: parsed.isPrinting !== undefined ? parsed.isPrinting : false,
-          printProgress: parsed.printProgress !== undefined ? parsed.printProgress : 0,
-          // Faza D backward compat
-          bonyBaltona: parsed.bonyBaltona !== undefined ? parsed.bonyBaltona : 0,
-          activeSeaSmuggle: parsed.activeSeaSmuggle !== undefined ? parsed.activeSeaSmuggle : null,
-          seaSmuggleProgress: parsed.seaSmuggleProgress !== undefined ? parsed.seaSmuggleProgress : 0,
-          baltonaUpgrades: parsed.baltonaUpgrades || {},
-          // Faza E backward compat
-          sbTwList: parsed.sbTwList || {},
-          sbTwRevealed: parsed.sbTwRevealed || {},
-          sbTwBlackmailed: parsed.sbTwBlackmailed || {},
-          sbCounterIntelTimeLeft: parsed.sbCounterIntelTimeLeft !== undefined ? parsed.sbCounterIntelTimeLeft : 0,
-          // Faza F (Hiperinflacja) backward compat
-          inflationPercent: parsed.inflationPercent !== undefined ? parsed.inflationPercent : 0,
-          zloto: parsed.zloto !== undefined ? parsed.zloto : 0,
-          srebro: parsed.srebro !== undefined ? parsed.srebro : 0,
-          bonyPewex: parsed.bonyPewex !== undefined ? parsed.bonyPewex : 0,
-          bondPrlCount: parsed.bondPrlCount !== undefined ? parsed.bondPrlCount : 0,
-          bondSolCount: parsed.bondSolCount !== undefined ? parsed.bondSolCount : 0,
-          bondSolValue: parsed.bondSolValue !== undefined ? parsed.bondSolValue : 0,
-          inflationUpgrades: parsed.inflationUpgrades || {},
-          // Faza G (GPW) backward compat
-          gpwUnlocked: parsed.gpwUnlocked !== undefined ? parsed.gpwUnlocked : false,
-          sharesOwned: parsed.sharesOwned || {},
-          sharesAvgCost: parsed.sharesAvgCost || {},
-          stockPrices: parsed.stockPrices || {},
-          stockPriceHistories: parsed.stockPriceHistories || {},
-          gpwActiveEvent: parsed.gpwActiveEvent !== undefined ? parsed.gpwActiveEvent : null,
-          gpwEventTimeLeft: parsed.gpwEventTimeLeft !== undefined ? parsed.gpwEventTimeLeft : 0,
-          gpwInsiderTip: parsed.gpwInsiderTip !== undefined ? parsed.gpwInsiderTip : null,
-          // Faza H (Spółki Nomenklaturowe) backward compat
-          nomenklaturaUnlocked: parsed.nomenklaturaUnlocked !== undefined ? parsed.nomenklaturaUnlocked : false,
-          sbSuspicion: parsed.sbSuspicion !== undefined ? parsed.sbSuspicion : 0,
-          sbLockdownTimeLeft: parsed.sbLockdownTimeLeft !== undefined ? parsed.sbLockdownTimeLeft : 0,
-          nomenklaturaCompanies: parsed.nomenklaturaCompanies || {},
-          // Faza J (Syndykat COCOM) backward compat
-          syndicateUnlocked: parsed.syndicateUnlocked !== undefined ? parsed.syndicateUnlocked : false,
-          cocomInventory: parsed.cocomInventory || {},
-          cocomProceedsPln: parsed.cocomProceedsPln !== undefined ? parsed.cocomProceedsPln : 0,
-          unlockedContacts: parsed.unlockedContacts || { moscow_bureau: true },
-          syndicateUpgrades: parsed.syndicateUpgrades || {},
-          activeCocomShipments: parsed.activeCocomShipments || [],
-          activeGeoEvent: parsed.activeGeoEvent !== undefined ? parsed.activeGeoEvent : null,
-          geoEventTimeLeft: parsed.geoEventTimeLeft !== undefined ? parsed.geoEventTimeLeft : 0,
-          autoExportEnabled: parsed.autoExportEnabled !== undefined ? parsed.autoExportEnabled : false,
-          autoExportCooldown: parsed.autoExportCooldown !== undefined ? parsed.autoExportCooldown : 0,
-          embassyImmunityCooldown: parsed.embassyImmunityCooldown !== undefined ? parsed.embassyImmunityCooldown : 0,
-          // Faza K (Wybory 4 Czerwca) backward compat
-          electionsUnlocked: parsed.electionsUnlocked !== undefined ? parsed.electionsUnlocked : false,
-          electionFundsPln: parsed.electionFundsPln !== undefined ? parsed.electionFundsPln : 0,
-          electionFundsUsd: parsed.electionFundsUsd !== undefined ? parsed.electionFundsUsd : 0,
-          paperStocks: parsed.paperStocks !== undefined ? parsed.paperStocks : 0,
-          inkStocks: parsed.inkStocks !== undefined ? parsed.inkStocks : 0,
-          campaignMaterials: parsed.campaignMaterials || {},
-          regionalCommittees: parsed.regionalCommittees || {},
-          regionalVotes: parsed.regionalVotes || {},
-          electionUpgrades: parsed.electionUpgrades || {},
-          activeRallies: parsed.activeRallies || [],
-          leaderCooldowns: parsed.leaderCooldowns || {},
-          regimePropaganda: parsed.regimePropaganda !== undefined ? parsed.regimePropaganda : 80,
-          churchSupport: parsed.churchSupport !== undefined ? parsed.churchSupport : 0,
-          debateCompleted: parsed.debateCompleted !== undefined ? parsed.debateCompleted : false,
-          debateRound: parsed.debateRound !== undefined ? parsed.debateRound : 0,
-          debateScore: parsed.debateScore !== undefined ? parsed.debateScore : 0,
-          rweActive: parsed.rweActive !== undefined ? parsed.rweActive : false,
-          electionsPhase: parsed.electionsPhase || 'not_started',
-          sejmSeatsWon: parsed.sejmSeatsWon !== undefined ? parsed.sejmSeatsWon : 0,
-          senateSeatsWon: parsed.senateSeatsWon !== undefined ? parsed.senateSeatsWon : 0,
-          campaignTimePlayed: parsed.campaignTimePlayed !== undefined ? parsed.campaignTimePlayed : 0,
-          // Faza L: Globalne Imperium Przemytnicze backward compat
-          cocomVehicles: parsed.cocomVehicles || {},
-          cocomPersonnel: parsed.cocomPersonnel || {},
-          activeCocomSmugglingRuns: parsed.activeCocomSmugglingRuns || [],
-          borderShiftTimeLeft: parsed.borderShiftTimeLeft !== undefined ? parsed.borderShiftTimeLeft : 60,
-          borderShiftStatus: parsed.borderShiftStatus || {
-            'Świecko (Drogowe)': 'standard',
-            'Cieszyn (Drogowe)': 'standard',
-            'Szwajcarska Straż Graniczna': 'standard',
-            'Terespol (Kolejowe)': 'standard',
-            'Okęcie (Kontrola Lotnicza)': 'standard'
-          },
-          borderShiftTimer: parsed.borderShiftTimer !== undefined ? parsed.borderShiftTimer : 60,
-
-          // Faza M backward compat
-          fazaMUnlocked: parsed.fazaMUnlocked !== undefined ? parsed.fazaMUnlocked : false,
-          nfiVouchers: parsed.nfiVouchers !== undefined ? parsed.nfiVouchers : 0,
-          nfiCompanies: { ...INITIAL_STATE.nfiCompanies, ...(parsed.nfiCompanies || {}) },
-          nfiCompanyStatus: parsed.nfiCompanyStatus || INITIAL_STATE.nfiCompanyStatus,
-          mafiaProtectionId: parsed.mafiaProtectionId !== undefined ? parsed.mafiaProtectionId : null,
-          mafiaThreatLevel: parsed.mafiaThreatLevel !== undefined ? parsed.mafiaThreatLevel : 0,
-          bazarInventory: { ...INITIAL_STATE.bazarInventory, ...(parsed.bazarInventory || {}) },
-          isDenominated: parsed.isDenominated !== undefined ? parsed.isDenominated : false,
-          plzInflationMult: parsed.plzInflationMult !== undefined ? parsed.plzInflationMult : 1,
-
-          // Faza P backward compat
-          bazarWarehouseCapacity: parsed.bazarWarehouseCapacity !== undefined ? parsed.bazarWarehouseCapacity : 50,
-          bazarMarketSaturation: parsed.bazarMarketSaturation || { 'vhs_tapes': 0, 'turkey_sweaters': 0, 'taiwan_electronics': 0 },
-          activeBazarTransports: parsed.activeBazarTransports || [],
-          bazarWarehouseUpgradeId: parsed.bazarWarehouseUpgradeId !== undefined ? parsed.bazarWarehouseUpgradeId : null,
-
-          // Faza R backward compat
-          mediaUnlocked: parsed.mediaUnlocked !== undefined ? parsed.mediaUnlocked : false,
-          mediaStations: parsed.mediaStations || {},
-          mediaPrograms: parsed.mediaPrograms || {},
-          activeMediaPrograms: parsed.activeMediaPrograms || {
-            'gazeta_bazarowa': { 'rano': null, 'poludnie': null, 'wieczor': null },
-            'radio_szum': { 'rano': null, 'poludnie': null, 'wieczor': null },
-            'tv_kombinator': { 'rano': null, 'poludnie': null, 'wieczor': null }
-          },
-          mediaAntennas: parsed.mediaAntennas || {},
-          mediaTrust: parsed.mediaTrust || { 'gazeta_bazarowa': 100, 'radio_szum': 100, 'tv_kombinator': 100 },
-          mediaKrritBribeDiscount: parsed.mediaKrritBribeDiscount !== undefined ? parsed.mediaKrritBribeDiscount : 1.0,
-
-          // Faza N backward compat
-          fazaNUnlocked: parsed.fazaNUnlocked !== undefined ? parsed.fazaNUnlocked : false,
-          gangRespect: parsed.gangRespect !== undefined ? parsed.gangRespect : 0,
-          gangUnits: { ...INITIAL_STATE.gangUnits, ...(parsed.gangUnits || {}) },
-          gangWeapons: { ...INITIAL_STATE.gangWeapons, ...(parsed.gangWeapons || {}) },
-          districtControl: { ...INITIAL_STATE.districtControl, ...(parsed.districtControl || {}) },
-        };
+        const merged = mergeSavedState(parsed);
         
         // Wygenerowanie ofert na start, jeśli puste
         if (merged.blackMarketOffers.length === 0) {
@@ -1111,14 +979,18 @@ export function useGameState(isPaused: boolean = false) {
 
         return merged;
       } catch {
-        return INITIAL_STATE;
+        return structuredClone(INITIAL_STATE);
       }
     }
-    return INITIAL_STATE;
+    // [Claude] klon zamiast wspoldzielenia: petla gry mutuje zagniezdzone obiekty stanu,
+    // a INITIAL_STATE musi zostac nietkniety (korzysta z niego reset i scalanie zapisu)
+    return structuredClone(INITIAL_STATE);
   });
 
   // Autozapis gry
-  // [Claude] naprawa: ten interwał losowo zmieniał exchangeRate co 2 s (±10, widełki 50-500),
+  // [Claude] co 60 s (na zyczenie wlasciciela; wczesniej 5 s) - serializacja calego stanu
+  // do localStorage to najdrozsza cykliczna operacja poza renderem. Nic nie ginie przy
+  // zamknieciu gry: efekt nizej zapisuje natychmiast przy beforeunload/ukryciu karty.
   // podczas gdy pętla gry w App.tsx ma WŁASNE wahania kursu co 10 s (±5%, widełki 80-150,
   // z bonusem polisy asekuracyjnej). Dwa systemy walczyły ze sobą - kurs skakał chaotycznie
   // i uciekał poza widełki nowszego systemu. Zostaje wyłącznie system z pętli gry,
@@ -1135,9 +1007,33 @@ export function useGameState(isPaused: boolean = false) {
         localStorage.setItem('kombinator-save', JSON.stringify(newState));
         return newState;
       });
-    }, 5000);
+    }, 60000);
     return () => clearInterval(interval);
   }, [isPaused]);
+
+  // [Claude] KIERUNEK 2 (uzupelnienie autosave 60 s): zapis "na wyjscie" - przy zamykaniu
+  // strony i przy ukryciu karty (przelaczenie okna, telefon). Ref jest odswiezany w efekcie
+  // po kazdym renderze (zapis do refa w trakcie renderu lamalby react-hooks/refs).
+  const stateRef = useRef(state);
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
+  useEffect(() => {
+    const saveNow = () => {
+      try {
+        localStorage.setItem('kombinator-save', JSON.stringify({ ...stateRef.current, lastSave: Date.now() }));
+      } catch {
+        // np. pelny magazyn - okresowy autozapis sprobuje ponownie
+      }
+    };
+    window.addEventListener('beforeunload', saveNow);
+    const onVisibility = () => { if (document.visibilityState === 'hidden') saveNow(); };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('beforeunload', saveNow);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, []);
 
   const updateState = useCallback((updates: Partial<GameState> | ((s: GameState) => GameState)) => {
     setState(s => {
@@ -1166,8 +1062,8 @@ export function useGameState(isPaused: boolean = false) {
   ) => {
     setState(s => {
       const nextPrestigeCount = (s.prestigeCount || 0) + 1;
-      const nextState = { 
-        ...INITIAL_STATE, 
+      const nextState = {
+        ...structuredClone(INITIAL_STATE), 
         prestigePoints: s.prestigePoints + prestigeToEarn,
         prestigeCount: nextPrestigeCount,
         activeDestination: destination,

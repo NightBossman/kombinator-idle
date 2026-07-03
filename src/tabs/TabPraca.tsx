@@ -105,3 +105,6 @@ export const TabPraca = memo(function TabPraca() {
            </div>
   );
 });
+
+// [Claude] KIERUNEK 4: default export dla React.lazy (podzial paczki JS per zakladka)
+export default TabPraca;

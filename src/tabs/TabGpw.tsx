@@ -296,3 +296,6 @@ export const TabGpw = memo(function TabGpw() {
             );
          })();
 });
+
+// [Claude] KIERUNEK 4: default export dla React.lazy (podzial paczki JS per zakladka)
+export default TabGpw;

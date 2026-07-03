@@ -713,3 +713,6 @@ export const TabLata2000 = memo(function TabLata2000() {
           );
         })();
 });
+
+// [Claude] KIERUNEK 4: default export dla React.lazy (podzial paczki JS per zakladka)
+export default TabLata2000;

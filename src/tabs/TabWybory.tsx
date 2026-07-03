@@ -353,3 +353,6 @@ export const TabWybory = memo(function TabWybory() {
           );
         })();
 });
+
+// [Claude] KIERUNEK 4: default export dla React.lazy (podzial paczki JS per zakladka)
+export default TabWybory;

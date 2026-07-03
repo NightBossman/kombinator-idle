@@ -177,3 +177,6 @@ export const TabBazar = memo(function TabBazar() {
            </div>
   );
 });
+
+// [Claude] KIERUNEK 4: default export dla React.lazy (podzial paczki JS per zakladka)
+export default TabBazar;

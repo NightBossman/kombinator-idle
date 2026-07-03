@@ -49,3 +49,6 @@ export const TabOdznaczenia = memo(function TabOdznaczenia() {
             </div>
   );
 });
+
+// [Claude] KIERUNEK 4: default export dla React.lazy (podzial paczki JS per zakladka)
+export default TabOdznaczenia;

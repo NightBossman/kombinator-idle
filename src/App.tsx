@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { useGameState } from './hooks/useGameState';
 import { QUEUE_ITEMS, HELPERS, PARTY_RANKS, BUSINESSES, SMUGGLING_ROUTES, HISTORY_EVENTS, SEA_SMUGGLING_ROUTES, BALTONA_ITEMS, GPW_STOCKS, NOMENKLATURA_COMPANIES, OFFSHORE_DEPOSITS, COCOM_ITEMS, EXPORT_CONTACTS, SYNDICATE_UPGRADES, ELECTION_REGIONS, CAMPAIGN_MATERIALS, CAMPAIGN_LEADERS, DEBATE_OPTIONS, ELECTION_UPGRADES, COCOM_SMUGGLING_ROUTES, COCOM_VEHICLES, COCOM_PERSONNEL, BAZAR_ITEMS, NFI_COMPANIES, MAFIA_PROTECTIONS, GANGSTER_UNITS, BLACK_MARKET_WEAPONS, BAZAR_LOGISTICS_ROUTES, WAREHOUSE_UPGRADES, MEDIA_STATIONS, MEDIA_PROGRAMS, MEDIA_ANTENNA_REGIONS , EU_PROJECTS, DOTCOM_UPGRADES, REAL_ESTATE_PROJECTS, CRISIS_REAL_ESTATE, CURRENCY_OPTION_PRESETS, LOBBY_BILLS, COMMISSION_QUESTIONS, VAT_GOODS, VAT_UPGRADES, HELPER_UPGRADE_COSTS } from './game/items';
 import { playClick, playSuccess, playError, playAlert, isSoundEnabled, setSoundEnabled } from './utils/audio';
@@ -7,22 +7,24 @@ import { playClick, playSuccess, playError, playAlert, isSoundEnabled, setSoundE
 import { fmtNum, pluralPL } from './utils/format';
 // [Claude] KIERUNEK 7.3: identyfikatory i rzuty koscia przez utils/rng.ts - koniec wyciszen react-hooks/purity
 import { uniqueId, chance } from './utils/rng';
-// [Claude] KIERUNEK 1.2: zakladki jako osobne komponenty (JSX przeniesiony 1:1 z tego pliku)
+// [Claude] KIERUNEK 1.2: zakladki jako osobne komponenty (JSX przeniesiony 1:1 z tego pliku).
+// [Claude] KIERUNEK 4: React.lazy - kod kazdej zakladki laduje sie dopiero przy pierwszym wejsciu
+// (gracz w PRL-u nie pobiera kodu GPW ani karuzeli VAT); vite tnie paczke na czesci automatycznie.
+const TabLata2000 = lazy(() => import('./tabs/TabLata2000'));
+const TabPraca = lazy(() => import('./tabs/TabPraca'));
+const TabBazar = lazy(() => import('./tabs/TabBazar'));
+const TabCzarnyRynek = lazy(() => import('./tabs/TabCzarnyRynek'));
+const TabPrzemyt = lazy(() => import('./tabs/TabPrzemyt'));
+const TabPartia = lazy(() => import('./tabs/TabPartia'));
+const TabOdznaczenia = lazy(() => import('./tabs/TabOdznaczenia'));
+const TabGpw = lazy(() => import('./tabs/TabGpw'));
+const TabOffshore = lazy(() => import('./tabs/TabOffshore'));
+const TabSyndykat = lazy(() => import('./tabs/TabSyndykat'));
+const TabWybory = lazy(() => import('./tabs/TabWybory'));
+const TabLata90 = lazy(() => import('./tabs/TabLata90'));
+const TabMiasto = lazy(() => import('./tabs/TabMiasto'));
 import { GameApiContext } from './tabs/GameApiContext';
 import type { GameApi } from './tabs/GameApiContext';
-import { TabLata2000 } from './tabs/TabLata2000';
-import { TabPraca } from './tabs/TabPraca';
-import { TabBazar } from './tabs/TabBazar';
-import { TabCzarnyRynek } from './tabs/TabCzarnyRynek';
-import { TabPrzemyt } from './tabs/TabPrzemyt';
-import { TabPartia } from './tabs/TabPartia';
-import { TabOdznaczenia } from './tabs/TabOdznaczenia';
-import { TabGpw } from './tabs/TabGpw';
-import { TabOffshore } from './tabs/TabOffshore';
-import { TabSyndykat } from './tabs/TabSyndykat';
-import { TabWybory } from './tabs/TabWybory';
-import { TabLata90 } from './tabs/TabLata90';
-import { TabMiasto } from './tabs/TabMiasto';
 // [Claude] KIERUNEK 1.3: wspolne wzory - panel Casio i Bazar pokazuja to, co liczy silnik
 import { helperSpeedMult, businessProductionMult, cinkciarzRate, queueTimeMs, bazarPlnUnitPrice, bazarUsdUnitPrice } from './game/formulas';
 // [Claude] silnik gry (KIERUNEK.md pkt 1.1) - czysta pętla + zdarzenia; stamtąd też calculateLuxurySuspicionReduction
@@ -168,29 +170,44 @@ function App() {
     onConfirm: () => void;
     onCancel?: () => void;
   }
-  const [activeModal, setActiveModal] = useState<GameModal | null>(null);
+  // [Claude] KIERUNEK 3: KOLEJKA modali zamiast pojedynczego okna. Wcześniej gdy w tej samej
+  // sekundzie wypadło kilka zdarzeń (np. koniec lokaty + nalot SB), gracz widział tylko
+  // ostatni komunikat - reszta przepadała. Teraz "ZROZUMIANO" pokazuje kolejny z kolejki.
+  // Bezpieczniki: identyczna treść nie dubluje się w kolejce, limit 8 okien naraz.
+  const [modalQueue, setModalQueue] = useState<GameModal[]>([]);
+  const activeModal = modalQueue.length > 0 ? modalQueue[0] : null;
+  // useCallback: stabilne tożsamości, żeby efekty mogły mieć showAlert w zależnościach
+  // bez restartu co render (settery useState są stabilne, więc [] wystarczy)
+  const closeActiveModal = useCallback(() => setModalQueue(q => q.slice(1)), []);
+  const enqueueModal = useCallback((modal: GameModal) => {
+    setModalQueue(q => {
+      if (q.length >= 8) return q;
+      if (q.some(m => m.message === modal.message && m.title === modal.title)) return q;
+      return [...q, modal];
+    });
+  }, []);
 
-  const showAlert = (message: string, title = 'KOMUNIKAT URZĘDOWY', type: 'info' | 'error' | 'success' | 'raid' | 'pap' = 'info') => {
-    setActiveModal({
+  const showAlert = useCallback((message: string, title = 'KOMUNIKAT URZĘDOWY', type: 'info' | 'error' | 'success' | 'raid' | 'pap' = 'info') => {
+    enqueueModal({
       title,
       message,
       type,
       confirmText: 'ZROZUMIANO',
-      onConfirm: () => setActiveModal(null)
+      onConfirm: closeActiveModal
     });
-  };
+  }, [enqueueModal, closeActiveModal]);
 
   const showConfirm = (message: string, onConfirm: () => void, title = 'DECYZJA') => {
-    setActiveModal({
+    enqueueModal({
       title,
       message,
       confirmText: 'TAK',
       cancelText: 'NIE',
       onConfirm: () => {
         onConfirm();
-        setActiveModal(null);
+        closeActiveModal();
       },
-      onCancel: () => setActiveModal(null)
+      onCancel: closeActiveModal
     });
   };
   
@@ -248,7 +265,7 @@ function App() {
         `success`
       );
     }
-  }, [state.pewexItems.transformacja, state.okraglyStolVictory, state.speedrunActive, state.speedrunHistory, state.speedrunTime, updateState]);
+  }, [state.pewexItems.transformacja, state.okraglyStolVictory, state.speedrunActive, state.speedrunHistory, state.speedrunTime, updateState, showAlert]);
 
   // [Claude] 7.3: bez Date.now() przy inicjalizacji (czysty render); pierwszy tick uzupelnia wartosc
   const lastTickRef = useRef<number | null>(null);
@@ -518,7 +535,7 @@ function App() {
     }, tickMs);
     
     return () => clearInterval(interval);
-  }, [activeSmuggle, state.solidarnos, state.baltonaUpgrades, updateState, settingsOpen]);
+  }, [activeSmuggle, state.solidarnos, state.baltonaUpgrades, updateState, settingsOpen, showAlert]);
 
   // Printing Progression
   useEffect(() => {
@@ -678,7 +695,7 @@ function App() {
     }, tickMs);
 
     return () => clearInterval(interval);
-  }, [state.activeSeaSmuggle, state.baltonaUpgrades, state.solidarnos, state.pewexItems, state.unlockedAchievements, updateState, settingsOpen]);
+  }, [state.activeSeaSmuggle, state.baltonaUpgrades, state.solidarnos, state.pewexItems, state.unlockedAchievements, updateState, settingsOpen, showAlert]);
 
   const startQueue = (id: string, cost: number, kartkiCost: number = 0) => {
     if (state.prisonSentenceRemaining > 0) {
@@ -4741,7 +4758,8 @@ function App() {
         </div>
         <div className="flex-col" style={{color: '#ff4500'}}>
            <span style={{fontSize: '0.8rem', color: 'var(--prl-gray)'}}>RUBLE</span>
-           <span style={{fontSize: '1.2rem'}}>{Math.floor(state.ruble)} Rub</span>
+           {/* [Claude] KIERUNEK 7.4: "Rub" -> "rub." - spójnie z resztą skrótów (szt./bon./oz) */}
+           <span style={{fontSize: '1.2rem'}}>{Math.floor(state.ruble)} rub.</span>
         </div>
         <div className="flex-col" style={{color: 'var(--prl-yellow)'}}>
            <span style={{fontSize: '0.8rem', color: 'var(--prl-gray)'}}>BONY BALTONA</span>
@@ -4924,6 +4942,8 @@ function App() {
       </div>
 
       <div className="game-grid" style={{gridTemplateColumns: '1fr'}}>
+        {/* [Claude] KIERUNEK 4: zakladki lazy - retro-komunikat na czas dogrywania modulu */}
+        <Suspense fallback={<div className="panel"><h2>WCZYTYWANIE MODUŁU...</h2><p style={{color: 'var(--prl-gray)'}}>Dalekopis odbiera dane sekcji. Chwileczkę, towarzyszu.</p></div>}>
         
         {/* TAB: PRACA / KOLEJKA */}
 
@@ -4959,7 +4979,7 @@ function App() {
         {currentTab === 'lata90' && <TabLata90 />}
 
         {currentTab === 'miasto' && <TabMiasto />}
-
+        </Suspense>
 
       </div>
       
@@ -4989,6 +5009,12 @@ function App() {
                 {activeModal.confirmText || 'OK'}
               </button>
             </div>
+            {/* [Claude] KIERUNEK 3: wskaźnik kolejki - gracz wie, że czekają kolejne depesze */}
+            {modalQueue.length > 1 && (
+              <div style={{ marginTop: '8px', fontSize: '0.8rem', color: 'var(--prl-gray)', textAlign: 'right' }}>
+                +{modalQueue.length - 1} {pluralPL(modalQueue.length - 1, 'kolejny komunikat', 'kolejne komunikaty', 'kolejnych komunikatów')} w kolejce...
+              </div>
+            )}
           </div>
         </div>
       )}

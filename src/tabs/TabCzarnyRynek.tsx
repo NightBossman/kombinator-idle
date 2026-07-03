@@ -469,3 +469,6 @@ export const TabCzarnyRynek = memo(function TabCzarnyRynek() {
            </div>
   );
 });
+
+// [Claude] KIERUNEK 4: default export dla React.lazy (podzial paczki JS per zakladka)
+export default TabCzarnyRynek;
