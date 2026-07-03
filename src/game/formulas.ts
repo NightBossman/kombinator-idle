@@ -13,7 +13,7 @@
 // (zdarzenia celowo nie działają, gdy gra jest wyłączona - tak było od zawsze).
 
 import type { GameState } from '../hooks/useGameState';
-import { LUXURY_ITEMS } from './items';
+import { LUXURY_ITEMS, VAT_GOODS } from './items';
 
 export interface FormulaOpts {
   zZdarzeniami?: boolean;
@@ -149,3 +149,52 @@ export const realEstateCostPln = (baseCost: number, count: number): number => ba
 
 /** Czas budowy deweloperki: rośnie o 10% z każdą kolejną inwestycją tego samego typu. */
 export const realEstateBuildTimeSec = (baseTime: number, count: number): number => baseTime * Math.pow(1.10, count);
+
+/** Rata kredytu w CHF na sekundę: 0.05% długu na sekundę * zniżka doradców. */
+export const chfInstallmentPerSec = (s: GameState): number => {
+  if (s.chfDebt <= 0) return 0;
+  const advisorDiscount = 1 - (s.bankAdvisors || 0) * 0.15;
+  return s.chfDebt * 0.0005 * advisorDiscount;
+};
+
+/** Przychód z karuzeli VAT (zwrot VAT) na sekundę. */
+export const vatCarouselRefundPerSec = (s: GameState): number => {
+  if (!s.vatCarouselActive || s.prisonSentenceRemaining > 0) return 0;
+  let totalTurnover = 0;
+  (s.vatCompanies || []).forEach(comp => {
+    if (comp.isActive && comp.status === 'trading') {
+      const goods = VAT_GOODS.find(g => g.type === comp.goodsType);
+      if (goods) {
+        totalTurnover += comp.capital * goods.turnoverMult;
+      }
+    }
+  });
+  return totalTurnover * 0.22;
+};
+
+/** Przyrost ryzyka kontroli skarbowej w karuzeli VAT na sekundę. Scales with turnover. */
+export const vatCarouselRiskGainPerSec = (s: GameState): number => {
+  if (!s.vatCarouselActive || s.prisonSentenceRemaining > 0) return 0;
+  let totalTurnover = 0;
+  let totalRisk = 0;
+  (s.vatCompanies || []).forEach(comp => {
+    if (comp.isActive && comp.status === 'trading') {
+      const goods = VAT_GOODS.find(g => g.type === comp.goodsType);
+      if (goods) {
+        totalTurnover += comp.capital * goods.turnoverMult;
+        totalRisk += goods.riskPerSec;
+      }
+    }
+  });
+
+  if (totalRisk <= 0) return 0;
+
+  let riskMult = 1.0;
+  if (s.vatUpgrades?.['slup_podlasie']) riskMult *= 0.7;
+  if (s.vatUpgrades?.['naczelnik_us']) riskMult *= 0.7;
+
+  // Skalowanie: każdy milion obrotu na sekundę zwiększa tempo ryzyka o 100%
+  const turnoverScaling = 1 + (totalTurnover / 1000000);
+
+  return totalRisk * riskMult * turnoverScaling;
+};

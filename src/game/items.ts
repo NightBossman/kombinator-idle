@@ -1002,7 +1002,7 @@ export interface CurrencyOptionPreset {
 }
 
 export const CURRENCY_OPTION_PRESETS: CurrencyOptionPreset[] = [
-  { id: 'put_safeguard', name: 'Opcja PUT (Zabezpieczenie CHF)', desc: 'Zabezpieczenie przed wzrostem franka. Kurs wykonania: 3.50 PLN.', type: 'put', strikeRate: 3.50, premiumPln: 150000, amountChf: 1000000, durationSec: 60 },
+  { id: 'put_safeguard', name: 'Opcja CALL (Zabezpieczenie CHF)', desc: 'Zabezpieczenie przed wzrostem franka. Kurs wykonania: 3.50 PLN.', type: 'call', strikeRate: 3.50, premiumPln: 150000, amountChf: 1000000, durationSec: 60 },
   { id: 'call_speculate', name: 'Opcja CALL (Spekulacja CHF)', desc: 'Zarabiasz gdy frank drożeje. Kurs wykonania: 3.00 PLN.', type: 'call', strikeRate: 3.00, premiumPln: 250000, amountChf: 1500000, durationSec: 90 },
   { id: 'toxic_asymmetric', name: 'Toksyczna Opcja Asymetryczna', desc: 'Brak kosztu wstępnego. Zyski przy niskim franku, podwójna kara powyżej 4.20!', type: 'toxic', strikeRate: 4.20, premiumPln: 0, amountChf: 3000000, durationSec: 120 }
 ];

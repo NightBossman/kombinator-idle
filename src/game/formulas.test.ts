@@ -1,7 +1,7 @@
 // [Claude] testy wspólnych wzorów (KIERUNEK 1.3) - pilnują, żeby mnożniki
 // nie rozjechały się ponownie między silnikiem, symulacją offline i UI.
 import { describe, it, expect } from 'vitest';
-import { helperSpeedMult, businessProductionMult, queueTimeMs, cinkciarzRate, bazarPlnUnitPrice, bazarUsdUnitPrice, generalProductionMult } from './formulas';
+import { helperSpeedMult, businessProductionMult, queueTimeMs, cinkciarzRate, bazarPlnUnitPrice, bazarUsdUnitPrice, generalProductionMult, chfInstallmentPerSec, vatCarouselRefundPerSec, vatCarouselRiskGainPerSec } from './formulas';
 import { INITIAL_STATE } from '../hooks/useGameState';
 import type { GameState } from '../hooks/useGameState';
 
@@ -55,6 +55,36 @@ describe('wzory mnożników (formulas.ts)', () => {
     const uwolnienie = freshState({ activeEvent: 'uwolnienie_cen' });
     expect(bazarPlnUnitPrice(100, 'mydlo', uwolnienie)).toBe(Math.floor(bazarPlnUnitPrice(100, 'mydlo', zwykly) * 2.5));
     expect(bazarUsdUnitPrice(10, 'wyroby_hutnicze', uwolnienie)).toBe(bazarUsdUnitPrice(10, 'wyroby_hutnicze', zwykly));
+  });
+
+  it('chfInstallmentPerSec: calculates mortgage installment with advisor discount', () => {
+    const s = freshState({ chfDebt: 1000000, bankAdvisors: 0 });
+    // 1000000 * 0.0005 * 1.0 = 500
+    expect(chfInstallmentPerSec(s)).toBe(500);
+
+    const sDiscount = freshState({ chfDebt: 1000000, bankAdvisors: 2 });
+    // 1000000 * 0.0005 * (1 - 0.30) = 350
+    expect(chfInstallmentPerSec(sDiscount)).toBe(350);
+  });
+
+  it('vatCarouselRefundPerSec & vatCarouselRiskGainPerSec: calculates VAT refunds and risk correctly', () => {
+    const s = freshState({
+      vatCarouselActive: true,
+      vatCompanies: [
+        { id: 'c1', name: 'F1', goodsType: 'steel', capital: 1000000, isActive: true, status: 'trading' },
+        { id: 'c2', name: 'F2', goodsType: 'fuel', capital: 500000, isActive: true, status: 'trading' }
+      ]
+    });
+    // steel: turnover = 1M * 0.05 = 50k, refund = 11k
+    // fuel: turnover = 500k * 0.20 = 100k, refund = 22k
+    // Total turnover = 150k
+    // Total refund = 33k
+    expect(vatCarouselRefundPerSec(s)).toBeCloseTo(33000, 2);
+
+    // steel risk = 0.1, fuel risk = 0.6. Total risk = 0.7
+    // turnover mult = 1 + 150000 / 1000000 = 1.15
+    // expected risk gain = 0.7 * 1.15 = 0.805
+    expect(vatCarouselRiskGainPerSec(s)).toBeCloseTo(0.805, 4);
   });
 });
 

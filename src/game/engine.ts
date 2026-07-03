@@ -12,7 +12,7 @@ import { generateBlackMarketOffers } from '../hooks/useGameState';
 import { fmtNum } from '../utils/format';
 // [Claude] KIERUNEK 1.3: wspolne wzory mnoznikow - jedno zrodlo prawdy dla silnika,
 // symulacji offline (useGameState) i paneli UI (Casio, Bazar)
-import { helperSpeedMult, businessProductionMult, cinkciarzRate, queueTimeMs } from './formulas';
+import { helperSpeedMult, businessProductionMult, cinkciarzRate, queueTimeMs, chfInstallmentPerSec, vatCarouselRefundPerSec, vatCarouselRiskGainPerSec } from './formulas';
 import {
   QUEUE_ITEMS, HELPERS, BUSINESSES, HISTORY_EVENTS, ACHIEVEMENTS, LUXURY_ITEMS,
   GPW_STOCKS, GPW_EVENTS, NOMENKLATURA_COMPANIES, OFFSHORE_DEPOSITS, COCOM_ITEMS,
@@ -20,7 +20,7 @@ import {
   CAMPAIGN_LEADERS, COCOM_SMUGGLING_ROUTES, COCOM_VEHICLES, COCOM_PERSONNEL,
   BAZAR_ITEMS, NFI_COMPANIES, MAFIA_PROTECTIONS, WARSAW_DISTRICTS, GANGSTER_UNITS,
   BLACK_MARKET_WEAPONS, BAZAR_LOGISTICS_ROUTES, MEDIA_STATIONS, MEDIA_PROGRAMS,
-  MEDIA_ANTENNA_REGIONS, EU_PROJECTS, LOBBY_BILLS, VAT_GOODS
+  MEDIA_ANTENNA_REGIONS, EU_PROJECTS, LOBBY_BILLS
 } from './items';
 
 // Przeniesione z App.tsx - używane przez silnik i przez UI (zakładka luksusów, przemyt)
@@ -145,28 +145,10 @@ export function tick(s: GameState, deltaSec: number, ctx: TickContext): { state:
 
           // Faza V: Karuzela VAT
           if (s.vatCarouselActive && s.prisonSentenceRemaining <= 0) {
-            let totalTurnover = 0;
-            let totalRisk = 0;
-            (s.vatCompanies || []).forEach(comp => {
-              if (comp.isActive && comp.status === 'trading') {
-                const goods = VAT_GOODS.find(g => g.type === comp.goodsType);
-                if (goods) {
-                  totalTurnover += comp.capital * goods.turnoverMult;
-                  totalRisk += goods.riskPerSec;
-                }
-              }
-            });
-
-            if (totalTurnover > 0) {
-              const gainedRefund = totalTurnover * 0.22 * deltaSec;
+            const gainedRefund = vatCarouselRefundPerSec(nextState) * deltaSec;
+            if (gainedRefund > 0) {
               nextState.vatRefundClaimed = (s.vatRefundClaimed || 0) + gainedRefund;
-              
-              // Apply upgrade risk reductions
-              let riskMult = 1.0;
-              if (s.vatUpgrades?.['slup_podlasie']) riskMult *= 0.7;
-              if (s.vatUpgrades?.['naczelnik_us']) riskMult *= 0.7;
-              
-              const riskGain = totalRisk * riskMult * deltaSec;
+              const riskGain = vatCarouselRiskGainPerSec(nextState) * deltaSec;
               nextState.vatAuditRisk = Math.min(100, (s.vatAuditRisk || 0) + riskGain);
             }
           } else {
@@ -344,6 +326,8 @@ export function tick(s: GameState, deltaSec: number, ctx: TickContext): { state:
               payout = rate <= opt.strikeRate
                 ? (opt.strikeRate - rate) * opt.amountChf * 0.05
                 : -2 * (rate - opt.strikeRate) * opt.amountChf;
+            } else if (opt.type === 'put') {
+              payout = Math.max(0, opt.strikeRate - rate) * opt.amountChf;
             } else {
               payout = Math.max(0, rate - opt.strikeRate) * opt.amountChf;
             }
@@ -1503,14 +1487,11 @@ export function tick(s: GameState, deltaSec: number, ctx: TickContext): { state:
 
           // 2. Raty kredytów we frankach (CHF)
           if (nextState.chfDebt > 0) {
-            // Roczna stopa ~5%, w grze powiedzmy że płacimy ułamek procenta na sekundę
-            // Żeby kredyt był duszony, płacimy stałą kwotę (kapitał + odsetki)
-            const advisorDiscount = 1 - (nextState.bankAdvisors || 0) * 0.15;
-            const chfInstallmentPerSec = nextState.chfDebt * 0.005 * advisorDiscount; // 0.5% długu na sekundę w CHF
-            const plnCost = Math.floor(chfInstallmentPerSec * nextState.chfExchangeRate * deltaSec);
+            const installmentChf = chfInstallmentPerSec(nextState);
+            const plnCost = Math.floor(installmentChf * nextState.chfExchangeRate * deltaSec);
             if (nextState.pln >= plnCost) {
               nextState.pln -= plnCost;
-              nextState.chfDebt -= (chfInstallmentPerSec * deltaSec * 0.8); // 80% to kapitał
+              nextState.chfDebt = Math.max(0, nextState.chfDebt - (installmentChf * deltaSec * 0.8)); // 80% to kapitał
             } else {
               // Brak na rate - karna odsetka i komornik
               nextState.chfDebt += 1000;

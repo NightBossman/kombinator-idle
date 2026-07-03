@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { useGameState } from './hooks/useGameState';
-import { QUEUE_ITEMS, HELPERS, PARTY_RANKS, BUSINESSES, SMUGGLING_ROUTES, HISTORY_EVENTS, SEA_SMUGGLING_ROUTES, BALTONA_ITEMS, GPW_STOCKS, NOMENKLATURA_COMPANIES, OFFSHORE_DEPOSITS, COCOM_ITEMS, EXPORT_CONTACTS, SYNDICATE_UPGRADES, ELECTION_REGIONS, CAMPAIGN_MATERIALS, CAMPAIGN_LEADERS, DEBATE_OPTIONS, ELECTION_UPGRADES, COCOM_SMUGGLING_ROUTES, COCOM_VEHICLES, COCOM_PERSONNEL, BAZAR_ITEMS, NFI_COMPANIES, MAFIA_PROTECTIONS, GANGSTER_UNITS, BLACK_MARKET_WEAPONS, BAZAR_LOGISTICS_ROUTES, WAREHOUSE_UPGRADES, MEDIA_STATIONS, MEDIA_PROGRAMS, MEDIA_ANTENNA_REGIONS , EU_PROJECTS, DOTCOM_UPGRADES, REAL_ESTATE_PROJECTS, CRISIS_REAL_ESTATE, CURRENCY_OPTION_PRESETS, LOBBY_BILLS, COMMISSION_QUESTIONS, VAT_GOODS, VAT_UPGRADES, HELPER_UPGRADE_COSTS } from './game/items';
+import { QUEUE_ITEMS, HELPERS, PARTY_RANKS, BUSINESSES, SMUGGLING_ROUTES, HISTORY_EVENTS, SEA_SMUGGLING_ROUTES, BALTONA_ITEMS, GPW_STOCKS, NOMENKLATURA_COMPANIES, OFFSHORE_DEPOSITS, COCOM_ITEMS, EXPORT_CONTACTS, SYNDICATE_UPGRADES, ELECTION_REGIONS, CAMPAIGN_MATERIALS, CAMPAIGN_LEADERS, DEBATE_OPTIONS, ELECTION_UPGRADES, COCOM_SMUGGLING_ROUTES, COCOM_VEHICLES, COCOM_PERSONNEL, BAZAR_ITEMS, NFI_COMPANIES, MAFIA_PROTECTIONS, GANGSTER_UNITS, BLACK_MARKET_WEAPONS, BAZAR_LOGISTICS_ROUTES, WAREHOUSE_UPGRADES, MEDIA_STATIONS, MEDIA_PROGRAMS, MEDIA_ANTENNA_REGIONS , EU_PROJECTS, DOTCOM_UPGRADES, REAL_ESTATE_PROJECTS, CRISIS_REAL_ESTATE, CURRENCY_OPTION_PRESETS, LOBBY_BILLS, COMMISSION_QUESTIONS, VAT_UPGRADES, HELPER_UPGRADE_COSTS } from './game/items';
 import { playClick, playSuccess, playError, playAlert, isSoundEnabled, setSoundEnabled } from './utils/audio';
 // [Claude] fmtNum/pluralPL: polskie formatowanie liczb (przecinek dziesiętny) i odmiana rzeczowników po liczebnikach.
 // Usunięto też martwe "void DEBATE_OPTIONS; void ELECTION_UPGRADES;" - obie stałe są od dawna używane w zakładce Wyborów.
@@ -26,7 +26,7 @@ const TabMiasto = lazy(() => import('./tabs/TabMiasto'));
 import { GameApiContext } from './tabs/GameApiContext';
 import type { GameApi } from './tabs/GameApiContext';
 // [Claude] KIERUNEK 1.3: wspolne wzory - panel Casio i Bazar pokazuja to, co liczy silnik
-import { helperSpeedMult, businessProductionMult, cinkciarzRate, queueTimeMs, bazarPlnUnitPrice, bazarUsdUnitPrice, realEstateCostPln, realEstateBuildTimeSec } from './game/formulas';
+import { helperSpeedMult, businessProductionMult, cinkciarzRate, queueTimeMs, bazarPlnUnitPrice, bazarUsdUnitPrice, realEstateCostPln, realEstateBuildTimeSec, chfInstallmentPerSec, vatCarouselRefundPerSec } from './game/formulas';
 // [Claude] silnik gry (KIERUNEK.md pkt 1.1) - czysta pętla + zdarzenia; stamtąd też calculateLuxurySuspicionReduction
 import { tick, calculateLuxurySuspicionReduction } from './game/engine';
 import type { GameEvent, SoundId } from './game/engine';
@@ -4259,9 +4259,8 @@ function App() {
 
   let chfPlnCost = 0;
   if (state.fazaSUnlocked && state.chfDebt > 0) {
-    const advisorDiscount = 1 - (state.bankAdvisors || 0) * 0.15;
-    const chfInstallmentPerSec = state.chfDebt * 0.005 * advisorDiscount;
-    chfPlnCost = Math.floor(chfInstallmentPerSec * state.chfExchangeRate);
+    const installmentChf = chfInstallmentPerSec(state);
+    chfPlnCost = Math.floor(installmentChf * state.chfExchangeRate);
   }
 
   let cyprusInterestPlnRate = 0;
@@ -4270,17 +4269,8 @@ function App() {
   }
 
   let vatCarouselPlnRate = 0;
-  if (state.fazaSUnlocked && state.vatCarouselActive && state.prisonSentenceRemaining <= 0) {
-    let totalTurnover = 0;
-    (state.vatCompanies || []).forEach(comp => {
-      if (comp.isActive && comp.status === 'trading') {
-        const goods = VAT_GOODS.find(g => g.type === comp.goodsType);
-        if (goods) {
-          totalTurnover += comp.capital * goods.turnoverMult;
-        }
-      }
-    });
-    vatCarouselPlnRate = totalTurnover * 0.22;
+  if (state.fazaSUnlocked) {
+    vatCarouselPlnRate = vatCarouselRefundPerSec(state);
   }
 
   const totalPassiveIncome = businessPlnRate + mediaPlnRate + dotcomPlnRate + zmywakPlnRate + nfiPlnRate + gpwPlnRate + cyprusInterestPlnRate;
