@@ -199,6 +199,7 @@ function App() {
 
   // Raport offline (wykonywany po wczytaniu save'a i ewentualnej symulacji)
   useEffect(() => {
+    console.log('Checking offlineReport:', state.offlineReport);
     if (state.offlineReport) {
       const rep = state.offlineReport;
       const hours = Math.floor(rep.timeSec / 3600);
