@@ -197,6 +197,44 @@ function App() {
     });
   }, [enqueueModal, closeActiveModal]);
 
+  // Raport offline (wykonywany po wczytaniu save'a i ewentualnej symulacji)
+  useEffect(() => {
+    if (state.offlineReport) {
+      const rep = state.offlineReport;
+      const hours = Math.floor(rep.timeSec / 3600);
+      const mins = Math.floor((rep.timeSec % 3600) / 60);
+      let msg = `Towarzyszu Obywatelu, pod Twoją nieobecność (${hours}h ${mins}m) nasz kombinat pracował pełną parą!\n\nOto wyniki produkcyjne:\n`;
+      if (rep.earnedPln > 0) msg += `- Gotówka (PLN): +${fmtNum(rep.earnedPln)}\n`;
+      if (rep.earnedDollars > 0) msg += `- Dewizy (USD): +$${fmtNum(rep.earnedDollars)}\n`;
+      if (rep.dividends > 0) msg += `- Dywidendy GPW/NFI: +${fmtNum(rep.dividends)} PLN\n`;
+      if (rep.interest > 0) msg += `- Odsetki: +${fmtNum(rep.interest)}\n`;
+      
+      const itemKeys = Object.keys(rep.earnedItems);
+      if (itemKeys.length > 0) {
+        msg += `\nWyprodukowane dobra:\n`;
+        itemKeys.forEach(k => {
+          if (rep.earnedItems[k] > 0) {
+             msg += `- ${k}: +${fmtNum(rep.earnedItems[k], 2, true)}\n`;
+          }
+        });
+      }
+      
+      msg += `\nKu chwale ojczyzny!`;
+      
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      enqueueModal({
+        title: 'RAPORT ZMIANY (OFFLINE)',
+        message: msg,
+        type: 'info',
+        confirmText: 'ZROZUMIANO',
+        onConfirm: () => {
+           updateState(s => ({ ...s, offlineReport: null }));
+           closeActiveModal();
+        }
+      });
+    }
+  }, [state.offlineReport, enqueueModal, closeActiveModal, updateState]);
+
   const showConfirm = (message: string, onConfirm: () => void, title = 'DECYZJA') => {
     enqueueModal({
       title,
@@ -2048,7 +2086,7 @@ function App() {
       mediaAntennas: { ...s.mediaAntennas, [antennaId]: 1 }
     }));
     playSuccess();
-    showAlert(`Wybudowano maszt nadawczy: ${antenna.name}. Zasięg stacji wzrósł o +${(antenna.coverageMultiplier * 100).toFixed(0)}%!`, '📡 MASZT NADAWCZY', 'success');
+    showAlert(`Wybudowano maszt nadawczy: ${antenna.name}. Zasięg stacji wzrósł o +${fmtNum(antenna.coverageMultiplier * 100, 0)}%!`, '📡 MASZT NADAWCZY', 'success');
   };
 
   const claimMediaSponsorshipContract = (stationId: string) => {
@@ -2589,7 +2627,7 @@ function App() {
 
     if (state.pln < plnCost) {
       playError();
-      showAlert(`Brak gotówki! Restrukturyzacja 500 000 CHF wymaga spłaty po karnym kursie stabilizującym ${fmtNum(penaltyRate, 2)} PLN/CHF. Wymagane: ${plnCost.toLocaleString('pl-PL')} PLN.`, 'BRAK ŚRODKÓW', 'error');
+      showAlert(`Brak gotówki! Restrukturyzacja 500 000 CHF wymaga spłaty po karnym kursie stabilizującym ${fmtNum(penaltyRate, 2)} PLN/CHF. Wymagane: ${fmtNum(plnCost)} PLN.`, 'BRAK ŚRODKÓW', 'error');
       return;
     }
 
@@ -2599,7 +2637,7 @@ function App() {
       chfDebt: Math.max(0, s.chfDebt - restructureAmountChf)
     }));
     playSuccess();
-    showAlert(`Pomyślnie spłacono i zamknięto 500 000 CHF długu walutowego za kwotę ${plnCost.toLocaleString('pl-PL')} PLN. Ograniczyłeś ryzyko kursowe!`, '🏦 RESTRUKTURYZACJA CHF', 'success');
+    showAlert(`Pomyślnie spłacono i zamknięto 500 000 CHF długu walutowego za kwotę ${fmtNum(plnCost)} PLN. Ograniczyłeś ryzyko kursowe!`, '🏦 RESTRUKTURYZACJA CHF', 'success');
   };
 
   const devUnlockEverything = () => {

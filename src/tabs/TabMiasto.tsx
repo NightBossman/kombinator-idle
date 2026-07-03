@@ -118,7 +118,7 @@ export const TabMiasto = memo(function TabMiasto() {
                           <div key={w.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#34495e', padding: '10px', borderRadius: '4px' }}>
                             <div>
                               <div style={{ fontWeight: 'bold' }}>{w.name} <span style={{color: '#f1c40f'}}>({qty})</span></div>
-                              <div style={{ fontSize: '0.8em', color: '#bdc3c7' }}>Bonus: +{(w.powerBonus * 100).toFixed(0)}% do siły</div>
+                              <div style={{ fontSize: '0.8em', color: '#bdc3c7' }}>Bonus: +{fmtNum(w.powerBonus * 100, 0)}% do siły</div>
                             </div>
                             <button 
                               onClick={() => buyBlackMarketWeapon(w.id, 1)}

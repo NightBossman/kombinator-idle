@@ -57,17 +57,26 @@ export const TabGpw = memo(function TabGpw() {
 
             const chartWidth = 500;
             const chartHeight = 160;
-            const padding = 15;
+            const paddingLeft = 40;
+            const paddingRight = 15;
+            const paddingTop = 15;
+            const paddingBottom = 20;
             
             const minPrice = Math.min(...history) * 0.95;
             const maxPrice = Math.max(...history) * 1.05;
             const priceRange = maxPrice - minPrice || 1;
             
+            const chartInnerWidth = chartWidth - paddingLeft - paddingRight;
+            const chartInnerHeight = chartHeight - paddingTop - paddingBottom;
+            
             const points = history.map((price, idx) => {
-              const x = padding + (idx / (history.length - 1 || 1)) * (chartWidth - padding * 2);
-              const y = chartHeight - padding - ((price - minPrice) / priceRange) * (chartHeight - padding * 2);
+              const x = paddingLeft + (idx / (history.length - 1 || 1)) * chartInnerWidth;
+              const y = chartHeight - paddingBottom - ((price - minPrice) / priceRange) * chartInnerHeight;
               return `${x},${y}`;
             }).join(' ');
+            
+            const basePriceY = chartHeight - paddingBottom - ((selectedStock.basePrice - minPrice) / priceRange) * chartInnerHeight;
+
 
             return (
               <div className="flex-col gap-4">
@@ -121,7 +130,7 @@ export const TabGpw = memo(function TabGpw() {
                               <span style={{fontSize: '0.75rem', color: 'var(--prl-gray)'}}>Dywidenda: {fmtNum((stock.dividendRate * 100), 1)}% co 30s | Posiadasz: {owned}</span>
                             </div>
                             <div style={{textAlign: 'right'}} className="flex-col">
-                              <span style={{fontSize: '1.1rem', fontWeight: 'bold'}}>{price} zł</span>
+                              <span style={{fontSize: '1.1rem', fontWeight: 'bold'}}>{fmtNum(price)} zł</span>
                               <span style={{fontSize: '0.8rem', color: baseDiff >= 0 ? '#39ff14' : 'var(--prl-red)'}}>
                                 {baseDiff >= 0 ? '+' : ''}{fmtNum(baseDiff, 1)}%
                               </span>
@@ -140,22 +149,46 @@ export const TabGpw = memo(function TabGpw() {
                         <span style={{fontSize: '0.8rem', color: 'var(--prl-gray)'}}>{selectedStock.desc}</span>
                       </div>
                       <div style={{textAlign: 'right'}}>
-                        <div style={{fontSize: '1.6rem', fontWeight: 'bold', color: '#39ff14'}}>{currentPrice} zł</div>
-                        <span style={{fontSize: '0.8rem', color: 'var(--prl-gray)'}}>Cena debiutu: {selectedStock.basePrice} zł</span>
+                        <div style={{fontSize: '1.6rem', fontWeight: 'bold', color: '#39ff14'}}>{fmtNum(currentPrice)} zł</div>
+                        <span style={{fontSize: '0.8rem', color: 'var(--prl-gray)'}}>Cena debiutu: {fmtNum(selectedStock.basePrice)} zł</span>
                       </div>
                     </div>
 
                     {/* Wykres SVG */}
                     <div style={{background: '#000', border: '1px solid #111', borderRadius: '4px', overflow: 'hidden', position: 'relative'}}>
                       <svg width="100%" height={chartHeight} viewBox={`0 0 ${chartWidth} ${chartHeight}`} style={{display: 'block'}}>
+                        {/* Linie siatki poziome (ceny) */}
                         {[0, 1, 2, 3, 4].map(i => {
-                          const y = padding + (i / 4) * (chartHeight - padding * 2);
-                          return <line key={i} x1="0" y1={y} x2={chartWidth} y2={y} stroke="#111" strokeDasharray="3" />;
+                          const y = paddingTop + (i / 4) * chartInnerHeight;
+                          const priceAtY = maxPrice - (i / 4) * priceRange;
+                          return (
+                            <g key={`y-${i}`}>
+                              <line x1={paddingLeft} y1={y} x2={chartWidth - paddingRight} y2={y} stroke="#111" strokeDasharray="3" />
+                              <text x={2} y={y + 3} fill="rgba(57, 255, 20, 0.6)" fontSize="9">{fmtNum(priceAtY, 0)}</text>
+                            </g>
+                          );
                         })}
+                        
+                        {/* Linie siatki pionowe (czas) */}
                         {[0, 1, 2, 3, 4, 5, 6, 7].map(i => {
-                          const x = padding + (i / 7) * (chartWidth - padding * 2);
-                          return <line key={i} x1={x} y1="0" x2={x} y2={chartHeight} stroke="#111" strokeDasharray="3" />;
+                          const x = paddingLeft + (i / 7) * chartInnerWidth;
+                          return (
+                            <g key={`x-${i}`}>
+                              <line x1={x} y1={paddingTop} x2={x} y2={chartHeight - paddingBottom} stroke="#111" strokeDasharray="3" />
+                            </g>
+                          );
                         })}
+                        
+                        <text x={paddingLeft} y={chartHeight - 5} fill="rgba(57, 255, 20, 0.6)" fontSize="9">-2.5 min</text>
+                        <text x={chartWidth - paddingRight} y={chartHeight - 5} fill="rgba(57, 255, 20, 0.6)" fontSize="9" textAnchor="end">teraz</text>
+
+                        {/* Linia ceny debiutu */}
+                        {basePriceY >= paddingTop && basePriceY <= chartHeight - paddingBottom && (
+                          <g>
+                            <line x1={paddingLeft} y1={basePriceY} x2={chartWidth - paddingRight} y2={basePriceY} stroke="rgba(255, 255, 255, 0.2)" strokeDasharray="4 2" />
+                            <text x={paddingLeft + 5} y={basePriceY - 3} fill="rgba(255, 255, 255, 0.4)" fontSize="8">DEBIUT</text>
+                          </g>
+                        )}
 
                         {history.length > 1 && (
                           <polyline
@@ -168,8 +201,8 @@ export const TabGpw = memo(function TabGpw() {
                         )}
                         
                         {history.length > 0 && (() => {
-                          const x = chartWidth - padding;
-                          const y = chartHeight - padding - ((currentPrice - minPrice) / priceRange) * (chartHeight - padding * 2);
+                          const x = paddingLeft + chartInnerWidth;
+                          const y = chartHeight - paddingBottom - ((currentPrice - minPrice) / priceRange) * chartInnerHeight;
                           return <circle cx={x} cy={y} r="4" fill="#39ff14" />;
                         })()}
                       </svg>
@@ -180,13 +213,13 @@ export const TabGpw = memo(function TabGpw() {
                     <div style={{background: 'rgba(57, 255, 20, 0.05)', border: '1px dashed rgba(57, 255, 20, 0.3)', padding: '12px', borderRadius: '4px'}}>
                       <div className="flex justify-between items-center" style={{fontSize: '0.9rem'}}>
                         <span>Posiadane akcje: <strong>{ownedCount}</strong></span>
-                        <span>Średnia cena zakupu: <strong>{avgCost > 0 ? `${avgCost} zł` : 'brak'}</strong></span>
+                        <span>Średnia cena zakupu: <strong>{avgCost > 0 ? `${fmtNum(avgCost)} zł` : 'brak'}</strong></span>
                       </div>
                       <div className="flex justify-between items-center mt-2" style={{fontSize: '0.9rem'}}>
-                        <span>Wycena portfela: <strong>{totalValue} zł</strong></span>
+                        <span>Wycena portfela: <strong>{fmtNum(totalValue)} zł</strong></span>
                         <span>Zysk / Strata: 
                           <strong style={{color: profitLoss >= 0 ? '#39ff14' : 'var(--prl-red)', marginLeft: '5px'}}>
-                            {profitLoss >= 0 ? '+' : ''}{profitLoss} zł ({profitLossPercent >= 0 ? '+' : ''}{fmtNum(profitLossPercent, 1)}%)
+                            {profitLoss >= 0 ? '+' : ''}{fmtNum(profitLoss)} zł ({profitLossPercent >= 0 ? '+' : ''}{fmtNum(profitLossPercent, 1)}%)
                           </strong>
                         </span>
                       </div>

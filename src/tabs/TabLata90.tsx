@@ -145,7 +145,7 @@ export const TabLata90 = memo(function TabLata90() {
                             <div style={{ marginTop: '6px' }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8em', color: '#bdc3c7' }}>
                                 <span>Nasycenie rynku (Podaż):</span>
-                                <span style={{ color: currentSat > 50 ? '#e74c3c' : '#2ecc71', fontWeight: 'bold' }}>{currentSat.toFixed(0)}% (Cena: -{((1 - priceMult) * 100).toFixed(0)}%)</span>
+                                <span style={{ color: currentSat > 50 ? '#e74c3c' : '#2ecc71', fontWeight: 'bold' }}>{fmtNum(currentSat, 0)}% (Cena: -{fmtNum((1 - priceMult) * 100, 0)}%)</span>
                               </div>
                               <div style={{ width: '100%', height: '5px', backgroundColor: '#34495e', borderRadius: '3px', marginTop: '3px', overflow: 'hidden' }}>
                                 <div style={{ width: `${currentSat}%`, height: '100%', backgroundColor: currentSat > 50 ? '#e74c3c' : '#f1c40f' }} />
@@ -158,14 +158,14 @@ export const TabLata90 = memo(function TabLata90() {
                                 disabled={!canBuy}
                                 style={{ flex: 1, padding: '8px', fontSize: '0.9em', backgroundColor: '#c0392b', color: '#fff', border: 'none', borderRadius: '4px', cursor: canBuy ? 'pointer' : 'not-allowed', fontWeight: 'bold' }}
                               >
-                                Kup (Hurt: {buyP.toLocaleString('pl-PL')} zł)
+                                Kup (Hurt: {fmtNum(buyP)} zł)
                               </button>
                               <button 
                                 onClick={() => sellBazarItem(item.id, 1)}
                                 disabled={qty < 1}
                                 style={{ flex: 1, padding: '8px', fontSize: '0.9em', backgroundColor: '#27ae60', color: '#fff', border: 'none', borderRadius: '4px', cursor: qty >= 1 ? 'pointer' : 'not-allowed', fontWeight: 'bold' }}
                               >
-                                Sprzedaj ({finalSellPrice.toLocaleString('pl-PL')} zł)
+                                Sprzedaj ({fmtNum(finalSellPrice)} zł)
                               </button>
                             </div>
                             <div style={{ display: 'flex', gap: '10px', marginTop: '5px' }}>
@@ -203,7 +203,7 @@ export const TabLata90 = memo(function TabLata90() {
                             
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
                               <div style={{ fontSize: '0.8em', color: '#fff' }}>
-                                Koszt: <strong>{costPln.toLocaleString('pl-PL')} zł</strong> + <strong>${route.costUsd}</strong>
+                                Koszt: <strong>{fmtNum(costPln)} zł</strong> + <strong>${route.costUsd}</strong>
                               </div>
                               <button
                                 onClick={() => dispatchBazarTransport(route.id)}
@@ -240,7 +240,7 @@ export const TabLata90 = memo(function TabLata90() {
                           disabled={(state.activeBazarTransports || []).length === 0 || state.pln < Math.floor(2000000 * (state.isDenominated ? 1 : state.plzInflationMult))}
                           style={{ padding: '6px 12px', fontSize: '0.85em', backgroundColor: '#3498db', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
                         >
-                          Bribe ({(Math.floor(2000000 * (state.isDenominated ? 1 : state.plzInflationMult))).toLocaleString('pl-PL')} zł)
+                          Bribe ({fmtNum(Math.floor(2000000 * (state.isDenominated ? 1 : state.plzInflationMult)))} zł)
                         </button>
                       </div>
 
@@ -264,7 +264,7 @@ export const TabLata90 = memo(function TabLata90() {
                                 disabled={!canBuy}
                                 style={{ padding: '6px 12px', fontSize: '0.85em', backgroundColor: '#9b59b6', color: '#fff', border: 'none', borderRadius: '4px', cursor: canBuy ? 'pointer' : 'not-allowed', fontWeight: 'bold' }}
                               >
-                                Kup ({costPln.toLocaleString('pl-PL')} zł)
+                                Kup ({fmtNum(costPln)} zł)
                               </button>
                             )}
                           </div>
@@ -351,7 +351,7 @@ export const TabLata90 = memo(function TabLata90() {
                                 <div style={{ display: 'flex', justifyContent: 'space-between', backgroundColor: '#334155', padding: '6px', borderRadius: '4px' }}>
                                   <span>Zysk z dywidendy:</span>
                                   <strong style={{ color: status.strikeActive ? '#ef4444' : '#10b981' }}>
-                                    {status.strikeActive ? '0 zł/s (ZABLOKOWANY)' : `+${currentDividend.toLocaleString('pl-PL')} zł/s`}
+                                    {status.strikeActive ? '0 zł/s (ZABLOKOWANY)' : `+${fmtNum(currentDividend)} zł/s`}
                                   </strong>
                                 </div>
 
@@ -359,7 +359,7 @@ export const TabLata90 = memo(function TabLata90() {
                                 <div>
                                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8em', color: '#cbd5e1' }}>
                                     <span>Morale Robotników:</span>
-                                    <span>{status.morale.toFixed(0)}%</span>
+                                    <span>{fmtNum(status.morale, 0)}%</span>
                                   </div>
                                   <div style={{ width: '100%', height: '6px', backgroundColor: '#475569', borderRadius: '3px', overflow: 'hidden', marginTop: '2px' }}>
                                     <div style={{ width: `${status.morale}%`, height: '100%', backgroundColor: status.morale > 50 ? '#10b981' : (status.morale > 20 ? '#f59e0b' : '#ef4444') }} />
@@ -370,7 +370,7 @@ export const TabLata90 = memo(function TabLata90() {
                                 <div>
                                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8em', color: '#cbd5e1' }}>
                                     <span>Stan Parku Maszynowego:</span>
-                                    <span>{status.infrastructure.toFixed(0)}%</span>
+                                    <span>{fmtNum(status.infrastructure, 0)}%</span>
                                   </div>
                                   <div style={{ width: '100%', height: '6px', backgroundColor: '#475569', borderRadius: '3px', overflow: 'hidden', marginTop: '2px' }}>
                                     <div style={{ width: `${status.infrastructure}%`, height: '100%', backgroundColor: status.infrastructure > 60 ? '#10b981' : '#f59e0b' }} />
@@ -380,13 +380,13 @@ export const TabLata90 = memo(function TabLata90() {
                                 {/* ZWIĄZKI ZAWODOWE */}
                                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8em', color: '#cbd5e1' }}>
                                   <span>Siła Związków Zawodowych (NSZZ):</span>
-                                  <strong style={{ color: status.unionStrength > 100 ? '#ef4444' : '#fff' }}>{status.unionStrength.toFixed(0)} pkt</strong>
+                                  <strong style={{ color: status.unionStrength > 100 ? '#ef4444' : '#fff' }}>{fmtNum(status.unionStrength, 0)} pkt</strong>
                                 </div>
 
                                 {/* ZATRUDNIENIE */}
                                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8em', color: '#cbd5e1' }}>
                                   <span>Zatrudnienie:</span>
-                                  <strong>{status.employment.toLocaleString('pl-PL')} robotników</strong>
+                                  <strong>{fmtNum(status.employment)} robotników</strong>
                                 </div>
 
                                 {/* PRZYCISKI ZATRUDNIANIA/ZWALNIANIA */}
@@ -400,11 +400,11 @@ export const TabLata90 = memo(function TabLata90() {
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.85em', borderTop: '1px solid #465c71', paddingTop: '8px', marginBottom: '15px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                   <span>Bazowa Dywidenda:</span>
-                                  <strong style={{ color: '#2ecc71' }}>+{currentDividend.toLocaleString('pl-PL')} zł/s</strong>
+                                  <strong style={{ color: '#2ecc71' }}>+{fmtNum(currentDividend)} zł/s</strong>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                   <span>Zatrudnienie:</span>
-                                  <span>{comp.baseEmployment.toLocaleString('pl-PL')} robotników</span>
+                                  <span>{fmtNum(comp.baseEmployment)} robotników</span>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                   <span>Wymagane kupony NFI:</span>
@@ -499,7 +499,7 @@ export const TabLata90 = memo(function TabLata90() {
                           <div>
                             <h4 style={{ margin: '0 0 5px 0', color: '#f1c40f' }}>Krajowa Rada (KRRiT)</h4>
                             <div style={{ fontSize: '0.85em', color: '#bdc3c7' }}>
-                              Mnożnik cen koncesji: <strong>{((state.mediaKrritBribeDiscount || 1.0) * 100).toFixed(0)}%</strong>
+                              Mnożnik cen koncesji: <strong>{fmtNum((state.mediaKrritBribeDiscount || 1.0) * 100, 0)}%</strong>
                             </div>
                           </div>
                           <button
@@ -556,7 +556,7 @@ export const TabLata90 = memo(function TabLata90() {
                                 <div style={{ marginTop: '8px' }}>
                                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8em', color: '#bdc3c7' }}>
                                     <span>Zaufanie widzów:</span>
-                                    <strong style={{ color: trust > 70 ? '#2ecc71' : (trust > 40 ? '#f1c40f' : '#e74c3c') }}>{trust.toFixed(0)}/100</strong>
+                                    <strong style={{ color: trust > 70 ? '#2ecc71' : (trust > 40 ? '#f1c40f' : '#e74c3c') }}>{fmtNum(trust, 0)}/100</strong>
                                   </div>
                                   <div style={{ width: '100%', height: '6px', backgroundColor: '#34495e', borderRadius: '3px', marginTop: '3px', overflow: 'hidden' }}>
                                     <div style={{ width: `${trust}%`, height: '100%', backgroundColor: trust > 70 ? '#2ecc71' : (trust > 40 ? '#f1c40f' : '#e74c3c') }} />
@@ -664,7 +664,7 @@ export const TabLata90 = memo(function TabLata90() {
                                     disabled={!canBuy}
                                     style={{ padding: '6px 10px', fontSize: '0.8em', backgroundColor: '#9b59b6', color: '#fff', border: 'none', borderRadius: '4px', cursor: canBuy ? 'pointer' : 'not-allowed', fontWeight: 'bold' }}
                                   >
-                                    Kup ({costPln.toLocaleString('pl-PL')} zł)
+                                    Kup ({fmtNum(costPln)} zł)
                                   </button>
                                 )}
                               </div>
@@ -687,7 +687,7 @@ export const TabLata90 = memo(function TabLata90() {
                                   {isOwned ? (
                                     <span style={{ color: '#2ecc71', fontSize: '0.8em' }}>ZAKUPIONO</span>
                                   ) : (
-                                    <span style={{ color: '#fff', fontSize: '0.8em' }}>{costPln.toLocaleString('pl-PL')} zł</span>
+                                    <span style={{ color: '#fff', fontSize: '0.8em' }}>{fmtNum(costPln)} zł</span>
                                   )}
                                 </div>
                                 <div style={{ fontSize: '0.75em', color: '#bdc3c7', margin: '3px 0' }}>{prog.desc}</div>
@@ -720,7 +720,7 @@ export const TabLata90 = memo(function TabLata90() {
                               <div key={antenna.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: isOwned ? '#1e293b' : '#2c3e50', padding: '10px', borderRadius: '4px', border: '1px solid ' + (isOwned ? '#27ae60' : '#465c71'), fontSize: '0.85em' }}>
                                 <div style={{ flex: 1 }}>
                                   <strong>{antenna.name}</strong>
-                                  <div style={{ fontSize: '0.75em', color: '#bdc3c7' }}>{antenna.desc} (Zasięg: +{(antenna.coverageMultiplier * 100).toFixed(0)}%)</div>
+                                  <div style={{ fontSize: '0.75em', color: '#bdc3c7' }}>{antenna.desc} (Zasięg: +{fmtNum(antenna.coverageMultiplier * 100, 0)}%)</div>
                                 </div>
                                 {isOwned ? (
                                   <span style={{ color: '#2ecc71', fontWeight: 'bold', fontSize: '0.8em', padding: '5px' }}>WYBUDOWANY</span>
@@ -730,7 +730,7 @@ export const TabLata90 = memo(function TabLata90() {
                                     disabled={!canBuy}
                                     style={{ padding: '6px 10px', fontSize: '0.8em', backgroundColor: '#3498db', color: '#fff', border: 'none', borderRadius: '4px', cursor: canBuy ? 'pointer' : 'not-allowed', fontWeight: 'bold' }}
                                   >
-                                    Buduj ({costPln.toLocaleString('pl-PL')} zł)
+                                    Buduj ({fmtNum(costPln)} zł)
                                   </button>
                                 )}
                               </div>
@@ -776,7 +776,7 @@ export const TabLata90 = memo(function TabLata90() {
                                 disabled={!canBuy}
                                 style={{ padding: '8px 15px', fontSize: '0.85em', backgroundColor: '#e74c3c', color: '#fff', border: 'none', borderRadius: '4px', cursor: canBuy ? 'pointer' : 'not-allowed', fontWeight: 'bold' }}
                               >
-                                Kup ({costPln.toLocaleString('pl-PL')} zł)
+                                Kup ({fmtNum(costPln)} zł)
                               </button>
                             )}
                           </div>

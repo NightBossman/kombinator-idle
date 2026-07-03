@@ -57,3 +57,28 @@ describe('wzory mnożników (formulas.ts)', () => {
     expect(bazarUsdUnitPrice(10, 'wyroby_hutnicze', uwolnienie)).toBe(bazarUsdUnitPrice(10, 'wyroby_hutnicze', zwykly));
   });
 });
+
+import { fmtNum, fmtShort, pluralPL } from '../utils/format';
+
+describe('Format Utils (Polonizacja)', () => {
+  it('formats numbers with spaces correctly', () => {
+    // Note: pl-PL formatter might use non-breaking spaces (  or similar). 
+    // We can just verify it replaces dots with commas and adds some space.
+    const formatted = fmtNum(1234.56, 2);
+    expect(formatted).toMatch(/1\s?234,56/);
+  });
+
+  it('formats short numbers correctly', () => {
+    expect(fmtShort(1500000)).toMatch(/1,50\s?mln/);
+    expect(fmtShort(20000)).toMatch(/20,0\s?tys\./);
+  });
+
+  it('pluralizes correctly in Polish', () => {
+    expect(pluralPL(1, 'plik', 'pliki', 'plikow')).toBe('plik');
+    expect(pluralPL(2, 'plik', 'pliki', 'plikow')).toBe('pliki');
+    expect(pluralPL(4, 'plik', 'pliki', 'plikow')).toBe('pliki');
+    expect(pluralPL(5, 'plik', 'pliki', 'plikow')).toBe('plikow');
+    expect(pluralPL(12, 'plik', 'pliki', 'plikow')).toBe('plikow');
+    expect(pluralPL(22, 'plik', 'pliki', 'plikow')).toBe('pliki');
+  });
+});

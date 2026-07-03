@@ -74,7 +74,7 @@ export const TabCzarnyRynek = memo(function TabCzarnyRynek() {
                             <strong>Obligacje PRL (Nominalne)</strong>
                             <button onClick={buyBondPRL} style={{padding: '2px 5px', fontSize: '0.75rem'}}>Kup ({Math.floor(50000 * (1 + state.inflationPercent/100))} zł)</button>
                           </div>
-                          <span style={{fontSize: '0.75rem', color: 'var(--prl-gray)'}}>Masz: {state.bondPrlCount || 0} szt. | Zysk: +{((state.bondPrlCount || 0) * 2000).toLocaleString('pl-PL')} zł/s</span>
+                          <span style={{fontSize: '0.75rem', color: 'var(--prl-gray)'}}>Masz: {state.bondPrlCount || 0} szt. | Zysk: +{fmtNum((state.bondPrlCount || 0) * 2000)} zł/s</span>
                         </div>
                         <div className="flex-col">
                           <div className="flex justify-between items-center">
@@ -87,7 +87,7 @@ export const TabCzarnyRynek = memo(function TabCzarnyRynek() {
                           <span style={{fontSize: '0.75rem', color: 'var(--prl-gray)'}}>Masz: {state.bondSolCount || 0} szt. | Oprocentowanie: +{fmtNum((state.inflationPercent + 5), 1)}%/s</span>
                           {state.bondSolCount > 0 && (
                             <div className="flex justify-between items-center style-button" style={{marginTop: '5px', background: 'rgba(255, 215, 0, 0.1)', padding: '5px'}}>
-                              <span>Wartość: {Math.floor(state.bondSolValue || 0).toLocaleString('pl-PL')} zł</span>
+                              <span>Wartość: {fmtNum(Math.floor(state.bondSolValue || 0))} zł</span>
                               <button onClick={redeemSolidarnosBonds} style={{padding: '2px 5px', fontSize: '0.75rem', borderColor: '#ffd700', color: '#ffd700'}}>Wykup</button>
                             </div>
                           )}

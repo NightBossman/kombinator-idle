@@ -114,6 +114,7 @@ export interface GameState {
   lastMarketRefresh: number;
 
   // Faza C: Losowe zdarzenia historyczne
+  offlineReport: { timeSec: number; earnedPln: number; earnedDollars: number; earnedItems: Record<string, number>; dividends: number; interest: number } | null;
   activeEvent: string | null;
   eventTimeLeft: number;
   nextEventIn: number;
@@ -372,6 +373,7 @@ export const INITIAL_STATE: GameState = {
   blackMarketOffers: [],
   lastMarketRefresh: 0,
 
+  offlineReport: null,
   activeEvent: null,
   eventTimeLeft: 0,
   nextEventIn: 120,
@@ -679,6 +681,15 @@ export function useGameState(isPaused: boolean = false) {
            if (timeDiffSec > 10) {
               const offlineSec = Math.min(86400, timeDiffSec); // Limit 24h
               
+              const offlineRep = {
+                timeSec: offlineSec,
+                earnedPln: 0,
+                earnedDollars: 0,
+                earnedItems: {} as Record<string, number>,
+                dividends: 0,
+                interest: 0
+              };
+
               // 1. Mnozniki - wspolny wzor z formulas.ts (KIERUNEK 1.3)
               const helperMult = helperSpeedMult(merged);
                                
@@ -695,13 +706,18 @@ export function useGameState(isPaused: boolean = false) {
                   } else if (h.id === 'widmo') {
                     merged.dollars += amount;
                     merged.stats.totalDollarsEarned = (merged.stats.totalDollarsEarned || 0) + amount;
+                    offlineRep.earnedDollars += amount;
                   } else if (h.id === 'staszek') {
                     merged.inventory['predom'] = (merged.inventory['predom'] || 0) + amount * 0.5;
                     merged.inventory['kasprzak'] = (merged.inventory['kasprzak'] || 0) + amount * 0.5;
+                    offlineRep.earnedItems['predom'] = (offlineRep.earnedItems['predom'] || 0) + amount * 0.5;
+                    offlineRep.earnedItems['kasprzak'] = (offlineRep.earnedItems['kasprzak'] || 0) + amount * 0.5;
                   } else if (h.id === 'konspiracja') {
                     merged.kartki = (merged.kartki || 0) + amount;
+                    offlineRep.earnedItems['kartki'] = (offlineRep.earnedItems['kartki'] || 0) + amount;
                   } else {
                     merged.inventory[h.generateId] = (merged.inventory[h.generateId] || 0) + amount;
+                    offlineRep.earnedItems[h.generateId] = (offlineRep.earnedItems[h.generateId] || 0) + amount;
                   }
                 }
               });
@@ -715,11 +731,14 @@ export function useGameState(isPaused: boolean = false) {
                   if (b.generateType === 'pln') {
                      merged.pln += amount;
                      merged.stats.totalPlnEarned = (merged.stats.totalPlnEarned || 0) + amount;
+                     offlineRep.earnedPln += amount;
                   } else if (b.generateType === 'dollars') {
                      merged.dollars += amount;
                      merged.stats.totalDollarsEarned = (merged.stats.totalDollarsEarned || 0) + amount;
+                     offlineRep.earnedDollars += amount;
                   } else {
                      merged.inventory[b.generateType] = (merged.inventory[b.generateType] || 0) + amount;
+                     offlineRep.earnedItems[b.generateType] = (offlineRep.earnedItems[b.generateType] || 0) + amount;
                   }
                 }
               });
@@ -752,6 +771,8 @@ export function useGameState(isPaused: boolean = false) {
                     const passivePln = merged.bondPrlCount * 2000 * offlineSec;
                     merged.pln += passivePln;
                     merged.stats.totalPlnEarned = (merged.stats.totalPlnEarned || 0) + passivePln;
+                    offlineRep.earnedPln += passivePln;
+                    offlineRep.interest += passivePln;
                  }
 
                  if (merged.bondSolCount > 0) {
@@ -778,6 +799,8 @@ export function useGameState(isPaused: boolean = false) {
                                   if (totalDividends > 0) {
                     merged.pln += totalDividends;
                     merged.stats.totalPlnEarned = (merged.stats.totalPlnEarned || 0) + totalDividends;
+                    offlineRep.earnedPln += totalDividends;
+                    offlineRep.dividends += totalDividends;
                   }
                }
 
@@ -808,10 +831,12 @@ export function useGameState(isPaused: boolean = false) {
                       merged.pln += amount;
                       merged.stats.totalPlnEarned = (merged.stats.totalPlnEarned || 0) + amount;
                       totalNomenklaturaEarnedThisSession += amount;
+                      offlineRep.earnedPln += amount;
                     } else if (comp.generateType === 'dollars') {
                       const amount = Math.floor(comp.baseRate * rateMult * activeOfflineSec);
                       merged.dollars += amount;
                       merged.stats.totalDollarsEarned = (merged.stats.totalDollarsEarned || 0) + amount;
+                      offlineRep.earnedDollars += amount;
                     } else if (comp.generateType === 'autos') {
                       const autosEarned = Math.floor((comp.baseRate * rateMult * activeOfflineSec) / 60);
                       if (autosEarned > 0) {
@@ -819,6 +844,7 @@ export function useGameState(isPaused: boolean = false) {
                           const isFiat = Math.random() < 0.5;
                           const carId = isFiat ? 'fiat125' : 'polonez';
                           merged.inventory[carId] = (merged.inventory[carId] || 0) + 1;
+                          offlineRep.earnedItems[carId] = (offlineRep.earnedItems[carId] || 0) + 1;
                         }
                       }
                     } else if (comp.generateType === 'special') {
@@ -826,6 +852,8 @@ export function useGameState(isPaused: boolean = false) {
                       const bonyAmount = Math.floor(2 * rateMult * activeOfflineSec);
                       merged.ruble = (merged.ruble || 0) + rubleAmount;
                       merged.bonyBaltona = (merged.bonyBaltona || 0) + bonyAmount;
+                      offlineRep.earnedItems['ruble'] = (offlineRep.earnedItems['ruble'] || 0) + rubleAmount;
+                      offlineRep.earnedItems['bonyBaltona'] = (offlineRep.earnedItems['bonyBaltona'] || 0) + bonyAmount;
                       merged.stats.totalBonyEarned = (merged.stats.totalBonyEarned || 0) + bonyAmount;
                     }
                   }
@@ -892,8 +920,8 @@ export function useGameState(isPaused: boolean = false) {
                     const depType = OFFSHORE_DEPOSITS.find(d => d.id === dep.depositTypeId);
                     const rate = depType ? (depType.interestRate * depositInterestMult) : 0;
                     const finalAmount = Math.floor(dep.amount * (1 + rate));
-                    if (dep.currency === 'pln') returnedPln += finalAmount;
-                    else returnedUsd += finalAmount;
+                    if (dep.currency === 'pln') { returnedPln += finalAmount; offlineRep.interest += (finalAmount - dep.amount); }
+                    else { returnedUsd += finalAmount; offlineRep.interest += (finalAmount - dep.amount); }
                   } else {
                     remainingDeposits.push({ ...dep, timeLeft: tLeft });
                   }
@@ -936,6 +964,7 @@ export function useGameState(isPaused: boolean = false) {
                   merged.cocomProceedsPln = (merged.cocomProceedsPln || 0) + ship.amount;
                   merged.stats.totalCocomItemsSold = (merged.stats.totalCocomItemsSold || 0) + 1;
                   merged.stats.totalCocomRevenuePln = (merged.stats.totalCocomRevenuePln || 0) + ship.amount;
+                  offlineRep.earnedPln += ship.amount;
                 } else {
                   remainingShipments.push({ ...ship, timeLeft: tLeft });
                 }
@@ -959,6 +988,7 @@ export function useGameState(isPaused: boolean = false) {
                   merged.cocomProceedsPln = (merged.cocomProceedsPln || 0) + run.potentialPayoutPln;
                   merged.stats.totalCocomItemsSold = (merged.stats.totalCocomItemsSold || 0) + run.itemIds.length;
                   merged.stats.totalCocomRevenuePln = (merged.stats.totalCocomRevenuePln || 0) + run.potentialPayoutPln;
+                  offlineRep.earnedPln += run.potentialPayoutPln;
                   
                   // Wypłata pensji kurierowi
                   const salary = run.personnelId ? (COCOM_PERSONNEL.find(person => person.id === run.personnelId)?.salaryPerRunPln || 0) : 0;

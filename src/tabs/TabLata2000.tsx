@@ -27,11 +27,11 @@ export const TabLata2000 = memo(function TabLata2000() {
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#2c3e50', padding: '10px', borderRadius: '4px' }}>
                     <span style={{ fontSize: '0.9em', color: '#bdc3c7' }}>Dług w CHF:</span>
-                    <strong style={{ fontSize: '1.2em', color: '#e74c3c' }}>{state.chfDebt.toLocaleString('pl-PL')} CHF</strong>
+                    <strong style={{ fontSize: '1.2em', color: '#e74c3c' }}>{fmtNum(state.chfDebt)} CHF</strong>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#2c3e50', padding: '10px', borderRadius: '4px' }}>
                     <span style={{ fontSize: '0.9em', color: '#bdc3c7' }}>Gotówka:</span>
-                    <strong style={{ fontSize: '1.2em', color: '#2ecc71' }}>{state.pln.toLocaleString('pl-PL')} PLN</strong>
+                    <strong style={{ fontSize: '1.2em', color: '#2ecc71' }}>{fmtNum(state.pln)} PLN</strong>
                   </div>
                 </div>
               </div>
@@ -73,13 +73,13 @@ export const TabLata2000 = memo(function TabLata2000() {
                           <div key={proj.id} style={{ padding: '15px', backgroundColor: '#2c3e50', borderRadius: '6px', border: '1px solid #465c71' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <strong style={{ fontSize: '1.1em', color: '#fff' }}>{proj.name}</strong>
-                              <span style={{ fontSize: '0.85em', color: '#f1c40f', fontWeight: 'bold' }}>Zwrot: {(proj.euGrantPercent * 100).toFixed(0)}%</span>
+                              <span style={{ fontSize: '0.85em', color: '#f1c40f', fontWeight: 'bold' }}>Zwrot: {fmtNum(proj.euGrantPercent * 100, 0)}%</span>
                             </div>
                             <div style={{ fontSize: '0.85em', color: '#bdc3c7', margin: '8px 0' }}>{proj.desc}</div>
                             
                             {!active ? (
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
-                                <span style={{ fontSize: '0.85em', color: '#ecf0f1' }}>Wkład własny: <strong>{costOwn.toLocaleString('pl-PL')} PLN</strong></span>
+                                <span style={{ fontSize: '0.85em', color: '#ecf0f1' }}>Wkład własny: <strong>{fmtNum(costOwn)} PLN</strong></span>
                                 <button onClick={() => startEuProject(proj.id)} disabled={!canBuy} style={{ padding: '6px 12px', fontSize: '0.85em', backgroundColor: '#3498db', color: '#fff', border: 'none', borderRadius: '4px', cursor: canBuy ? 'pointer' : 'not-allowed', fontWeight: 'bold' }}>
                                   Wyślij Wniosek ({proj.durationSec}s)
                                 </button>
@@ -106,7 +106,7 @@ export const TabLata2000 = memo(function TabLata2000() {
                     <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#2c3e50', borderRadius: '6px', border: '1px solid #465c71' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
                         <span style={{ fontSize: '0.9em', color: '#bdc3c7' }}>Ryzyko Kontroli:</span>
-                        <strong style={{ color: state.euAuditRisk > 50 ? '#e74c3c' : '#f1c40f' }}>{state.euAuditRisk.toFixed(0)}%</strong>
+                        <strong style={{ color: state.euAuditRisk > 50 ? '#e74c3c' : '#f1c40f' }}>{fmtNum(state.euAuditRisk, 0)}%</strong>
                       </div>
                       <div style={{ width: '100%', height: '10px', backgroundColor: '#34495e', borderRadius: '5px', overflow: 'hidden' }}>
                         <div style={{ width: `${state.euAuditRisk}%`, height: '100%', backgroundColor: state.euAuditRisk > 50 ? '#e74c3c' : '#f1c40f' }} />
@@ -128,11 +128,11 @@ export const TabLata2000 = memo(function TabLata2000() {
                     <div style={{ backgroundColor: '#2c3e50', padding: '15px', borderRadius: '6px', border: '1px solid #465c71', marginBottom: '20px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
                         <span style={{ color: '#bdc3c7' }}>Aktywni Użytkownicy:</span>
-                        <strong style={{ color: '#2ecc71', fontSize: '1.2em' }}>{state.dotcomUsers.toLocaleString('pl-PL')}</strong>
+                        <strong style={{ color: '#2ecc71', fontSize: '1.2em' }}>{fmtNum(state.dotcomUsers)}</strong>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
                         <span style={{ color: '#bdc3c7' }}>Pojemność Serwerów:</span>
-                        <strong style={{ color: '#fff' }}>{state.dotcomServerCapacity.toLocaleString('pl-PL')}</strong>
+                        <strong style={{ color: '#fff' }}>{fmtNum(state.dotcomServerCapacity)}</strong>
                       </div>
                       <div style={{ width: '100%', height: '8px', backgroundColor: '#34495e', borderRadius: '4px', overflow: 'hidden' }}>
                         <div style={{ width: `${Math.min(100, (state.dotcomUsers / state.dotcomServerCapacity) * 100)}%`, height: '100%', backgroundColor: state.dotcomUsers >= state.dotcomServerCapacity ? '#e74c3c' : '#2ecc71' }} />
@@ -154,7 +154,7 @@ export const TabLata2000 = memo(function TabLata2000() {
                               <span style={{ fontSize: '0.8em', color: '#2ecc71', fontWeight: 'bold' }}>POSIADASZ</span>
                             ) : (
                               <button onClick={() => buyDotcomUpgrade(upg.id)} disabled={!canBuy} style={{ padding: '6px 12px', fontSize: '0.8em', backgroundColor: '#2ecc71', color: '#fff', border: 'none', borderRadius: '4px', cursor: canBuy ? 'pointer' : 'not-allowed', fontWeight: 'bold' }}>
-                                Kup ({upg.costPln.toLocaleString('pl-PL')} PLN)
+                                Kup ({fmtNum(upg.costPln)} PLN)
                               </button>
                             )}
                           </div>
@@ -184,7 +184,7 @@ export const TabLata2000 = memo(function TabLata2000() {
                           <div key={proj.id} style={{ padding: '15px', backgroundColor: '#2c3e50', borderRadius: '6px', border: '1px solid #465c71' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <strong style={{ fontSize: '1.1em', color: '#fff' }}>{proj.name}</strong>
-                              <span style={{ fontSize: '0.85em', color: '#2ecc71', fontWeight: 'bold' }}>Sprzedaż: {proj.sellRevenuePln.toLocaleString('pl-PL')} PLN</span>
+                              <span style={{ fontSize: '0.85em', color: '#2ecc71', fontWeight: 'bold' }}>Sprzedaż: {fmtNum(proj.sellRevenuePln)} PLN</span>
                             </div>
                             <div style={{ fontSize: '0.85em', color: '#bdc3c7', margin: '8px 0' }}>{proj.desc}</div>
                             
@@ -197,9 +197,9 @@ export const TabLata2000 = memo(function TabLata2000() {
                               </div>
                               <div style={{ display: 'flex', gap: '8px' }}>
                                 <button onClick={() => buyRealEstate(proj.id, false)} disabled={!canBuyCash} style={{ padding: '6px 12px', fontSize: '0.8em', backgroundColor: '#2ecc71', color: '#fff', border: 'none', borderRadius: '4px', cursor: canBuyCash ? 'pointer' : 'not-allowed', fontWeight: 'bold' }}>
-                                  Kup ({actualCostPln.toLocaleString('pl-PL')} PLN)
+                                  Kup ({fmtNum(actualCostPln)} PLN)
                                 </button>
-                                <button onClick={() => buyRealEstate(proj.id, true)} style={{ padding: '6px 12px', fontSize: '0.8em', backgroundColor: '#e74c3c', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }} title={`Pobierze ${neededChf.toLocaleString('pl-PL')} CHF kredytu`}>
+                                <button onClick={() => buyRealEstate(proj.id, true)} style={{ padding: '6px 12px', fontSize: '0.8em', backgroundColor: '#e74c3c', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }} title={`Pobierze ${fmtNum(neededChf)} CHF kredytu`}>
                                   Kredyt CHF
                                 </button>
                                 <button onClick={() => sellRealEstate(proj.id)} disabled={owned <= 0} style={{ padding: '6px 12px', fontSize: '0.8em', backgroundColor: '#3498db', color: '#fff', border: 'none', borderRadius: '4px', cursor: owned > 0 ? 'pointer' : 'not-allowed', fontWeight: 'bold' }}>
@@ -259,7 +259,7 @@ export const TabLata2000 = memo(function TabLata2000() {
                             </div>
                             <div style={{ fontSize: '0.75em', color: '#bdc3c7', margin: '4px 0' }}>{opt.desc}</div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '5px' }}>
-                              <span style={{ fontSize: '0.8em', color: '#bdc3c7' }}>Premia: <strong>{opt.premiumPln === 0 ? 'DARMOWA*' : `${opt.premiumPln.toLocaleString('pl-PL')} PLN`}</strong></span>
+                              <span style={{ fontSize: '0.8em', color: '#bdc3c7' }}>Premia: <strong>{opt.premiumPln === 0 ? 'DARMOWA*' : `${fmtNum(opt.premiumPln)} PLN`}</strong></span>
                               <button onClick={() => buyCurrencyOption(opt.id)} disabled={!canBuy} style={{ padding: '4px 10px', fontSize: '0.75em', backgroundColor: '#9b59b6', color: '#fff', border: 'none', borderRadius: '4px', cursor: canBuy ? 'pointer' : 'not-allowed', fontWeight: 'bold' }}>
                                 Kup ({opt.durationSec}s)
                               </button>
@@ -275,7 +275,7 @@ export const TabLata2000 = memo(function TabLata2000() {
                         <div style={{ display: 'grid', gap: '5px', marginTop: '8px', maxHeight: '150px', overflowY: 'auto' }}>
                           {state.currencyOptions.map(opt => (
                             <div key={opt.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#2c3e50', padding: '6px', borderRadius: '4px', borderLeft: '3px solid #9b59b6', fontSize: '0.8em' }}>
-                              <span>{opt.type.toUpperCase()} ({opt.amountChf.toLocaleString('pl-PL')} CHF @ {fmtNum(opt.strikeRate, 2)})</span>
+                              <span>{opt.type.toUpperCase()} ({fmtNum(opt.amountChf)} CHF @ {fmtNum(opt.strikeRate, 2)})</span>
                               <span style={{ color: '#f1c40f', fontWeight: 'bold' }}>{fmtNum(opt.timeLeft, 1)}s</span>
                             </div>
                           ))}
@@ -301,7 +301,7 @@ export const TabLata2000 = memo(function TabLata2000() {
                                 <div key={proj.id} style={{ padding: '10px', backgroundColor: '#2c3e50', borderRadius: '6px', border: '1px solid #465c71' }}>
                                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <strong style={{ fontSize: '0.9em', color: '#fff' }}>{proj.name}</strong>
-                                    <span style={{ fontSize: '0.8em', color: '#e67e22', fontWeight: 'bold' }}>Syndyk: {proj.buyCostPln.toLocaleString('pl-PL')} PLN</span>
+                                    <span style={{ fontSize: '0.8em', color: '#e67e22', fontWeight: 'bold' }}>Syndyk: {fmtNum(proj.buyCostPln)} PLN</span>
                                   </div>
                                   <div style={{ fontSize: '0.75em', color: '#bdc3c7', margin: '4px 0' }}>{proj.desc}</div>
                                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '5px' }}>
@@ -339,12 +339,12 @@ export const TabLata2000 = memo(function TabLata2000() {
                                   <div style={{ display: 'flex', gap: '8px', marginTop: '8px', justifyContent: 'flex-end' }}>
                                     {unfinished > 0 && (
                                       <button onClick={() => finishCrisisRealEstate(proj.id)} disabled={state.pln < proj.finishCostPln} style={{ padding: '4px 8px', fontSize: '0.75rem', backgroundColor: '#2ecc71', color: '#fff', border: 'none', borderRadius: '4px', cursor: state.pln >= proj.finishCostPln ? 'pointer' : 'not-allowed', fontWeight: 'bold' }}>
-                                        Dokończ ({(proj.finishCostPln/1000000).toFixed(0)}M PLN)
+                                        Dokończ ({fmtNum(proj.finishCostPln/1000000, 0)}M PLN)
                                       </button>
                                     )}
                                     {finished > 0 && (
                                       <button onClick={() => sellCrisisRealEstate(proj.id)} disabled={state.recessionActive} style={{ padding: '4px 8px', fontSize: '0.75rem', backgroundColor: '#3498db', color: '#fff', border: 'none', borderRadius: '4px', cursor: !state.recessionActive ? 'pointer' : 'not-allowed', fontWeight: 'bold' }} title={state.recessionActive ? 'Rynek zamrożony w trakcie krachu!' : 'Sprzedaj za gotówkę'}>
-                                        Sprzedaj ({(proj.sellRevenuePln/1000000).toFixed(0)}M PLN)
+                                        Sprzedaj ({fmtNum(proj.sellRevenuePln/1000000, 0)}M PLN)
                                       </button>
                                     )}
                                   </div>
@@ -365,10 +365,10 @@ export const TabLata2000 = memo(function TabLata2000() {
                     <h3 style={{ margin: '0 0 15px 0', color: '#f1c40f' }}>Agencja Pracy: Bilet do Londynu</h3>
                     <p style={{ color: '#bdc3c7', fontSize: '1.05em' }}>Polska w UE to otwarte granice! Wyślij rodaków do pracy w UK lub Irlandii. Pobierasz drobną prowizję od ich zarobków w funtach (GBP).</p>
                     <div style={{ margin: '20px 0', fontSize: '1.2em', color: '#ecf0f1' }}>
-                      Wysłanych pracowników: <strong style={{ color: '#f1c40f', fontSize: '1.5em' }}>{state.zmywakWorkers.toLocaleString('pl-PL')}</strong>
+                      Wysłanych pracowników: <strong style={{ color: '#f1c40f', fontSize: '1.5em' }}>{fmtNum(state.zmywakWorkers)}</strong>
                     </div>
                     <div style={{ marginBottom: '20px', fontSize: '0.9em', color: '#2ecc71' }}>
-                      Pasywny przychód: <strong>+{Math.floor(state.zmywakWorkers * 5 * 0.15 * 6).toLocaleString('pl-PL')} PLN/s</strong>
+                      Pasywny przychód: <strong>+{fmtNum(Math.floor(state.zmywakWorkers * 5 * 0.15 * 6))} PLN/s</strong>
                     </div>
                     
                     <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
@@ -396,7 +396,7 @@ export const TabLata2000 = memo(function TabLata2000() {
                                 Efekt: {bill.effectDesc}
                               </div>
                               <div style={{ fontSize: '0.8em', color: '#e74c3c', marginTop: '2px' }}>
-                                Koszt: -{bill.bribeCostPerSec.toLocaleString('pl-PL')} PLN/s | Korupcja: +{bill.corruptionPerSec}%/s
+                                Koszt: -{fmtNum(bill.bribeCostPerSec)} PLN/s | Korupcja: +{bill.corruptionPerSec}%/s
                               </div>
                             </div>
                             <button
@@ -475,12 +475,12 @@ export const TabLata2000 = memo(function TabLata2000() {
                     {/* Control Panel */}
                     <div style={{ backgroundColor: '#2c3e50', padding: '15px', borderRadius: '6px', border: '1px solid #465c71', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
                       <div>
-                        <div>Roszczenie o zwrot VAT: <strong style={{ color: '#2ecc71', fontSize: '1.2em' }}>{Math.floor(state.vatRefundClaimed || 0).toLocaleString('pl-PL')} PLN</strong></div>
+                        <div>Roszczenie o zwrot VAT: <strong style={{ color: '#2ecc71', fontSize: '1.2em' }}>{fmtNum(Math.floor(state.vatRefundClaimed || 0))} PLN</strong></div>
                         <div style={{ fontSize: '0.8em', color: '#bdc3c7', marginTop: '2px' }}>
                           Status deklaracji: {state.vatRefundStatus === 'none' ? 'Brak deklaracji' :
                                              state.vatRefundStatus === 'pending' ? `Weryfikacja w toku (${Math.ceil(state.vatRefundTimer || 0)}s)` :
                                              state.vatRefundStatus === 'approved' ? 'Zwrócono pomyślnie' : 'Odrzucono (Kontrola)'}
-                          {state.vatRefundStatus === 'pending' && ` (${Math.floor(state.vatRefundPendingAmount).toLocaleString('pl-PL')} PLN)`}
+                          {state.vatRefundStatus === 'pending' && ` (${fmtNum(Math.floor(state.vatRefundPendingAmount))} PLN)`}
                         </div>
                       </div>
                       <div style={{ display: 'flex', gap: '10px' }}>
@@ -550,7 +550,7 @@ export const TabLata2000 = memo(function TabLata2000() {
                             <p style={{ fontSize: '0.8em', color: '#bdc3c7', margin: '5px 0' }}>{goods?.desc}</p>
                             
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', backgroundColor: '#34495e', padding: '10px', borderRadius: '4px' }}>
-                              <div>Kapitał obrotowy: <strong style={{ color: '#fff' }}>{comp.capital.toLocaleString('pl-PL')} PLN</strong></div>
+                              <div>Kapitał obrotowy: <strong style={{ color: '#fff' }}>{fmtNum(comp.capital)} PLN</strong></div>
                               <div style={{ display: 'flex', gap: '5px' }}>
                                 <button onClick={() => addCompanyCapital(comp.id, 50000)} disabled={comp.status === 'inspected' || state.pln < 50000} style={{ padding: '4px 8px', fontSize: '0.75em', cursor: 'pointer', fontWeight: 'bold' }}>+50k PLN</button>
                                 <button onClick={() => addCompanyCapital(comp.id, 100000)} disabled={comp.status === 'inspected' || state.pln < 100000} style={{ padding: '4px 8px', fontSize: '0.75em', cursor: 'pointer', fontWeight: 'bold' }}>+100k PLN</button>
@@ -646,7 +646,7 @@ export const TabLata2000 = memo(function TabLata2000() {
                       <div style={{ backgroundColor: '#34495e', padding: '10px', borderRadius: '4px', textAlign: 'center', marginBottom: '15px' }}>
                         <span>Środki na Cyprze:</span>
                         <div style={{ fontSize: '1.4em', color: '#1abc9c', fontWeight: 'bold', marginTop: '5px' }}>
-                          {Math.floor(state.offshoreCyprusBalance || 0).toLocaleString('pl-PL')} PLN
+                          {fmtNum(Math.floor(state.offshoreCyprusBalance || 0))} PLN
                         </div>
                       </div>
 
@@ -708,7 +708,7 @@ export const TabLata2000 = memo(function TabLata2000() {
                                   cursor: isBought ? 'not-allowed' : 'pointer'
                                 }}
                               >
-                                {isBought ? 'KUPIONE' : upg.costPln ? `${(upg.costPln/1000).toFixed(0)}k zł` : upg.costUsd ? `${(upg.costUsd/1000).toFixed(0)}k $` : '0 $'}
+                                {isBought ? 'KUPIONE' : upg.costPln ? `${fmtNum(upg.costPln/1000, 0)}k zł` : upg.costUsd ? `${fmtNum(upg.costUsd/1000, 0)}k $` : '0 $'}
                               </button>
                             </div>
                           );
