@@ -62,9 +62,6 @@ export interface GameStats {
   totalItemsSold: number;
   totalTimeQueued: number;
   totalCinkciarzExchanges: number;
-  totalMoscowRuns?: number;
-  totalInterestEarned?: number;
-  totalDividendsEarned?: number;
   totalBazarPlnEarned: number;
   totalBribesPaidPln: number;
   totalConfiscations: number;
