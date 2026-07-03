@@ -1931,7 +1931,8 @@ export function tick(s: GameState, deltaSec: number, ctx: TickContext): { state:
           else if (ach.id === 'smug_caught') isUnlocked = stats.totalCleCatches >= 5;
           else if (ach.id === 'black_market_1') isUnlocked = stats.totalBlackMarketPurchases >= 10;
           else if (ach.id === 'black_market_2') isUnlocked = stats.totalBlackMarketPurchases >= 50;
-          else if (ach.id === 'smug_moskwa') isUnlocked = stats.totalSmugglesCompleted >= 10;
+          else if (ach.id === 'smug_moskwa') isUnlocked = (stats.totalMoscowRuns || 0) >= 10;
+          
           
           else if (ach.id === 'pres_escape_1') isUnlocked = nextState.prestigePoints >= 1;
           else if (ach.id === 'pres_escape_2') isUnlocked = nextState.prestigePoints >= 5;
