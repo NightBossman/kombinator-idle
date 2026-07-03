@@ -1583,6 +1583,42 @@ export function tick(s: GameState, deltaSec: number, ctx: TickContext): { state:
                showAlert(`Kontrola z OLAF i Urzędu Skarbowego wykazała nieprawidłowości w Twoich dotacjach unijnych! Skonfiskowano ${penalty.toLocaleString('pl-PL')} PLN tytułem zwrotu i kar.`, '🚨 KONTROLA UNIJNA', 'raid');
              }, 50);
           }
+          
+          // 7. Deweloperka (czas budowy)
+          if (nextState.realEstateUnderConstruction && nextState.realEstateUnderConstruction.length > 0) {
+            const stillBuilding: typeof nextState.realEstateUnderConstruction = [];
+            
+            for (const build of nextState.realEstateUnderConstruction) {
+              build.timeLeft -= deltaSec;
+              
+              if (build.timeLeft <= 0) {
+                // Budowa ukończona!
+                nextState.realEstateOwned[build.id] = (nextState.realEstateOwned[build.id] || 0) + 1;
+                
+                // Alert/Toast
+                playSuccess();
+                addToast('BUDOWA UKOŃCZONA', `Inwestycja oddana do użytku.`);
+                
+                // WYZWALACZ RECESJI 2008
+                if (build.id === 'mikro_wola' && !nextState.recessionTriggered) {
+                  nextState.recessionTriggered = true;
+                  nextState.recessionActive = true;
+                  nextState.recessionTimer = 180; // 3 minuty recesji
+                  nextState.chfExchangeRate = Math.min(7.20, nextState.chfExchangeRate + 0.50);
+                  playAlert();
+                  showAlert(
+                    'Pęknięcie bańki na amerykańskim rynku subprime rozlało się na cały świat. Globalny Krach finansowy dotarł do nas! GPW tonie, banki upadają, a toksyczne opcje walutowe grożą bankructwem przedsiębiorstw. Masz 3 minuty na przetrwanie najgorszego!',
+                    'WIELKA RECESJA 2008!',
+                    'raid'
+                  );
+                }
+              } else {
+                stillBuilding.push(build);
+              }
+            }
+            
+            nextState.realEstateUnderConstruction = stillBuilding;
+          }
         }
 
         // Milicja - random check if suspicion is above threshold
