@@ -355,6 +355,8 @@ export interface GameState {
   euroBondEvents: string[];
   euros: number;
   euroExchangeRate: number;
+  eventsUnlocked: boolean;
+  timeWithHighPlnSec: number;
 }
 
 export const INITIAL_STATE: GameState = {
@@ -654,7 +656,9 @@ export const INITIAL_STATE: GameState = {
   euroBonds: [],
   euroBondEvents: [],
   euros: 0,
-  euroExchangeRate: 4.20
+  euroExchangeRate: 4.20,
+  eventsUnlocked: false,
+  timeWithHighPlnSec: 0
 };
 
 const isPlainObject = (v: unknown): v is Record<string, unknown> =>
@@ -689,6 +693,12 @@ export function mergeSavedState(parsed: unknown): GameState {
 
   const merged = merge(INITIAL_STATE, parsed, true) as GameState;
   merged.saveVersion = SAVE_VERSION;
+
+  // Auto-unlock events for late-game players loading their saves
+  if (merged.fazaMUnlocked || merged.fazaSUnlocked || merged.fazaWUnlocked || merged.activeDestination === 'usa' || merged.activeDestination === 'australia' || merged.pln >= 100000) {
+    merged.eventsUnlocked = true;
+  }
+
   return merged;
 }
 

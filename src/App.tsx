@@ -103,6 +103,22 @@ function App() {
   const [speedrunChecked, setSpeedrunChecked] = useState(false);
   const [offshoreTransferAmount, setOffshoreTransferAmount] = useState<string>('');
   const [offshoreExchangeAmount, setOffshoreExchangeAmount] = useState<string>('');
+
+  interface GameModal {
+    title: string;
+    message: string;
+    type?: 'info' | 'error' | 'success' | 'raid' | 'pap';
+    confirmText?: string;
+    cancelText?: string;
+    onConfirm: () => void;
+    onCancel?: () => void;
+  }
+  // [Claude] KIERUNEK 3: KOLEJKA modali zamiast pojedynczego okna. Wcześniej gdy w tej samej
+  // sekundzie wypadło kilka zdarzeń (np. koniec lokaty + nalot SB), gracz widział tylko
+  // ostatni komunikat - reszta przepadała. Teraz "ZROZUMIANO" pokazuje kolejny z kolejki.
+  // Bezpieczniki: identyczna treść nie dubluje się w kolejce, limit 8 okien naraz.
+  const [modalQueue, setModalQueue] = useState<GameModal[]>([]);
+  const activeModal = modalQueue.length > 0 ? modalQueue[0] : null;
   const [offshoreDepositAmount, setOffshoreDepositAmount] = useState<string>('');
   const [offshoreWashAmount, setOffshoreWashAmount] = useState<string>('');
   const [wholesalePrices, setWholesalePrices] = useState<Record<string, { pln: number, usd: number }>>({
@@ -141,7 +157,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (settingsOpen) return;
+    if (settingsOpen || modalQueue.length > 0) return;
     const interval = setInterval(() => {
       setWholesalePrices(prev => {
         const next = { ...prev };
@@ -161,23 +177,9 @@ function App() {
       });
     }, 15000);
     return () => clearInterval(interval);
-  }, [settingsOpen]);
+  }, [settingsOpen, modalQueue.length]);
   
-  interface GameModal {
-    title: string;
-    message: string;
-    type?: 'info' | 'error' | 'success' | 'raid' | 'pap';
-    confirmText?: string;
-    cancelText?: string;
-    onConfirm: () => void;
-    onCancel?: () => void;
-  }
-  // [Claude] KIERUNEK 3: KOLEJKA modali zamiast pojedynczego okna. Wcześniej gdy w tej samej
-  // sekundzie wypadło kilka zdarzeń (np. koniec lokaty + nalot SB), gracz widział tylko
-  // ostatni komunikat - reszta przepadała. Teraz "ZROZUMIANO" pokazuje kolejny z kolejki.
-  // Bezpieczniki: identyczna treść nie dubluje się w kolejce, limit 8 okien naraz.
-  const [modalQueue, setModalQueue] = useState<GameModal[]>([]);
-  const activeModal = modalQueue.length > 0 ? modalQueue[0] : null;
+
   // useCallback: stabilne tożsamości, żeby efekty mogły mieć showAlert w zależnościach
   // bez restartu co render (settery useState są stabilne, więc [] wystarczy)
   const closeActiveModal = useCallback(() => setModalQueue(q => q.slice(1)), []);
@@ -326,7 +328,7 @@ function App() {
       lastTickRef.current = now;
       const deltaSec = deltaMs / 1000;
 
-      if (settingsOpen) {
+      if (settingsOpen || modalQueue.length > 0) {
         return; // Pauza
       }
 
@@ -341,7 +343,7 @@ function App() {
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [updateState, activeQueue, settingsOpen]);
+  }, [updateState, activeQueue, settingsOpen, modalQueue.length]);
 
   // [Claude] Odtwarzanie zdarzeń silnika po każdym renderze (poza updaterem stanu).
   // Efekt celowo NIE ma tablicy zależności - musi zaglądać do bufora po każdym renderze.
@@ -375,7 +377,7 @@ function App() {
   const queue1Item = activeQueue ? QUEUE_ITEMS.find(i => i.id === activeQueue) : undefined;
   const queue1TimeMs = queue1Item ? queueTimeMs(queue1Item.timeToBuyMs, state) : 0;
   useEffect(() => {
-    if (!queue1Item || settingsOpen || queue1TimeMs <= 0) return;
+    if (!queue1Item || settingsOpen || modalQueue.length > 0 || queue1TimeMs <= 0) return;
     const item = queue1Item;
     const timeToBuy = queue1TimeMs;
 
@@ -386,7 +388,6 @@ function App() {
       setQueueProgress(prev => {
         const next = prev + (tickMs / timeToBuy) * 100;
         if (next >= 100) {
-          let restartQueue = false;
           updateState(s => {
             const doubleChance = (s.pewexItems['krakus'] ? 0.05 : 0) + (s.baltonaUpgrades?.['alpia'] ? 0.15 : 0);
             const isDouble = Math.random() < doubleChance;
@@ -410,15 +411,12 @@ function App() {
             if (s.plnUpgrades['zeszyt'] && s.pln >= currentCost && s.kartki >= reqKartki) {
                 nextState.pln -= currentCost;
                 if (reqKartki > 0) nextState.kartki -= reqKartki;
-                restartQueue = true;
+            } else {
+                setActiveQueue(null);
             }
             
             return nextState;
           });
-          
-          if (!restartQueue) {
-             setActiveQueue(null);
-          }
           return 0; // reset progress
         }
         return next;
@@ -426,14 +424,14 @@ function App() {
     }, tickMs);
     
     return () => clearInterval(interval);
-  }, [queue1Item, queue1TimeMs, updateState, settingsOpen]);
+  }, [queue1Item, queue1TimeMs, updateState, settingsOpen, modalQueue.length]);
 
   // Queue Progression 2 (Double queue upgrade)
   // [Claude] KIERUNEK 1.3: jak w pierwszej kolejce - wspolny wzor queueTimeMs()
   const queue2Item = activeQueue2 ? QUEUE_ITEMS.find(i => i.id === activeQueue2) : undefined;
   const queue2TimeMs = queue2Item ? queueTimeMs(queue2Item.timeToBuyMs, state) : 0;
   useEffect(() => {
-    if (!queue2Item || settingsOpen || queue2TimeMs <= 0) return;
+    if (!queue2Item || settingsOpen || modalQueue.length > 0 || queue2TimeMs <= 0) return;
     const item = queue2Item;
     const timeToBuy = queue2TimeMs;
 
@@ -444,7 +442,6 @@ function App() {
       setQueueProgress2(prev => {
         const next = prev + (tickMs / timeToBuy) * 100;
         if (next >= 100) {
-          let restartQueue = false;
           updateState(s => {
             const doubleChance = (s.pewexItems['krakus'] ? 0.05 : 0) + (s.baltonaUpgrades?.['alpia'] ? 0.15 : 0);
             const isDouble = Math.random() < doubleChance;
@@ -467,15 +464,12 @@ function App() {
             if (s.plnUpgrades['zeszyt'] && s.pln >= currentCost && s.kartki >= reqKartki) {
                 nextState.pln -= currentCost;
                 if (reqKartki > 0) nextState.kartki -= reqKartki;
-                restartQueue = true;
+            } else {
+                setActiveQueue2(null);
             }
             
             return nextState;
           });
-          
-          if (!restartQueue) {
-             setActiveQueue2(null);
-          }
           return 0;
         }
         return next;
@@ -483,11 +477,11 @@ function App() {
     }, tickMs);
     
     return () => clearInterval(interval);
-  }, [queue2Item, queue2TimeMs, updateState, settingsOpen]);
+  }, [queue2Item, queue2TimeMs, updateState, settingsOpen, modalQueue.length]);
 
   // Smuggling Progression
   useEffect(() => {
-    if (!activeSmuggle || settingsOpen) return;
+    if (!activeSmuggle || settingsOpen || modalQueue.length > 0) return;
     const route = SMUGGLING_ROUTES.find(r => r.id === activeSmuggle);
     if (!route) return;
 
@@ -576,11 +570,11 @@ function App() {
     }, tickMs);
     
     return () => clearInterval(interval);
-  }, [activeSmuggle, state.solidarnos, state.baltonaUpgrades, updateState, settingsOpen, showAlert]);
+  }, [activeSmuggle, state.solidarnos, state.baltonaUpgrades, updateState, settingsOpen, showAlert, modalQueue.length]);
 
   // Printing Progression
   useEffect(() => {
-    if (!state.isPrinting || settingsOpen) return;
+    if (!state.isPrinting || settingsOpen || modalQueue.length > 0) return;
     const printTimeMs = 5000; // 5 seconds
     // [Claude] wydajność: tick 50 ms wymuszał ~20 pełnych re-renderów aplikacji na sekundę na KAŻDY aktywny pasek.
     // 200 ms wystarcza (płynność zapewnia CSS transition na pasku), a obciążenie spada 4-krotnie.
@@ -619,11 +613,11 @@ function App() {
       });
     }, tickMs);
     return () => clearInterval(interval);
-  }, [state.isPrinting, updateState, settingsOpen]);
+  }, [state.isPrinting, updateState, settingsOpen, modalQueue.length]);
 
   // Sea Smuggling Progression
   useEffect(() => {
-    if (!state.activeSeaSmuggle || settingsOpen) return;
+    if (!state.activeSeaSmuggle || settingsOpen || modalQueue.length > 0) return;
     const route = SEA_SMUGGLING_ROUTES.find(r => r.id === state.activeSeaSmuggle);
     if (!route) return;
 
@@ -736,7 +730,7 @@ function App() {
     }, tickMs);
 
     return () => clearInterval(interval);
-  }, [state.activeSeaSmuggle, state.baltonaUpgrades, state.solidarnos, state.pewexItems, state.unlockedAchievements, updateState, settingsOpen, showAlert]);
+  }, [state.activeSeaSmuggle, state.baltonaUpgrades, state.solidarnos, state.pewexItems, state.unlockedAchievements, updateState, settingsOpen, showAlert, modalQueue.length]);
 
   const startQueue = (id: string, cost: number, kartkiCost: number = 0) => {
     if (state.prisonSentenceRemaining > 0) {
@@ -1908,7 +1902,8 @@ function App() {
     updateState(s => ({
       ...s,
       pln: s.pln - 10000000,
-      fazaMUnlocked: true
+      fazaMUnlocked: true,
+      gpwUnlocked: true
     }));
     playSuccess();
     showAlert('Obalono dawną komunę gospodarczą! Ustawa Wilczka weszła w życie: "Co nie jest zabronione, jest dozwolone". Możesz teraz handlować z łóżka polowego i brać udział w prywatyzacji!', '📜 USTAWA WILCZKA', 'success');
@@ -5180,7 +5175,9 @@ function App() {
          <button onClick={() => { playClick(); setCurrentTab('przemyt'); }} style={{flex: 1, backgroundColor: currentTab === 'przemyt' ? 'var(--crt-text)' : 'transparent', color: currentTab === 'przemyt' ? '#000' : 'var(--crt-text)'}}>PRZEMYT / BIZNES</button>
          <button onClick={() => { playClick(); setCurrentTab('partia'); }} style={{flex: 1, backgroundColor: currentTab === 'partia' ? 'var(--crt-text)' : 'transparent', color: currentTab === 'partia' ? '#000' : 'var(--crt-text)'}}>PARTIA / OPOZYCJA</button>
          <button onClick={() => { playClick(); setCurrentTab('odznaczenia'); }} style={{flex: 1, backgroundColor: currentTab === 'odznaczenia' ? 'var(--prl-yellow)' : 'transparent', color: currentTab === 'odznaczenia' ? '#000' : 'var(--prl-yellow)', borderColor: 'var(--prl-yellow)'}}>ODZNACZENIA</button>
-         <button onClick={() => { playClick(); setCurrentTab('gpw'); }} style={{flex: 1, backgroundColor: currentTab === 'gpw' ? '#39ff14' : 'transparent', color: currentTab === 'gpw' ? '#000' : '#39ff14', borderColor: '#39ff14'}}>GIEŁDA (GPW)</button>
+         {state.gpwUnlocked && (
+            <button onClick={() => { playClick(); setCurrentTab('gpw'); }} style={{flex: 1, backgroundColor: currentTab === 'gpw' ? '#39ff14' : 'transparent', color: currentTab === 'gpw' ? '#000' : '#39ff14', borderColor: '#39ff14'}}>GIEŁDA (GPW)</button>
+         )}
          {(state.partyRank === 'sekretarz' || state.partyRank === 'dyrektor' || state.partyRank === 'wiceminister' || state.partyRank === 'minister' || state.partyRank === 'biuro' || state.nomenklaturaUnlocked || state.swissAccountUnlocked) && (
             <button onClick={() => { playClick(); setCurrentTab('offshore'); }} style={{flex: 1, backgroundColor: currentTab === 'offshore' ? '#00e1d9' : 'transparent', color: currentTab === 'offshore' ? '#000' : '#00e1d9', borderColor: '#00e1d9'}}>KONTA ZAGRANICZNE</button>
           )}
