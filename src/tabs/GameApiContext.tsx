@@ -25,6 +25,7 @@ export interface GameApi {
   broadcastPoliticalSpot: (stationId: string, alignment: 'government' | 'solidarity') => void;
   buyAsset: (assetType: 'srebro' | 'krugerrand' | 'sztabkaZlota', payWith: 'pln' | 'dollars') => void;
   buyBaltonaUpgrade: (upgradeId: string) => void;
+  buySeaUpgrade: (upgradeId: string) => void;
   buyBazarItem: (itemId: string, amount: number) => void;
   buyBlackMarketOffer: (offerId: string) => void;
   buyBlackMarketWeapon: (weaponId: string, qty?: number) => void;

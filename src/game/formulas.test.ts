@@ -1,7 +1,7 @@
 // [Claude] testy wspólnych wzorów (KIERUNEK 1.3) - pilnują, żeby mnożniki
 // nie rozjechały się ponownie między silnikiem, symulacją offline i UI.
 import { describe, it, expect } from 'vitest';
-import { helperSpeedMult, businessProductionMult, queueTimeMs, cinkciarzRate, bazarPlnUnitPrice, bazarUsdUnitPrice, generalProductionMult, chfInstallmentPerSec, vatCarouselRefundPerSec, vatCarouselRiskGainPerSec, mordorIncomePerSec, mordorMoraleDecayPerSec, mordorEmployeeUpkeepPerSec, jdgRiskGainPerSec } from './formulas';
+import { helperSpeedMult, businessProductionMult, queueTimeMs, cinkciarzRate, bazarPlnUnitPrice, bazarUsdUnitPrice, generalProductionMult, chfInstallmentPerSec, vatCarouselRefundPerSec, vatCarouselRiskGainPerSec, mordorIncomePerSec, mordorMoraleDecayPerSec, mordorEmployeeUpkeepPerSec, jdgRiskGainPerSec, seaSmuggleTime, seaSmuggleRisk } from './formulas';
 import { INITIAL_STATE } from '../hooks/useGameState';
 import type { GameState } from '../hooks/useGameState';
 
@@ -124,6 +124,24 @@ describe('wzory mnożników (formulas.ts)', () => {
     const s = freshState({ fazaWUnlocked: true, jdgContracts: 5, jdgTaxOptimizationLevel: 2 });
     // 5 * 0.05 * 1.0 = 0.25% per second
     expect(jdgRiskGainPerSec(s)).toBeCloseTo(0.25, 4);
+  });
+
+  it('seaSmuggleTime: calculates smuggling time with weather and upgrades', () => {
+    const s1 = freshState({ seaState: 'storm' });
+    expect(seaSmuggleTime(1000, s1)).toBe(1500);
+
+    const s2 = freshState({ seaState: 'sailor_day', baltonaUpgrades: { marlboro: true } });
+    expect(seaSmuggleTime(1000, s2)).toBe(1000 * 0.7 * 0.8);
+  });
+
+  it('seaSmuggleRisk: calculates smuggling risk with weather and upgrades', () => {
+    const s1 = freshState({ seaState: 'lockdown', seaUpgrades: { zlom: true, celnicy: true } });
+    // 20 + 40 - 5 - 15 = 40
+    expect(seaSmuggleRisk(20, s1)).toBe(40);
+
+    const s2 = freshState({ seaState: 'sailor_day', seaUpgrades: { celnicy: true } });
+    // 20 - 10 - 15 = -5 => clamped to 0
+    expect(seaSmuggleRisk(20, s2)).toBe(0);
   });
 });
 

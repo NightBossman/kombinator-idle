@@ -231,3 +231,38 @@ export const jdgRiskGainPerSec = (s: GameState): number => {
   const taxLevel = JDG_TAX_LEVELS.find(l => l.level === level) || JDG_TAX_LEVELS[0];
   return s.jdgContracts * 0.05 * taxLevel.riskFactor;
 };
+
+/** 
+ * Oblicza ostateczny czas trwania szmuglu morskiego.
+ * - Sztorm: +50% czasu
+ * - Dzień Marynarza: -30% czasu
+ * - Szmugler Lądowy (Marlboro): -20%
+ */
+export const seaSmuggleTime = (baseMs: number, s: GameState): number => {
+  let t = baseMs;
+  if (s.seaState === 'storm') t *= 1.5;
+  if (s.seaState === 'sailor_day') t *= 0.7;
+  if (s.baltonaUpgrades?.['marlboro']) t *= 0.8;
+  return t;
+};
+
+/**
+ * Oblicza ryzyko wpadki (w procentach, 0-100) dla szmuglu morskiego.
+ * - Stan morza "Lockdown Gdyni": +40 punktów proc.
+ * - Stan morza "Patrole WOP": +20 punktów proc.
+ * - Dzień Marynarza: -10 punktów proc.
+ * - Ulepszenie "Złom na pokładzie": -5 punktów proc.
+ * - Ulepszenie "Przekupieni Celni": -15 punktów proc.
+ */
+export const seaSmuggleRisk = (baseRisk: number, s: GameState): number => {
+  let risk = baseRisk;
+  if (s.seaState === 'lockdown') risk += 40;
+  if (s.seaState === 'patrols') risk += 20;
+  if (s.seaState === 'sailor_day') risk -= 10;
+  
+  if (s.seaUpgrades?.['zlom']) risk -= 5;
+  if (s.seaUpgrades?.['celnicy']) risk -= 15;
+  
+  return Math.max(0, Math.min(100, risk));
+};
+

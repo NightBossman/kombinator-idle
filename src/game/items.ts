@@ -330,9 +330,12 @@ export interface SeaSmugglingRoute {
 }
 
 export const SEA_SMUGGLING_ROUTES: SeaSmugglingRoute[] = [
-  { id: 'hamburg', name: 'Rejs do Hamburga (Niemcy)', costPln: 20000, timeMs: 120000, riskPercent: 15, rewardDesc: 'Bony Baltona (5 - 15)', minBony: 5, maxBony: 15 },
-  { id: 'rotterdam', name: 'Kontenerowiec do Rotterdamu', costPln: 50000, timeMs: 300000, riskPercent: 25, rewardDesc: 'Bony Baltona (15 - 45)', minBony: 15, maxBony: 45 },
-  { id: 'nowy_jork', name: 'Transatlantyk do Nowego Jorku', costPln: 150000, timeMs: 600000, riskPercent: 35, rewardDesc: 'Bony Baltona (50 - 150)', minBony: 50, maxBony: 150 }
+  { id: 'szwecja', name: 'Prom do Ystad (Szwecja)', costPln: 10000, timeMs: 60000, riskPercent: 10, rewardDesc: 'Bony Balaton (2 - 8)', minBony: 2, maxBony: 8 },
+  { id: 'hamburg', name: 'Rejs do Hamburga (Niemcy)', costPln: 20000, timeMs: 120000, riskPercent: 15, rewardDesc: 'Bony Balaton (5 - 15)', minBony: 5, maxBony: 15 },
+  { id: 'rotterdam', name: 'Kontenerowiec do Rotterdamu', costPln: 50000, timeMs: 300000, riskPercent: 25, rewardDesc: 'Bony Balaton (15 - 45)', minBony: 15, maxBony: 45 },
+  { id: 'londyn', name: 'Rejs do Londynu (W. Brytania)', costPln: 90000, timeMs: 450000, riskPercent: 30, rewardDesc: 'Bony Balaton (30 - 80)', minBony: 30, maxBony: 80 },
+  { id: 'nowy_jork', name: 'Transatlantyk do Nowego Jorku', costPln: 150000, timeMs: 600000, riskPercent: 35, rewardDesc: 'Bony Balaton (50 - 150)', minBony: 50, maxBony: 150 },
+  { id: 'tokio', name: 'Rejs do Tokio (Japonia)', costPln: 300000, timeMs: 900000, riskPercent: 40, rewardDesc: 'Bony Balaton (100 - 300)', minBony: 100, maxBony: 300 }
 ];
 
 export interface BaltonaItem {
@@ -346,11 +349,14 @@ export const BALTONA_ITEMS: BaltonaItem[] = [
   { id: 'jacobs', name: 'Kawa Jacobs', costBony: 150, desc: '+20% zysków PLN z Pracy, -10% czasu w kolejkach' },
   { id: 'alpia', name: 'Czekolada Alpia', costBony: 300, desc: '+15% szansy na x2 nagrody z kolejki' },
   { id: 'grundig', name: 'Magnetofon Grundig', costBony: 750, desc: 'Pomocnicy szybsi o +40%' },
+  { id: 'banany', name: 'Banany z importu', costBony: 800, desc: 'Spowalnia spadek morale w Mordorze o 15% i zmniejsza ryzyko inspekcji PIP o 10%' },
   { id: 'marlboro', name: 'Papierosy Marlboro', costBony: 1500, desc: 'Czas wszystkich szmugli lądowych i morskich -20%' },
-  { id: 'sygnat', name: 'Złoty Sygnet', costBony: 3000, desc: '+25% do prestiżu (DM) przy emigracji' },
-  { id: 'import', name: 'Prywatny Import', costBony: 5000, desc: '+35% do wszystkich zysków PLN i USD' },
   { id: 'koniak', name: 'Koniak "Napoleon"', costBony: 2500, desc: 'Pasywnie obniża podejrzenie milicji ze wszystkich źródeł o 25%' },
-  { id: 'peklimax', name: 'Szynka Peklimax', costBony: 4000, desc: 'Eksportowa szynka konserwowa. +40% do cen sprzedaży surowców na Bazarze' }
+  { id: 'sygnat', name: 'Złoty Sygnet', costBony: 3000, desc: '+25% do prestiżu (DM) przy emigracji' },
+  { id: 'lego_technic', name: 'Klocki LEGO Technic', costBony: 3500, desc: 'Czas budowy nieruchomości (Lata 2000.) skraca się o 15%' },
+  { id: 'peklimax', name: 'Szynka Peklimax', costBony: 4000, desc: 'Eksportowa szynka konserwowa. +40% do cen sprzedaży surowców na Bazarze' },
+  { id: 'import', name: 'Prywatny Import', costBony: 5000, desc: '+35% do wszystkich zysków PLN i USD' },
+  { id: 'amiga', name: 'Komputer Amiga 500', costBony: 8000, desc: 'Ikona lat 90! +50% do zysków z biznesów i +25% do zysków z Dotcomów' }
 ];
 
 export interface StockInfo {

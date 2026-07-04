@@ -28,7 +28,7 @@ import { GameApiContext } from './tabs/GameApiContext';
 import type { GameApi } from './tabs/GameApiContext';
 import { MORDOR_UPGRADES, JDG_TAX_LEVELS, EURO_BOND_TYPES } from './game/items';
 // [Claude] KIERUNEK 1.3: wspolne wzory - panel Casio i Bazar pokazuja to, co liczy silnik
-import { helperSpeedMult, businessProductionMult, cinkciarzRate, queueTimeMs, bazarPlnUnitPrice, bazarUsdUnitPrice, realEstateCostPln, realEstateBuildTimeSec, chfInstallmentPerSec, vatCarouselRefundPerSec, mordorIncomePerSec, mordorEmployeeUpkeepPerSec } from './game/formulas';
+import { helperSpeedMult, businessProductionMult, cinkciarzRate, queueTimeMs, bazarPlnUnitPrice, bazarUsdUnitPrice, realEstateCostPln, realEstateBuildTimeSec, chfInstallmentPerSec, vatCarouselRefundPerSec, mordorIncomePerSec, mordorEmployeeUpkeepPerSec, seaSmuggleTime, seaSmuggleRisk } from './game/formulas';
 // [Claude] silnik gry (KIERUNEK.md pkt 1.1) - czysta pętla + zdarzenia; stamtąd też calculateLuxurySuspicionReduction
 import { tick, calculateLuxurySuspicionReduction } from './game/engine';
 import type { GameEvent, SoundId } from './game/engine';
@@ -654,23 +654,16 @@ function App() {
     const route = SEA_SMUGGLING_ROUTES.find(r => r.id === state.activeSeaSmuggle);
     if (!route) return;
 
-    let timeMs = route.timeMs;
-    if (state.baltonaUpgrades['marlboro']) {
-      timeMs *= 0.8;
-    }
-    if (state.solidarnos >= 3000) {
-      timeMs *= 0.85;
-    }
-
-    if (state.unlockedAchievements?.['sea_smug_3']) {
-      timeMs *= 0.85;
-    }
-
     // [Claude] wydajność: jak wyżej - rzadszy tick, płynność daje CSS transition
     const tickMs = 200;
     const interval = setInterval(() => {
       updateState(s => {
         if (!s.activeSeaSmuggle) return s;
+        let timeMs = seaSmuggleTime(route.timeMs, s);
+        if (s.unlockedAchievements?.['sea_smug_3']) {
+          timeMs *= 0.85;
+        }
+
         const nextProgress = s.seaSmuggleProgress + (tickMs / timeMs) * 100;
         if (nextProgress >= 100) {
           const r = SEA_SMUGGLING_ROUTES.find(routeItem => routeItem.id === s.activeSeaSmuggle);
@@ -678,7 +671,7 @@ function App() {
             return { ...s, activeSeaSmuggle: null, seaSmuggleProgress: 0 };
           }
           
-          let finalRisk = r.riskPercent;
+          let finalRisk = seaSmuggleRisk(r.riskPercent, s);
           if (s.pewexItems['polaroid']) {
             finalRisk *= 0.75;
           }
@@ -4069,6 +4062,29 @@ function App() {
     }));
   };
 
+  const buySeaUpgrade = (upgradeId: string) => {
+    if (state.seaUpgrades[upgradeId]) { playError(); return; }
+    const costs: Record<string, number> = { 'zlom': 20, 'celnicy': 150 };
+    const cost = costs[upgradeId];
+    if (!cost) return;
+
+    if (state.bonyBaltona < cost) {
+      playError();
+      showAlert(`Brak bonów Balaton! Wymagane: ${cost} bonów.`, "BRAK BONÓW", "error");
+      return;
+    }
+
+    playSuccess();
+    updateState(s => ({
+      ...s,
+      bonyBaltona: s.bonyBaltona - cost,
+      seaUpgrades: {
+        ...s.seaUpgrades,
+        [upgradeId]: true
+      }
+    }));
+  };
+
   const buyCounterIntel = () => {
     if (state.pln < 5000) {
       playError();
@@ -4518,6 +4534,7 @@ function App() {
     broadcastPoliticalSpot,
     buyAsset,
     buyBaltonaUpgrade,
+    buySeaUpgrade,
     buyBazarItem,
     buyBlackMarketOffer,
     buyBlackMarketWeapon,
