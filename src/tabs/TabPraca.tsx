@@ -7,7 +7,7 @@ import { playClick } from '../utils/audio';
 import { useGameApi } from './GameApiContext';
 
 export const TabPraca = memo(function TabPraca() {
-  const { activeQueue, activeQueue2, isKartkiRequired, pracuj, queueProgress, queueProgress2, startQueue, state, updateState } = useGameApi();
+  const { activeQueue, activeQueue2, isKartkiRequired, pracuj, queueProgress, queueProgress2, startQueue, stopQueue, state, updateState } = useGameApi();
   return (
     <div className="flex-col gap-4">
               <div className="panel">
@@ -75,17 +75,32 @@ export const TabPraca = memo(function TabPraca() {
                                 {state.activeEvent === 'podwyzki' && <span style={{color: 'var(--prl-red)', marginLeft: '5px'}}>(PODWYŻKA!)</span>}
                              </div>
                           </div>
-                          <button 
-                            disabled={
-                              (!state.pewexItems['podwojna_kolejka'] && !!activeQueue) || 
-                              (!!activeQueue && !!activeQueue2) || 
-                              state.pln < cost || 
-                              (isKartkiRequired(item) && state.kartki < (item.kartkiCost || 0))
-                            } 
-                            onClick={() => startQueue(item.id, item.costPln, item.kartkiCost || 0)}
-                          >
-                            Stój
-                          </button>
+                          {(activeQueue === item.id || activeQueue2 === item.id) ? (
+                            <button 
+                              style={{ backgroundColor: '#c0392b', color: '#fff', borderColor: '#c0392b' }}
+                              onClick={() => {
+                                if (activeQueue === item.id) {
+                                  stopQueue(1);
+                                } else {
+                                  stopQueue(2);
+                                }
+                              }}
+                            >
+                              Zrezygnuj
+                            </button>
+                          ) : (
+                            <button 
+                              disabled={
+                                (!state.pewexItems['podwojna_kolejka'] && !!activeQueue) || 
+                                (!!activeQueue && !!activeQueue2) || 
+                                state.pln < cost || 
+                                (isKartkiRequired(item) && state.kartki < (item.kartkiCost || 0))
+                              } 
+                              onClick={() => startQueue(item.id, item.costPln, item.kartkiCost || 0)}
+                            >
+                              Stój
+                            </button>
+                          )}
                         </div>
                         {activeQueue === item.id && (
                           <div style={{width: '100%', height: '10px', background: '#222', marginTop: '5px'}}>

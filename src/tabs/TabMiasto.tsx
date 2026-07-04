@@ -140,6 +140,20 @@ export const TabMiasto = memo(function TabMiasto() {
                     {WARSAW_DISTRICTS.map(dist => {
                       const ctrl = state.districtControl[dist.id] || { player: 0, pruszkow: 0, wolomin: 100 };
                       const income = Math.floor(dist.baseIncomePln * (ctrl.player / 100) * (state.isDenominated ? 1 : state.plzInflationMult));
+                      
+                      // Normalize to eliminate tiny slivers < 2%
+                      let p = ctrl.player < 2 ? 0 : ctrl.player;
+                      let pr = ctrl.pruszkow < 2 ? 0 : ctrl.pruszkow;
+                      let w = ctrl.wolomin < 2 ? 0 : ctrl.wolomin;
+                      const sum = p + pr + w;
+                      if (sum > 0) {
+                        p = (p / sum) * 100;
+                        pr = (pr / sum) * 100;
+                        w = (w / sum) * 100;
+                      } else {
+                        w = 100;
+                      }
+
                       return (
                         <div key={dist.id} style={{ backgroundColor: '#111', padding: '15px', borderRadius: '4px', border: '1px solid #333' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
@@ -149,15 +163,21 @@ export const TabMiasto = memo(function TabMiasto() {
                           <div style={{ fontSize: '0.85em', color: '#aaa', marginBottom: '10px' }}>{dist.desc}</div>
                           
                           <div style={{ display: 'flex', height: '20px', borderRadius: '10px', overflow: 'hidden', border: '1px solid #555' }}>
-                            <div style={{ width: `${ctrl.player}%`, backgroundColor: '#8e44ad', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7em', fontWeight: 'bold' }}>
-                              {ctrl.player > 5 ? `${fmtNum(ctrl.player, 1)}%` : ''}
-                            </div>
-                            <div style={{ width: `${ctrl.pruszkow}%`, backgroundColor: '#e67e22', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7em', fontWeight: 'bold' }}>
-                              {ctrl.pruszkow > 5 ? `${fmtNum(ctrl.pruszkow, 1)}% (P)` : ''}
-                            </div>
-                            <div style={{ width: `${ctrl.wolomin}%`, backgroundColor: '#c0392b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7em', fontWeight: 'bold' }}>
-                              {ctrl.wolomin > 5 ? `${fmtNum(ctrl.wolomin, 1)}% (W)` : ''}
-                            </div>
+                            {p > 0 && (
+                              <div style={{ width: `${p}%`, backgroundColor: '#8e44ad', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7em', fontWeight: 'bold' }}>
+                                {p > 5 ? `${fmtNum(p, 1)}%` : ''}
+                              </div>
+                            )}
+                            {pr > 0 && (
+                              <div style={{ width: `${pr}%`, backgroundColor: '#e67e22', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7em', fontWeight: 'bold' }}>
+                                {pr > 5 ? `${fmtNum(pr, 1)}% (P)` : ''}
+                              </div>
+                            )}
+                            {w > 0 && (
+                              <div style={{ width: `${w}%`, backgroundColor: '#c0392b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7em', fontWeight: 'bold' }}>
+                                {w > 5 ? `${fmtNum(w, 1)}% (W)` : ''}
+                              </div>
+                            )}
                           </div>
                         </div>
                       );

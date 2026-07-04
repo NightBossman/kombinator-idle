@@ -162,6 +162,7 @@ export interface GameApi {
   startOkraglyStol: () => void;
   startPrinting: () => void;
   startQueue: (id: string, cost: number, kartkiCost?: number) => void;
+  stopQueue: (slot: 1 | 2) => void;
   startSeaSmuggle: (routeId: string) => void;
   startSmuggle: (id: string, cost: number) => void;
   state: GameState;

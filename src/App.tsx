@@ -86,6 +86,8 @@ function App() {
   const [queueProgress, setQueueProgress] = useState(0);
   const [activeQueue2, setActiveQueue2] = useState<string | null>(null);
   const [queueProgress2, setQueueProgress2] = useState(0);
+  const zeszytRequeuedRef = useRef(false);
+  const zeszyt2RequeuedRef = useRef(false);
   
   const [activeSmuggle, setActiveSmuggle] = useState<string | null>(null);
   const [smuggleProgress, setSmuggleProgress] = useState(0);
@@ -409,12 +411,12 @@ function App() {
             const isReq = (item.kartkiCost || 0) > 0 && !(s.activeDestination === 'australia' && (s.timeInCurrentLoop || 0) < 300);
             const reqKartki = isReq ? (item.kartkiCost || 0) : 0;
             // Zeszyt Komitetu: ponawia kolejkę jednorazowo po ukończeniu (nie w nieskończoność)
-            if (s.plnUpgrades['zeszyt'] && s.pln >= currentCost && s.kartki >= reqKartki && !s.zeszytDidRequeue) {
+            if (s.plnUpgrades['zeszyt'] && s.pln >= currentCost && s.kartki >= reqKartki && !zeszytRequeuedRef.current) {
                 nextState.pln -= currentCost;
                 if (reqKartki > 0) nextState.kartki -= reqKartki;
-                nextState.zeszytDidRequeue = true;
+                zeszytRequeuedRef.current = true;
             } else {
-                nextState.zeszytDidRequeue = false;
+                zeszytRequeuedRef.current = false;
                 setActiveQueue(null);
             }
             
@@ -465,12 +467,12 @@ function App() {
             const isReq = (item.kartkiCost || 0) > 0 && !(s.activeDestination === 'australia' && (s.timeInCurrentLoop || 0) < 300);
             const reqKartki = isReq ? (item.kartkiCost || 0) : 0;
             // Zeszyt Komitetu: ponawia kolejkę jednorazowo po ukończeniu (nie w nieskończoność)
-            if (s.plnUpgrades['zeszyt'] && s.pln >= currentCost && s.kartki >= reqKartki && !s.zeszyt2DidRequeue) {
+            if (s.plnUpgrades['zeszyt'] && s.pln >= currentCost && s.kartki >= reqKartki && !zeszyt2RequeuedRef.current) {
                 nextState.pln -= currentCost;
                 if (reqKartki > 0) nextState.kartki -= reqKartki;
-                nextState.zeszyt2DidRequeue = true;
+                zeszyt2RequeuedRef.current = true;
             } else {
-                nextState.zeszyt2DidRequeue = false;
+                zeszyt2RequeuedRef.current = false;
                 setActiveQueue2(null);
             }
             
@@ -768,21 +770,26 @@ function App() {
     if (state.kartki < actualKartkiCost) { playError(); return; }
     
     playClick();
-    updateState(s => {
-      const next = { ...s, pln: s.pln - finalCost, kartki: s.kartki - actualKartkiCost };
-      if (targetSlot === 1) {
-        next.zeszytDidRequeue = false;
-      } else {
-        next.zeszyt2DidRequeue = false;
-      }
-      return next;
-    });
+    updateState(s => ({ ...s, pln: s.pln - finalCost, kartki: s.kartki - actualKartkiCost }));
     if (targetSlot === 1) {
+      zeszytRequeuedRef.current = false;
       setQueueProgress(0);
       setActiveQueue(id);
     } else {
+      zeszyt2RequeuedRef.current = false;
       setQueueProgress2(0);
       setActiveQueue2(id);
+    }
+  };
+
+  const stopQueue = (slot: 1 | 2) => {
+    playClick();
+    if (slot === 1) {
+      zeszytRequeuedRef.current = false;
+      setActiveQueue(null);
+    } else {
+      zeszyt2RequeuedRef.current = false;
+      setActiveQueue2(null);
     }
   };
 
@@ -4610,6 +4617,7 @@ function App() {
     startOkraglyStol,
     startPrinting,
     startQueue,
+    stopQueue,
     startSeaSmuggle,
     startSmuggle,
     state,
