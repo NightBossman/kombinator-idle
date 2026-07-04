@@ -1247,5 +1247,7 @@ export function useGameState(isPaused: boolean = false) {
     });
   }, []);
 
-  return { state, updateState, resetGame };
+  const getState = useCallback(() => stateRef.current, []);
+
+  return { state, updateState, resetGame, getState };
 }

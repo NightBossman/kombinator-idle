@@ -37,7 +37,7 @@ export type TabId = 'praca' | 'bazar' | 'przemyt' | 'partia' | 'czarnyRynek' | '
 
 function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const { state, updateState, resetGame: originalResetGame } = useGameState(settingsOpen);
+  const { state, updateState, resetGame: originalResetGame, getState } = useGameState(settingsOpen);
   const resetGame = (prestigeToEarn: number, destination: 'nrf' | 'austria' | 'usa' | 'kanada' | 'australia' | null, startSpeedrun: boolean = false) => {
     setActiveQueue(null);
     setQueueProgress(0);
@@ -388,19 +388,9 @@ function App() {
       setQueueProgress(prev => {
         const next = prev + (tickMs / timeToBuy) * 100;
         if (next >= 100) {
-          updateState(s => {
-            const doubleChance = (s.pewexItems['krakus'] ? 0.05 : 0) + (s.baltonaUpgrades?.['alpia'] ? 0.15 : 0);
-            const isDouble = Math.random() < doubleChance;
-            const amount = isDouble ? 2 : 1;
+          setTimeout(() => {
+            const s = getState();
             
-            if (isDouble) playSuccess();
-
-            const nextState = {
-              ...s,
-              inventory: { ...s.inventory, [item.id]: (s.inventory[item.id] || 0) + amount }
-            };
-            
-            // Auto-requeue logic (Podwyżki cen 1.5x, Uwolnienie cen 2x) i inflacja
             const inflationFactor = 1 + (s.inflationPercent / 100);
             let baseCost = item.costPln;
             if (s.activeEvent === 'podwyzki') baseCost = Math.floor(item.costPln * 1.5);
@@ -408,18 +398,40 @@ function App() {
             const currentCost = Math.floor(baseCost * inflationFactor);
             const isReq = (item.kartkiCost || 0) > 0 && !(s.activeDestination === 'australia' && (s.timeInCurrentLoop || 0) < 300);
             const reqKartki = isReq ? (item.kartkiCost || 0) : 0;
-            // Zeszyt Komitetu: ponawia kolejkę jednorazowo po ukończeniu (nie w nieskończoność)
+            
+            let shouldStop = false;
             if (s.plnUpgrades['zeszyt'] && s.pln >= currentCost && s.kartki >= reqKartki && !s.zeszytDidRequeue) {
-                nextState.pln -= currentCost;
-                if (reqKartki > 0) nextState.kartki -= reqKartki;
-                nextState.zeszytDidRequeue = true;
+               // Auto-requeue - continue
             } else {
-                nextState.zeszytDidRequeue = false;
-                setActiveQueue(null);
+               shouldStop = true;
             }
             
-            return nextState;
-          });
+            updateState(stateObj => {
+              const doubleChance = (stateObj.pewexItems['krakus'] ? 0.05 : 0) + (stateObj.baltonaUpgrades?.['alpia'] ? 0.15 : 0);
+              const isDouble = Math.random() < doubleChance;
+              const amount = isDouble ? 2 : 1;
+              if (isDouble) playSuccess();
+
+              const nextState = {
+                ...stateObj,
+                inventory: { ...stateObj.inventory, [item.id]: (stateObj.inventory[item.id] || 0) + amount }
+              };
+              
+              if (!shouldStop) {
+                  nextState.pln -= currentCost;
+                  if (reqKartki > 0) nextState.kartki -= reqKartki;
+                  nextState.zeszytDidRequeue = true;
+              } else {
+                  nextState.zeszytDidRequeue = false;
+              }
+              
+              return nextState;
+            });
+            
+            if (shouldStop) {
+               setActiveQueue(null);
+            }
+          }, 0);
           return 0; // reset progress
         }
         return next;
@@ -445,17 +457,8 @@ function App() {
       setQueueProgress2(prev => {
         const next = prev + (tickMs / timeToBuy) * 100;
         if (next >= 100) {
-          updateState(s => {
-            const doubleChance = (s.pewexItems['krakus'] ? 0.05 : 0) + (s.baltonaUpgrades?.['alpia'] ? 0.15 : 0);
-            const isDouble = Math.random() < doubleChance;
-            const amount = isDouble ? 2 : 1;
-            
-            if (isDouble) playSuccess();
-
-            const nextState = {
-              ...s,
-              inventory: { ...s.inventory, [item.id]: (s.inventory[item.id] || 0) + amount }
-            };
+          setTimeout(() => {
+            const s = getState();
             
             const inflationFactor = 1 + (s.inflationPercent / 100);
             let baseCost = item.costPln;
@@ -464,18 +467,40 @@ function App() {
             const currentCost = Math.floor(baseCost * inflationFactor);
             const isReq = (item.kartkiCost || 0) > 0 && !(s.activeDestination === 'australia' && (s.timeInCurrentLoop || 0) < 300);
             const reqKartki = isReq ? (item.kartkiCost || 0) : 0;
-            // Zeszyt Komitetu: ponawia kolejkę jednorazowo po ukończeniu (nie w nieskończoność)
+            
+            let shouldStop = false;
             if (s.plnUpgrades['zeszyt'] && s.pln >= currentCost && s.kartki >= reqKartki && !s.zeszyt2DidRequeue) {
-                nextState.pln -= currentCost;
-                if (reqKartki > 0) nextState.kartki -= reqKartki;
-                nextState.zeszyt2DidRequeue = true;
+               // Auto-requeue - continue
             } else {
-                nextState.zeszyt2DidRequeue = false;
-                setActiveQueue2(null);
+               shouldStop = true;
             }
             
-            return nextState;
-          });
+            updateState(stateObj => {
+              const doubleChance = (stateObj.pewexItems['krakus'] ? 0.05 : 0) + (stateObj.baltonaUpgrades?.['alpia'] ? 0.15 : 0);
+              const isDouble = Math.random() < doubleChance;
+              const amount = isDouble ? 2 : 1;
+              if (isDouble) playSuccess();
+
+              const nextState = {
+                ...stateObj,
+                inventory: { ...stateObj.inventory, [item.id]: (stateObj.inventory[item.id] || 0) + amount }
+              };
+              
+              if (!shouldStop) {
+                  nextState.pln -= currentCost;
+                  if (reqKartki > 0) nextState.kartki -= reqKartki;
+                  nextState.zeszyt2DidRequeue = true;
+              } else {
+                  nextState.zeszyt2DidRequeue = false;
+              }
+              
+              return nextState;
+            });
+            
+            if (shouldStop) {
+               setActiveQueue2(null);
+            }
+          }, 0);
           return 0;
         }
         return next;
@@ -501,74 +526,76 @@ function App() {
         if (state.baltonaUpgrades?.['marlboro']) timeMs *= 0.80; // Marlboro: -20% czasu szmugla
         const next = prev + (tickMs / timeMs) * 100;
         if (next >= 100) {
-          updateState(s => {
-            const polaroidDiscount = s.pewexItems['polaroid'] ? 0.75 : 1.0;
-            let risk = route.riskPercent * polaroidDiscount;
-            if (s.unlockedAchievements?.['smug_safe']) risk = Math.max(0, risk - 10);
-            
-            const isCaught = Math.random() < (risk / 100);
-            if (isCaught) {
-                 const suspAchMult = (s.unlockedAchievements?.['pol_rank_1'] ? 0.95 : 1) * (s.unlockedAchievements?.['pol_rank_2'] ? 0.90 : 1);
-                 const luxurySuspMult = 1 - calculateLuxurySuspicionReduction(s.ownedLuxuryItems);
-                 const suspAdd = (s.partyRank === 'minister' || s.partyRank === 'biuro' || s.activeEvent === 'odwilz') ? 0 : Math.floor(20 * suspAchMult * luxurySuspMult);
-                const insuranceDollars = s.unlockedAchievements?.['smug_caught'] ? 10 : 0;
-                const stats = {
-                  ...s.stats,
-                  totalCleCatches: (s.stats.totalCleCatches || 0) + 1,
-                  totalDollarsEarned: (s.stats.totalDollarsEarned || 0) + insuranceDollars
-                };
-                
-                const alertMsg = insuranceDollars > 0 
-                  ? `PRZEMYT ZATRZYMANY NA CLE! Straż Graniczna konfiskuje towar. Wzrost Podejrzenia!\n\nOtrzymujesz $10 z ubezpieczenia.`
-                  : `PRZEMYT ZATRZYMANY NA CLE! Straż Graniczna konfiskuje towar. Wzrost Podejrzenia!`;
-                setTimeout(() => showAlert(alertMsg, 'KONTROLA CELNA', 'error'), 50);
-                
-                return { 
-                  ...s, 
-                  suspicion: s.suspicion + suspAdd,
-                  dollars: s.dollars + insuranceDollars,
-                  stats
-                };
-            } else {
-                let dollarsEarned = Math.floor(Math.random() * (route.maxDollarsEarned - route.minDollarsEarned + 1)) + route.minDollarsEarned;
-                if (s.pewexItems['rubin']) dollarsEarned *= 2;
-                
-                const smugAchMult = 1 + (s.unlockedAchievements?.['smug_first'] ? 0.10 : 0) + (s.unlockedAchievements?.['smug_king'] ? 0.25 : 0);
-                const transformMult = s.unlockedAchievements?.['pres_transform'] ? 1.50 : 1.0;
-                const importMult = s.baltonaUpgrades?.['import'] ? 1.35 : 1.0;
-                dollarsEarned = Math.floor(dollarsEarned * smugAchMult * transformMult * importMult);
-                
-                // Solidarity Przywódca: +50% zysków z przemytu
-                if (s.solidarnos >= 8000) {
-                  dollarsEarned = Math.floor(dollarsEarned * 1.50);
-                }
-                
-                let rubleEarned = 0;
-                let alertMsg = `Przemyt udany! Zarobiono $${dollarsEarned}`;
-                if (route.id === 'moskwa') {
-                  rubleEarned = Math.floor(Math.random() * 31) + 20; // 20 - 50 Rubli
-                  if (s.unlockedAchievements?.['smug_moskwa']) rubleEarned += 2;
-                  // [Claude] naprawa odmiany: "22 Rubli" -> "22 ruble" (reguły liczebnika polskiego)
-                  alertMsg += ` oraz ${rubleEarned} ${pluralPL(rubleEarned, 'rubel', 'ruble', 'rubli')}`;
-                }
-                
-                setTimeout(() => showAlert(alertMsg, 'SUKCES SZMUGLA', 'success'), 50);
-                
-                const stats = {
-                  ...s.stats,
-                  totalDollarsEarned: (s.stats.totalDollarsEarned || 0) + dollarsEarned,
-                  totalSmugglesCompleted: (s.stats.totalSmugglesCompleted || 0) + 1
-                };
-                
-                return { 
-                  ...s, 
-                  dollars: s.dollars + dollarsEarned,
-                  ruble: s.ruble + rubleEarned,
-                  stats
-                };
-            }
-          });
-          setActiveSmuggle(null);
+          setTimeout(() => {
+            updateState(s => {
+              const polaroidDiscount = s.pewexItems['polaroid'] ? 0.75 : 1.0;
+              let risk = route.riskPercent * polaroidDiscount;
+              if (s.unlockedAchievements?.['smug_safe']) risk = Math.max(0, risk - 10);
+              
+              const isCaught = Math.random() < (risk / 100);
+              if (isCaught) {
+                   const suspAchMult = (s.unlockedAchievements?.['pol_rank_1'] ? 0.95 : 1) * (s.unlockedAchievements?.['pol_rank_2'] ? 0.90 : 1);
+                   const luxurySuspMult = 1 - calculateLuxurySuspicionReduction(s.ownedLuxuryItems);
+                   const suspAdd = (s.partyRank === 'minister' || s.partyRank === 'biuro' || s.activeEvent === 'odwilz') ? 0 : Math.floor(20 * suspAchMult * luxurySuspMult);
+                  const insuranceDollars = s.unlockedAchievements?.['smug_caught'] ? 10 : 0;
+                  const stats = {
+                    ...s.stats,
+                    totalCleCatches: (s.stats.totalCleCatches || 0) + 1,
+                    totalDollarsEarned: (s.stats.totalDollarsEarned || 0) + insuranceDollars
+                  };
+                  
+                  const alertMsg = insuranceDollars > 0 
+                    ? `PRZEMYT ZATRZYMANY NA CLE! Straż Graniczna konfiskuje towar. Wzrost Podejrzenia!\n\nOtrzymujesz $10 z ubezpieczenia.`
+                    : `PRZEMYT ZATRZYMANY NA CLE! Straż Graniczna konfiskuje towar. Wzrost Podejrzenia!`;
+                  setTimeout(() => showAlert(alertMsg, 'KONTROLA CELNA', 'error'), 50);
+                  
+                  return { 
+                    ...s, 
+                    suspicion: s.suspicion + suspAdd,
+                    dollars: s.dollars + insuranceDollars,
+                    stats
+                  };
+              } else {
+                  let dollarsEarned = Math.floor(Math.random() * (route.maxDollarsEarned - route.minDollarsEarned + 1)) + route.minDollarsEarned;
+                  if (s.pewexItems['rubin']) dollarsEarned *= 2;
+                  
+                  const smugAchMult = 1 + (s.unlockedAchievements?.['smug_first'] ? 0.10 : 0) + (s.unlockedAchievements?.['smug_king'] ? 0.25 : 0);
+                  const transformMult = s.unlockedAchievements?.['pres_transform'] ? 1.50 : 1.0;
+                  const importMult = s.baltonaUpgrades?.['import'] ? 1.35 : 1.0;
+                  dollarsEarned = Math.floor(dollarsEarned * smugAchMult * transformMult * importMult);
+                  
+                  // Solidarity Przywódca: +50% zysków z przemytu
+                  if (s.solidarnos >= 8000) {
+                    dollarsEarned = Math.floor(dollarsEarned * 1.50);
+                  }
+                  
+                  let rubleEarned = 0;
+                  let alertMsg = `Przemyt udany! Zarobiono $${dollarsEarned}`;
+                  if (route.id === 'moskwa') {
+                    rubleEarned = Math.floor(Math.random() * 31) + 20; // 20 - 50 Rubli
+                    if (s.unlockedAchievements?.['smug_moskwa']) rubleEarned += 2;
+                    // [Claude] naprawa odmiany: "22 Rubli" -> "22 ruble" (reguły liczebnika polskiego)
+                    alertMsg += ` oraz ${rubleEarned} ${pluralPL(rubleEarned, 'rubel', 'ruble', 'rubli')}`;
+                  }
+                  
+                  setTimeout(() => showAlert(alertMsg, 'SUKCES SZMUGLA', 'success'), 50);
+                  
+                  const stats = {
+                    ...s.stats,
+                    totalDollarsEarned: (s.stats.totalDollarsEarned || 0) + dollarsEarned,
+                    totalSmugglesCompleted: (s.stats.totalSmugglesCompleted || 0) + 1
+                  };
+                  
+                  return { 
+                    ...s, 
+                    dollars: s.dollars + dollarsEarned,
+                    ruble: s.ruble + rubleEarned,
+                    stats
+                  };
+              }
+            });
+            setActiveSmuggle(null);
+          }, 0);
           return 0;
         }
         return next;
