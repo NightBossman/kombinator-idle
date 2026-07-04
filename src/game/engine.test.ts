@@ -116,7 +116,7 @@ describe('denominacja (Faza F/M)', () => {
   });
 
   it('bez denominacji inflacja rośnie o 0,2%/s i dewaluuje gotówkę', () => {
-    const start = freshState({ pln: 1000, lastMarketRefresh: NOW });
+    const start = freshState({ pln: 1000, lastMarketRefresh: NOW, activeDestination: 'usa' });
     const { state } = runTicks(start, 5);
     expect(state.inflationPercent).toBeCloseTo(1.0, 3); // 5 s * 0,2%/s
     expect(state.pln).toBeLessThan(1000);
@@ -201,17 +201,20 @@ describe('kredyty CHF (Faza S)', () => {
       chfDebt: 500000,
       chfExchangeRate: 4.0,
       fazaSUnlocked: true,
+      activeDestination: 'usa',
+      inflationPercent: 2.0,
+      dotcomUsers: 100,
       lastMarketRefresh: NOW,
     });
     // 500000 * 0.0005 = 250 CHF/s raty
     // 250 CHF * 4.0 PLN = 1000 PLN kosztu na s
     // 250 CHF * 0.8 = 200 CHF spłaty kapitału na s
-    // Dot-com generuje pasywny przychód 140 PLN (100 użytkowników * 1.4 PLN/użytkownika/s)
-    // Pasywna dewaluacja gotówki zabiera 100 PLN (0.01% z 1M PLN)
+    // Dot-com generuje pasywny przychód 100 PLN (200 użytkowników * 0.5 PLN/użytkownika/s)
+    // Pasywna dewaluacja gotówki zabiera 110 PLN
     // Koszt raty CHF wynosi 1000 PLN (250 CHF * 4.0 PLN/CHF)
-    // Wynik netto gotówki: 1000000 - 1000 - 100 + 140 = 999040 PLN
+    // Wynik netto gotówki: 1000000 - 1000 - 110 + 100 = 998990 PLN
     const { state } = runTicks(start, 1);
-    expect(state.pln).toBe(999040);
+    expect(state.pln).toBe(998990);
   });
 });
 

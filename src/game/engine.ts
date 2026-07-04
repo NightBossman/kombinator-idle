@@ -88,7 +88,7 @@ export function tick(s: GameState, deltaSec: number, ctx: TickContext): { state:
         }
 
         // Faza F (Hiperinflacja): przyrost inflacji co sekundę (zamrożone po denominacji)
-        if (!s.isDenominated) {
+        if (s.activeDestination === 'usa' && !s.isDenominated) {
           let inflationInc = 0.2;
           if (s.partyRank === 'biuro') inflationInc = 0.3;
           else if (s.partyRank === 'minister') inflationInc = 0.14;
@@ -239,69 +239,90 @@ export function tick(s: GameState, deltaSec: number, ctx: TickContext): { state:
           nextState.solidarnos = Math.min(10000, (s.solidarnos || 0) + 0.05 * deltaSec);
         }
         
+        // Event unlocking logic based on PLN >= 100 000 for 10 minutes (600 seconds)
+        if (!s.eventsUnlocked) {
+          if (s.pln >= 100000) {
+            const nextTime = (s.timeWithHighPlnSec || 0) + deltaSec;
+            nextState.timeWithHighPlnSec = nextTime;
+            if (nextTime >= 600) {
+              nextState.eventsUnlocked = true;
+              showAlert(
+                "Obywatelu! Twój dynamiczny wzrost kapitału (osiągnięcie 100 000 zł) przyciągnął uwagę opinii publicznej i władz.\n\nOd teraz w kraju będą dziać się nieprzewidywalne zdarzenia historyczne (reformy, podwyżki cen, kryzysy), które bezpośrednio wpłyną na Twoje interesy!",
+                "⚡ NIEOCZEKIWANE ZDARZENIA",
+                "success"
+              );
+              playAlert();
+            }
+          } else {
+            nextState.timeWithHighPlnSec = 0;
+          }
+        }
+
         // Faza C: Zdarzenia historyczne
         let activeEvent = s.activeEvent;
         let eventTimeLeft = s.eventTimeLeft;
         let nextEventIn = s.nextEventIn;
 
-        if (activeEvent) {
-          eventTimeLeft -= deltaSec;
-          if (eventTimeLeft <= 0) {
-            activeEvent = null;
-            eventTimeLeft = 0;
-          }
-        } else {
-          nextEventIn -= deltaSec;
-          if (nextEventIn <= 0) {
-            const availableEvents = HISTORY_EVENTS.filter(e => !e.era || (e.era === 'lata2000' && s.fazaSUnlocked) || (e.era === 'lata2010' && s.fazaWUnlocked));
-            const randomEvent = availableEvents[Math.floor(Math.random() * availableEvents.length)];
-            activeEvent = randomEvent.id;
-            eventTimeLeft = randomEvent.durationSec;
-            nextEventIn = Math.floor(Math.random() * 181) + 120; // 2 do 5 minut (120 do 300 sekund)
-            
-            // Efekty natychmiastowe (Immediate effects)
-            if (randomEvent.id === 'papiez') {
-              nextState.suspicion = Math.max(0, nextState.suspicion - 20);
-              nextState.pln += 500;
-              nextState.stats.totalPlnEarned = (nextState.stats.totalPlnEarned || 0) + 500;
-            } else if (randomEvent.id === 'samochod') {
-              const isFiat = Math.random() < 0.5;
-              const carId = isFiat ? 'fiat125' : 'syrena';
-              nextState.inventory[carId] = (nextState.inventory[carId] || 0) + 1;
-            } else if (randomEvent.id === 'lehman_recession') {
-              nextState.recessionActive = true;
-              nextState.recessionTimer = 180;
-              nextState.chfExchangeRate = Math.min(7.20, nextState.chfExchangeRate + 0.50);
-            } else if (randomEvent.id === 'toxic_options_scandal') {
-              const penalty = Math.floor(nextState.pln * 0.15);
-              nextState.pln = Math.max(0, nextState.pln - penalty);
-            } else if (randomEvent.id === 'greek_haircut') {
-              const updatedBonds = (nextState.euroBonds || []).map(bond => {
-                if (bond.id === 'bond_greece') {
-                  return { ...bond, nominalAmountEur: Math.floor(bond.nominalAmountEur * 0.5) };
-                }
-                return bond;
-              });
-              nextState.euroBonds = updatedBonds;
-            } else if (randomEvent.id === 'euro_cup_2012') {
-              nextState.pln += 50000;
-              nextState.stats.totalPlnEarned = (nextState.stats.totalPlnEarned || 0) + 50000;
-              nextState.mordorMorale = Math.min(100, (nextState.mordorMorale || 100) + 30);
+        if (nextState.eventsUnlocked) {
+          if (activeEvent) {
+            eventTimeLeft -= deltaSec;
+            if (eventTimeLeft <= 0) {
+              activeEvent = null;
+              eventTimeLeft = 0;
             }
-            
-            setTimeout(() => {
-              playAlert();
-              const rewardNotice = randomEvent.id === 'samochod' 
-                ? `\n\n[DARMOWY WÓZ]: Do Twojego garażu trafia nowiutki polski pojazd!`
-                : randomEvent.id === 'papiez'
-                ? `\n\n[DAR]: Otrzymujesz +500 zł i tracisz 20% podejrzeń!`
-                : randomEvent.id === 'greek_haircut'
-                ? `\n\n[HAIRCUT]: Wartość nominalna Twoich greckich obligacji zostaje ścięta o 50%!`
-                : randomEvent.id === 'euro_cup_2012'
-                ? `\n\n[FESTIWAL]: Otrzymujesz +50 000 PLN, a morale pracowników w Mordorze rośnie o 30%!`
-                : ``;
-              showAlert(`--- ${randomEvent.name} ---\n\n${randomEvent.desc}${rewardNotice}`, 'TELEGRAM PAP (Wiadomości)', 'pap');
-            }, 50);
+          } else {
+            nextEventIn -= deltaSec;
+            if (nextEventIn <= 0) {
+              const availableEvents = HISTORY_EVENTS.filter(e => !e.era || (e.era === 'lata2000' && s.fazaSUnlocked) || (e.era === 'lata2010' && s.fazaWUnlocked));
+              const randomEvent = availableEvents[Math.floor(Math.random() * availableEvents.length)];
+              activeEvent = randomEvent.id;
+              eventTimeLeft = randomEvent.durationSec;
+              nextEventIn = Math.floor(Math.random() * 181) + 120; // 2 do 5 minut (120 do 300 sekund)
+              
+              // Efekty natychmiastowe (Immediate effects)
+              if (randomEvent.id === 'papiez') {
+                nextState.suspicion = Math.max(0, nextState.suspicion - 20);
+                nextState.pln += 500;
+                nextState.stats.totalPlnEarned = (nextState.stats.totalPlnEarned || 0) + 500;
+              } else if (randomEvent.id === 'samochod') {
+                const isFiat = Math.random() < 0.5;
+                const carId = isFiat ? 'fiat125' : 'syrena';
+                nextState.inventory[carId] = (nextState.inventory[carId] || 0) + 1;
+              } else if (randomEvent.id === 'lehman_recession') {
+                nextState.recessionActive = true;
+                nextState.recessionTimer = 180;
+                nextState.chfExchangeRate = Math.min(7.20, nextState.chfExchangeRate + 0.50);
+              } else if (randomEvent.id === 'toxic_options_scandal') {
+                const penalty = Math.floor(nextState.pln * 0.15);
+                nextState.pln = Math.max(0, nextState.pln - penalty);
+              } else if (randomEvent.id === 'greek_haircut') {
+                const updatedBonds = (nextState.euroBonds || []).map(bond => {
+                  if (bond.id === 'bond_greece') {
+                    return { ...bond, nominalAmountEur: Math.floor(bond.nominalAmountEur * 0.5) };
+                  }
+                  return bond;
+                });
+                nextState.euroBonds = updatedBonds;
+              } else if (randomEvent.id === 'euro_cup_2012') {
+                nextState.pln += 50000;
+                nextState.stats.totalPlnEarned = (nextState.stats.totalPlnEarned || 0) + 50000;
+                nextState.mordorMorale = Math.min(100, (nextState.mordorMorale || 100) + 30);
+              }
+              
+              setTimeout(() => {
+                playAlert();
+                const rewardNotice = randomEvent.id === 'samochod' 
+                  ? `\n\n[DARMOWY WÓZ]: Do Twojego garażu trafia nowiutki polski pojazd!`
+                  : randomEvent.id === 'papiez'
+                  ? `\n\n[DAR]: Otrzymujesz +500 zł i tracisz 20% podejrzeń!`
+                  : randomEvent.id === 'greek_haircut'
+                  ? `\n\n[HAIRCUT]: Wartość nominalna Twoich greckich obligacji zostaje ścięta o 50%!`
+                  : randomEvent.id === 'euro_cup_2012'
+                  ? `\n\n[FESTIWAL]: Otrzymujesz +50 000 PLN, a morale pracowników w Mordorze rośnie o 30%!`
+                  : ``;
+                showAlert(`--- ${randomEvent.name} ---\n\n${randomEvent.desc}${rewardNotice}`, 'TELEGRAM PAP (Wiadomości)', 'pap');
+              }, 50);
+            }
           }
         }
 
