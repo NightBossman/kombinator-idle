@@ -12,7 +12,7 @@ import { generateBlackMarketOffers } from '../hooks/useGameState';
 import { fmtNum } from '../utils/format';
 // [Claude] KIERUNEK 1.3: wspolne wzory mnoznikow - jedno zrodlo prawdy dla silnika,
 // symulacji offline (useGameState) i paneli UI (Casio, Bazar)
-import { helperSpeedMult, businessProductionMult, cinkciarzRate, queueTimeMs, chfInstallmentPerSec, vatCarouselRefundPerSec, vatCarouselRiskGainPerSec, mordorIncomePerSec, mordorMoraleDecayPerSec, mordorEmployeeUpkeepPerSec, jdgRiskGainPerSec } from './formulas';
+import { helperSpeedMult, businessProductionMult, cinkciarzRate, queueTimeMs, chfInstallmentPerSec, vatCarouselRefundPerSec, vatCarouselRiskGainPerSec, mordorIncomePerSec, mordorMoraleDecayPerSec, mordorEmployeeUpkeepPerSec, jdgRiskGainPerSec, cryptoMiningYield, cryptoPowerUpkeepPln, aiTrainSpeed, knfRiskGrowthRate } from './formulas';
 import {
   QUEUE_ITEMS, HELPERS, BUSINESSES, HISTORY_EVENTS, ACHIEVEMENTS, LUXURY_ITEMS,
   GPW_STOCKS, GPW_EVENTS, NOMENKLATURA_COMPANIES, OFFSHORE_DEPOSITS, COCOM_ITEMS,
@@ -1759,6 +1759,80 @@ export function tick(s: GameState, deltaSec: number, ctx: TickContext): { state:
               }
             });
             nextState.euroBonds = remainingBonds;
+          }
+        }
+
+        // Faza X: Startupy, AI i Kopalnia Krypto (Lata 2020.)
+        if (s.fazaXUnlocked) {
+          // 1. Pasywne wydobycie BTC
+          const btcMined = cryptoMiningYield(nextState) * deltaSec;
+          if (btcMined > 0) {
+            nextState.bitcoins = (nextState.bitcoins || 0) + btcMined;
+          }
+
+          // 2. Pasywny koszt prądu (PLN/s)
+          const powerCost = cryptoPowerUpkeepPln(nextState) * deltaSec;
+          if (powerCost > 0) {
+            nextState.pln = Math.max(0, nextState.pln - powerCost);
+          }
+
+          // 3. Pasywne płace Prompt Engineerów (PLN/s)
+          const engineersWage = (nextState.aiPromptEngineers || 0) * 150 * deltaSec;
+          if (engineersWage > 0) {
+            nextState.pln = Math.max(0, nextState.pln - engineersWage);
+          }
+
+          // 4. Wytrenowanie modeli AI (w tle)
+          if (nextState.isTrainingAi) {
+            const speed = aiTrainSpeed(nextState) * deltaSec;
+            nextState.aiTrainProgress = (nextState.aiTrainProgress || 0) + speed;
+            if (nextState.aiTrainProgress >= 100) {
+              nextState.aiTrainProgress = 0;
+              nextState.isTrainingAi = false;
+              nextState.aiModelsTrained = (nextState.aiModelsTrained || 0) + 1;
+              setTimeout(() => {
+                playSuccess();
+                addToast("MODEL AI WYTRENOWANY", `Wytrenowano model AI nr ${nextState.aiModelsTrained}! Możesz teraz wygenerować Pitch Deck.`);
+              }, 50);
+            }
+          }
+
+          // 5. Pasywny przyrost ryzyka KNF i fluktuacje tokena KMB
+          const knfRisk = knfRiskGrowthRate(nextState) * deltaSec;
+          if (knfRisk > 0) {
+            nextState.knfRiskLevel = Math.min(100, (nextState.knfRiskLevel || 0) + knfRisk);
+            
+            // Nalot KNF przy 100% ryzyka
+            if (nextState.knfRiskLevel >= 100) {
+              nextState.knfRiskLevel = 30; // reset do 30%
+              const penalty = Math.max(500000, Math.floor(nextState.pln * 0.30));
+              nextState.pln = Math.max(0, nextState.pln - penalty);
+              nextState.kmbTokensOwned = 0; // KNF zamraża/konfiskuje tokeny!
+              nextState.kmbTokenPricePln = 0.1; // krach tokena
+              setTimeout(() => {
+                playAlert();
+                showAlert(`KONTROLA KNF! Komisja Nadzoru Finansowego wykryła manipulacje rynkowe i schemat "pump and dump" na KombinatorCoin (KMB). Nałożono karę ${penalty.toLocaleString('pl-PL')} PLN oraz skonfiskowano wszystkie posiadane tokeny.`, '🚨 INTERWENCJA KNF', 'error');
+              }, 50);
+            }
+          }
+
+          // Pasywne wahania kursu KombinatorCoin (KMB)
+          const prev10sKmbTick = Math.floor((s.stats.totalTimePlayed || 0) / 10);
+          const current10sKmbTick = Math.floor(nextState.stats.totalTimePlayed / 10);
+          if (current10sKmbTick > prev10sKmbTick) {
+            const decay = 0.95 + Math.random() * 0.08; // naturalny decay/szum
+            nextState.kmbTokenPricePln = Math.max(0.01, nextState.kmbTokenPricePln * decay);
+          }
+
+          // 6. Wahania kursu Bitcoina (losowe skoki o ±4 co 10 sekund)
+          const prev10sBtcTick = Math.floor((s.stats.totalTimePlayed || 0) / 10);
+          const current10sBtcTick = Math.floor(nextState.stats.totalTimePlayed / 10);
+          if (current10sBtcTick > prev10sBtcTick) {
+            const btcFluctuation = 1 + (Math.random() * 0.08 - 0.04);
+            let newBtcPrice = nextState.bitcoinPricePln * btcFluctuation;
+            if (newBtcPrice < 40000) newBtcPrice = 40000 + Math.random() * 5000;
+            if (newBtcPrice > 450000) newBtcPrice = 450000 - Math.random() * 20000;
+            nextState.bitcoinPricePln = Math.round(newBtcPrice);
           }
         }
 

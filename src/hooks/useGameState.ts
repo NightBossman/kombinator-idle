@@ -9,7 +9,7 @@ import type { AuctionState } from '../game/items';
 // [Claude] KIERUNEK 2: wersja formatu zapisu. Podbij TYLKO, gdy zmienia sie ZNACZENIE
 // istniejacego pola (i dopisz migracje w mergeSavedState). Samo dodanie nowego pola
 // nie wymaga niczego - glebokie scalenie z INITIAL_STATE uzupelni je automatycznie.
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 
 export interface BlackMarketOffer {
   id: string;
@@ -362,6 +362,22 @@ export interface GameState {
   euroExchangeRate: number;
   eventsUnlocked: boolean;
   timeWithHighPlnSec: number;
+
+  // Faza X: Startupy, AI i Kopalnia Krypto (Lata 2020.)
+  fazaXUnlocked: boolean;
+  bitcoins: number;
+  bitcoinPricePln: number;
+  cryptoRigs: Record<string, number>;
+  aiComputers: number;
+  aiPromptEngineers: number;
+  aiModelsTrained: number;
+  aiTrainProgress: number;
+  isTrainingAi: boolean;
+  aiPitchDecks: number;
+  knfRiskLevel: number;
+  kmbTokenPricePln: number;
+  kmbTokensOwned: number;
+  aiUpgrades: Record<string, boolean>;
 }
 
 export const INITIAL_STATE: GameState = {
@@ -668,7 +684,23 @@ export const INITIAL_STATE: GameState = {
   euros: 0,
   euroExchangeRate: 4.20,
   eventsUnlocked: false,
-  timeWithHighPlnSec: 0
+  timeWithHighPlnSec: 0,
+
+  // Faza X: Startupy, AI i Kopalnia Krypto (Lata 2020.)
+  fazaXUnlocked: false,
+  bitcoins: 0,
+  bitcoinPricePln: 150000,
+  cryptoRigs: {},
+  aiComputers: 0,
+  aiPromptEngineers: 0,
+  aiModelsTrained: 0,
+  aiTrainProgress: 0,
+  isTrainingAi: false,
+  aiPitchDecks: 0,
+  knfRiskLevel: 0,
+  kmbTokenPricePln: 1.0,
+  kmbTokensOwned: 0,
+  aiUpgrades: {}
 };
 
 const isPlainObject = (v: unknown): v is Record<string, unknown> =>

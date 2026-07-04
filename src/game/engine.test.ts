@@ -280,3 +280,58 @@ describe('Faza W: Mordor i JDG', () => {
     expect(state.euroBonds.length).toBe(0);
   });
 });
+
+describe('Faza X: Startupy i Kryptowaluty', () => {
+  it('kopie Bitcoiny i nalicza koszty prądu oraz płace prompt engineerów', () => {
+    const start = freshState({
+      fazaXUnlocked: true,
+      cryptoRigs: { rtx4090: 2 },
+      aiPromptEngineers: 1,
+      bitcoins: 0,
+      pln: 100000,
+      lastMarketRefresh: NOW
+    });
+    // btcMined = 2 * 0.00005 = 0.0001 BTC/s
+    // powerCost = (2 * 0.45) * 5 = 4.5 PLN/s
+    // engineersWage = 1 * 150 = 150 PLN/s
+    // expected pln = 100000 - 4.5 - 150 = 99845.5 PLN
+    const { state } = runTicks(start, 1);
+    expect(state.bitcoins).toBeCloseTo(0.0001, 6);
+    expect(state.pln).toBeCloseTo(99845.5, 2);
+  });
+
+  it('trenuje model AI i kończy po osiągnięciu 100%', () => {
+    const start = freshState({
+      fazaXUnlocked: true,
+      isTrainingAi: true,
+      aiComputers: 1,
+      aiPromptEngineers: 0,
+      aiTrainProgress: 99.0,
+      aiModelsTrained: 0,
+      lastMarketRefresh: NOW
+    });
+    // aiTrainSpeed = 0.5 + 0.5 + 0 = 1.0%/s
+    // po 1s progress = 100% -> modelTrained = 1, isTrainingAi = false, progress = 0
+    const { state } = runTicks(start, 1);
+    expect(state.aiModelsTrained).toBe(1);
+    expect(state.isTrainingAi).toBe(false);
+    expect(state.aiTrainProgress).toBe(0);
+  });
+
+  it('wyzwala kontrolę KNF przy 100% ryzyka', () => {
+    const start = freshState({
+      fazaXUnlocked: true,
+      kmbTokensOwned: 5000,
+      knfRiskLevel: 99.9,
+      pln: 2000000,
+      lastMarketRefresh: NOW
+    });
+    // knfRiskGrowthRate = 0.2%/s
+    // po 1s risk >= 100 -> kara 30% kasy = 600000 PLN, tokeny wyzerowane
+    const { state } = runTicks(start, 1);
+    expect(state.pln).toBe(2000000 - 600000);
+    expect(state.kmbTokensOwned).toBe(0);
+    expect(state.knfRiskLevel).toBe(30);
+  });
+});
+
