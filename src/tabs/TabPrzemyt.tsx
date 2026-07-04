@@ -7,7 +7,7 @@ import { playClick } from '../utils/audio';
 import { useGameApi } from './GameApiContext';
 
 export const TabPrzemyt = memo(function TabPrzemyt() {
-  const { activeSmuggle, bribeSbChief, buyBaltonaUpgrade, buyBusiness, buyHelper, exchangeGoodsForBaltona, helperMult, hireRedDirector, przemytSubTab, recruitTwInNomenklatura, registerNomenklaturaCompany, setPrzemytSubTab, smuggleProgress, startSeaSmuggle, startSmuggle, state, updateState, upgradeHelper, upgradeLeasing } = useGameApi();
+  const { activeSmuggle, bribeSbChief, buyBaltonaUpgrade, buySeaUpgrade, buyBusiness, buyHelper, exchangeGoodsForBaltona, helperMult, hireRedDirector, przemytSubTab, recruitTwInNomenklatura, registerNomenklaturaCompany, setPrzemytSubTab, smuggleProgress, startSeaSmuggle, startSmuggle, state, updateState, upgradeHelper, upgradeLeasing } = useGameApi();
   return (
     <div className="flex-col gap-4">
               {/* Sub-tab switcher */}
@@ -36,7 +36,7 @@ export const TabPrzemyt = memo(function TabPrzemyt() {
                     cursor: 'pointer'
                   }}
                 >
-                  Port Gdynia & Baltona
+                  Port Gdynia & Balaton
                 </button>
                 {(state.partyRank === 'biuro' || state.nomenklaturaUnlocked) && (
                   <button 
@@ -263,7 +263,7 @@ export const TabPrzemyt = memo(function TabPrzemyt() {
                 <>
                   <div className="panel" style={{borderColor: 'var(--prl-yellow)'}}>
                     <h2 style={{color: 'var(--prl-yellow)'}}>PORT GDYNIA: SZMUGLE MORSKIE</h2>
-                    <p style={{fontSize: '0.8rem', marginBottom: '10px'}}>Wysyłaj statki handlowe za granicę przez zaufanych marynarzy, aby zdobyć Bony Baltona. Uwaga na rewizje celne w porcie!</p>
+                    <p style={{fontSize: '0.8rem', marginBottom: '10px'}}>Wysyłaj statki handlowe za granicę przez zaufanych marynarzy, aby zdobyć Bony Balaton. Uwaga na rewizje celne w porcie!</p>
                     <div style={{maxHeight: '450px', overflowY: 'auto', paddingRight: '10px'}}>
                       {SEA_SMUGGLING_ROUTES.map(r => {
                         const polaroidDiscount = state.pewexItems['polaroid'] ? 0.75 : 1.0;
@@ -275,7 +275,7 @@ export const TabPrzemyt = memo(function TabPrzemyt() {
                         if (state.baltonaUpgrades?.['marlboro']) timeSec *= 0.8;
                         if (state.solidarnos >= 3000) timeSec *= 0.85;
                         
-                        const rewardMsg = `Bony Towarowe Baltona (${r.minBony} - ${r.maxBony})`;
+                        const rewardMsg = `Bony Towarowe Balaton (${r.minBony} - ${r.maxBony})`;
 
                         return (
                           <div key={r.id} className="flex-col gap-2 mt-4" style={{borderBottom: '1px solid #333', paddingBottom: '10px'}}>
@@ -303,14 +303,74 @@ export const TabPrzemyt = memo(function TabPrzemyt() {
                     </div>
                   </div>
 
+                  <div className="panel" style={{borderColor: '#007ACC', background: 'rgba(0, 122, 204, 0.05)'}}>
+                    <h2 style={{color: '#007ACC'}}>🌊 STAN MORZA BAŁTYKIEGO</h2>
+                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                      <div className="flex-col">
+                        <span style={{fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--crt-text)'}}>
+                          {state.seaState === 'calm' ? '🟢 Spokojne Morze' :
+                           state.seaState === 'storm' ? '🔴 SZTORM' :
+                           state.seaState === 'lockdown' ? '🔴 LOCKDOWN PORTU' :
+                           state.seaState === 'patrols' ? '🟡 PATROLE WOP' :
+                           state.seaState === 'sailor_day' ? '🟢 Dzień Marynarza' : 'Nieznany'}
+                        </span>
+                        <span style={{fontSize: '0.8rem', color: 'var(--prl-gray)'}}>
+                          Następna zmiana za: {Math.max(0, Math.floor(state.seaStateTimer || 0))}s
+                        </span>
+                      </div>
+                      <div style={{textAlign: 'right', fontSize: '0.85rem', color: 'var(--prl-gray)'}}>
+                        {state.seaState === 'calm' ? 'Standardowy czas i ryzyko.' :
+                         state.seaState === 'storm' ? 'Rejsy trwają 50% dłużej!' :
+                         state.seaState === 'lockdown' ? 'Ryzyko wpadki rośnie o 40%!' :
+                         state.seaState === 'patrols' ? 'Ryzyko wpadki rośnie o 20%!' :
+                         state.seaState === 'sailor_day' ? 'Czas krótszy o 30%, Ryzyko spada o 10%!' : ''}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="panel" style={{borderColor: 'var(--prl-yellow)'}}>
+                    <h2 style={{color: 'var(--prl-yellow)'}}>ULEPSZENIA FLOTY (Bony Balaton)</h2>
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
+                      <div className="flex justify-between items-center" style={{borderBottom: '1px solid #222', paddingBottom: '10px'}}>
+                        <div className="flex-col">
+                          <span style={{color: 'var(--prl-yellow)', fontWeight: 'bold'}}>Złom na Pokładzie</span>
+                          <span style={{fontSize: '0.8rem', color: 'var(--prl-gray)'}}>Zmniejsza ryzyko na morzu o stałe 5%.</span>
+                        </div>
+                        <button 
+                          disabled={state.seaUpgrades?.['zlom'] || state.bonyBaltona < 20}
+                          onClick={() => buySeaUpgrade('zlom')}
+                          style={{ borderColor: state.seaUpgrades?.['zlom'] ? 'var(--prl-gray)' : 'var(--prl-yellow)', color: state.seaUpgrades?.['zlom'] ? 'var(--prl-gray)' : 'var(--prl-yellow)', backgroundColor: 'transparent' }}
+                        >
+                          {state.seaUpgrades?.['zlom'] ? "KUPIONE" : "20 bonów"}
+                        </button>
+                      </div>
+                      <div className="flex justify-between items-center" style={{borderBottom: '1px solid #222', paddingBottom: '10px'}}>
+                        <div className="flex-col">
+                          <span style={{color: 'var(--prl-yellow)', fontWeight: 'bold'}}>Przekupieni Celni</span>
+                          <span style={{fontSize: '0.8rem', color: 'var(--prl-gray)'}}>Zmniejsza ryzyko na morzu o stałe 15%.</span>
+                        </div>
+                        <button 
+                          disabled={state.seaUpgrades?.['celnicy'] || state.bonyBaltona < 150}
+                          onClick={() => buySeaUpgrade('celnicy')}
+                          style={{ borderColor: state.seaUpgrades?.['celnicy'] ? 'var(--prl-gray)' : 'var(--prl-yellow)', color: state.seaUpgrades?.['celnicy'] ? 'var(--prl-gray)' : 'var(--prl-yellow)', backgroundColor: 'transparent' }}
+                        >
+                          {state.seaUpgrades?.['celnicy'] ? "KUPIONE" : "150 bonów"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="panel" style={{borderColor: 'var(--prl-yellow)'}}>
                     <h2 style={{color: 'var(--prl-yellow)'}}>KONTRAKTY Z MARYNARZAMI</h2>
-                    <p style={{fontSize: '0.8rem', marginBottom: '10px'}}>Wymień towary krajowe na Bony Towarowe Baltona. Marynarze chętnie wezmą deficytowe produkty za dewizy!</p>
+                    <p style={{fontSize: '0.8rem', marginBottom: '10px'}}>Wymień towary krajowe na Bony Towarowe Balaton. Marynarze chętnie wezmą deficytowe produkty za dewizy!</p>
                     <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
                       {[
                         { id: 'cukier', name: 'Cukier (1kg)', amount: 50, reward: 10 },
+                        { id: 'papier_toaletowy', name: 'Papier Toaletowy', amount: 100, reward: 15 },
                         { id: 'dzinsy', name: 'Dżinsy "Odra"', amount: 20, reward: 15 },
+                        { id: 'woda_brzozowa', name: 'Woda Brzozowa', amount: 30, reward: 20 },
                         { id: 'kasprzak', name: 'Radio "Kasprzak"', amount: 10, reward: 25 },
+                        { id: 'czesci', name: 'Części Samochodowe', amount: 5, reward: 30 },
                         { id: 'wyroby_hutnicze', name: 'Wyroby Hutnicze', amount: 1, reward: 20 }
                       ].map(contract => {
                         const currentInv = Math.floor(state.inventory[contract.id] || 0);
@@ -319,7 +379,7 @@ export const TabPrzemyt = memo(function TabPrzemyt() {
                           <div key={contract.id} className="flex justify-between items-center mt-2" style={{borderBottom: '1px solid #333', paddingBottom: '8px'}}>
                             <div className="flex-col">
                               <span>{contract.name} (Masz: {currentInv}/{contract.amount})</span>
-                              <span style={{fontSize: '0.8rem', color: 'var(--prl-gray)'}}>Nagroda: +{contract.reward} Bonów Baltona</span>
+                              <span style={{fontSize: '0.8rem', color: 'var(--prl-gray)'}}>Nagroda: +{contract.reward} Bonów Balaton</span>
                             </div>
                             <button 
                               disabled={!canAfford} 
@@ -335,9 +395,9 @@ export const TabPrzemyt = memo(function TabPrzemyt() {
                   </div>
 
                   <div className="panel" style={{borderColor: 'var(--prl-yellow)'}}>
-                    <h2 style={{color: 'var(--prl-yellow)'}}>SKLEP BALTONA</h2>
+                    <h2 style={{color: 'var(--prl-yellow)'}}>SKLEP BALATON</h2>
                     <div style={{marginBottom: '10px', fontSize: '0.95rem'}}>
-                      Twoje Bony Baltona: <strong style={{color: 'var(--prl-yellow)'}}>{state.bonyBaltona} bonów</strong>
+                      Twoje Bony Balaton: <strong style={{color: 'var(--prl-yellow)'}}>{state.bonyBaltona} bonów</strong>
                     </div>
                     <div style={{maxHeight: '250px', overflowY: 'auto', paddingRight: '10px'}}>
                       {BALTONA_ITEMS.map(item => {

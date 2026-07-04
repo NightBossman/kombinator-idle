@@ -87,6 +87,36 @@ export function tick(s: GameState, deltaSec: number, ctx: TickContext): { state:
           nextState.bibulaLockdownRemaining = Math.max(0, s.bibulaLockdownRemaining - deltaSec);
         }
 
+        // Faza D (Port Gdynia): rotacja stanu morza
+        nextState.seaStateTimer = (s.seaStateTimer || 120) - deltaSec;
+        if (nextState.seaStateTimer <= 0) {
+          const states: Array<'calm' | 'storm' | 'lockdown' | 'patrols' | 'sailor_day'> = ['calm', 'storm', 'lockdown', 'patrols', 'sailor_day'];
+          const weights = [40, 20, 10, 20, 10]; // wagi dla stanów (spokój ma najwięcej)
+          
+          const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+          let r = Math.random() * totalWeight;
+          let newIndex = 0;
+          for (let i = 0; i < weights.length; i++) {
+            if (r < weights[i]) {
+              newIndex = i;
+              break;
+            }
+            r -= weights[i];
+          }
+
+          nextState.seaState = states[newIndex];
+          nextState.seaStateTimer = 120 + Math.floor(Math.random() * 60); // 2-3 minuty
+          
+          let alertDesc = '';
+          if (nextState.seaState === 'calm') alertDesc = 'Morze Bałtyckie uspokoiło się. Szmugiel morski przebiega bez zakłóceń.';
+          else if (nextState.seaState === 'storm') alertDesc = 'Sztorm na Bałtyku! Rejsy potrwają 50% dłużej.';
+          else if (nextState.seaState === 'lockdown') alertDesc = 'WOP i SB zablokowały Port Gdynia! Ryzyko wpadki wzrosło o 40%.';
+          else if (nextState.seaState === 'patrols') alertDesc = 'Wzmożone patrole Wojsk Ochrony Pogranicza. Ryzyko wyższe o 20%.';
+          else if (nextState.seaState === 'sailor_day') alertDesc = 'Dzień Marynarza! Strażnicy są pijani. Czas -30%, Ryzyko -10%.';
+          
+          addToast("ZMIANA SYTUACJI W PORCIE", alertDesc);
+        }
+
         // Faza F (Hiperinflacja): przyrost inflacji co sekundę (zamrożone po denominacji)
         if (s.activeDestination === 'usa' && !s.isDenominated) {
           let inflationInc = 0.2;

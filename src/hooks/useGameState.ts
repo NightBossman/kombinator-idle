@@ -165,6 +165,9 @@ export interface GameState {
   activeSeaSmuggle: string | null;
   seaSmuggleProgress: number;
   baltonaUpgrades: Record<string, boolean>;
+  seaState: 'calm' | 'storm' | 'lockdown' | 'patrols' | 'sailor_day';
+  seaStateTimer: number;
+  seaUpgrades: Record<string, boolean>;
 
   // Faza E: Służba Bezpieczeństwa (SB) i TW
   sbTwList: Record<string, boolean>;
@@ -460,6 +463,9 @@ export const INITIAL_STATE: GameState = {
   activeSeaSmuggle: null,
   seaSmuggleProgress: 0,
   baltonaUpgrades: {},
+  seaState: 'calm',
+  seaStateTimer: 120,
+  seaUpgrades: {},
 
   // Faza E: Służba Bezpieczeństwa (SB) i TW
   sbTwList: {},
