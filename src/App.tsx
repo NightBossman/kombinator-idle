@@ -408,10 +408,13 @@ function App() {
             const currentCost = Math.floor(baseCost * inflationFactor);
             const isReq = (item.kartkiCost || 0) > 0 && !(s.activeDestination === 'australia' && (s.timeInCurrentLoop || 0) < 300);
             const reqKartki = isReq ? (item.kartkiCost || 0) : 0;
-            if (s.plnUpgrades['zeszyt'] && s.pln >= currentCost && s.kartki >= reqKartki) {
+            // Zeszyt Komitetu: ponawia kolejkę jednorazowo po ukończeniu (nie w nieskończoność)
+            if (s.plnUpgrades['zeszyt'] && s.pln >= currentCost && s.kartki >= reqKartki && !s.zeszytDidRequeue) {
                 nextState.pln -= currentCost;
                 if (reqKartki > 0) nextState.kartki -= reqKartki;
+                nextState.zeszytDidRequeue = true;
             } else {
+                nextState.zeszytDidRequeue = false;
                 setActiveQueue(null);
             }
             
@@ -461,10 +464,13 @@ function App() {
             const currentCost = Math.floor(baseCost * inflationFactor);
             const isReq = (item.kartkiCost || 0) > 0 && !(s.activeDestination === 'australia' && (s.timeInCurrentLoop || 0) < 300);
             const reqKartki = isReq ? (item.kartkiCost || 0) : 0;
-            if (s.plnUpgrades['zeszyt'] && s.pln >= currentCost && s.kartki >= reqKartki) {
+            // Zeszyt Komitetu: ponawia kolejkę jednorazowo po ukończeniu (nie w nieskończoność)
+            if (s.plnUpgrades['zeszyt'] && s.pln >= currentCost && s.kartki >= reqKartki && !s.zeszyt2DidRequeue) {
                 nextState.pln -= currentCost;
                 if (reqKartki > 0) nextState.kartki -= reqKartki;
+                nextState.zeszyt2DidRequeue = true;
             } else {
+                nextState.zeszyt2DidRequeue = false;
                 setActiveQueue2(null);
             }
             
@@ -4938,10 +4944,12 @@ function App() {
           </div>
         </div>
       ) : (
-        <div className="pap-ticker" style={{borderColor: 'var(--prl-dark-gray)', background: 'rgba(0,0,0,0.2)', color: 'var(--prl-gray)'}}>
-          <div className="pap-badge" style={{background: 'var(--prl-dark-gray)', color: 'var(--prl-gray)'}}>TELEGRAM PAP</div>
-          <div className="pap-text" style={{fontSize: '0.95rem'}}>
-            Aktualnie brak komunikatów nadzwyczajnych PAP. Następny biuletyn za: {state.nextEventIn}s.
+        <div className="pap-ticker" style={{borderColor: '#3a3a1a', background: 'rgba(20,18,0,0.4)', color: '#6b6b3a', letterSpacing: '0.04em'}}>
+          <div className="pap-badge" style={{background: '#2a2a0a', color: '#5a5a2a', fontStyle: 'italic'}}>AKTA ZASTRZEŻONE</div>
+          <div className="pap-text" style={{fontSize: '0.88rem', fontStyle: 'italic', opacity: 0.7}}>
+            {state.eventsUnlocked
+              ? '▒▒▒ CZEKA NA SYGNAŁ... ▒▒▒ Następna transmisja zaszyfrowana. Utrzymuj kapitał powyżej progu.'
+              : '▒▒▒ [TREŚĆ UTAJNIONA] ▒▒▒ Dostęp do kanału specjalnego wymaga odpowiedniego statusu majątkowego. Osiągnij próg — a zasłona opadnie.'}
           </div>
         </div>
       )}

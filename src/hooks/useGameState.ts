@@ -108,6 +108,8 @@ export interface GameState {
   businesses: Record<string, number>;
   pewexItems: Record<string, boolean>;
   plnUpgrades: Record<string, boolean>;
+  zeszytDidRequeue: boolean;
+  zeszyt2DidRequeue: boolean;
   lastSave: number;
   
   // Faza B: Nowe waluty i Czarny Rynek
@@ -386,6 +388,8 @@ export const INITIAL_STATE: GameState = {
     willa: false, szwajcaria: false, transformacja: false 
   },
   plnUpgrades: { torba: false, wozek: false, zeszyt: false, kozuch: false, znajomosci: false },
+  zeszytDidRequeue: false,
+  zeszyt2DidRequeue: false,
   lastSave: Date.now(),
   
   talony: 0,
@@ -721,7 +725,9 @@ export function useGameState(isPaused: boolean = false) {
         const hasWilla = merged.pewexItems.willa;
         const efficiency = hasWilla ? 1.0 : (hasM3 ? 0.5 : 0.25);
         const timeDiffSec = (Date.now() - merged.lastSave) / 1000;
-        if (timeDiffSec > 10) {
+        // Pokaż raport offline tylko jeśli gracz ma już czas gry (nie przy pierwszym uruchomieniu)
+        const hasPlayTime = (merged.stats?.totalTimePlayed || 0) > 30;
+        if (timeDiffSec > 10 && hasPlayTime) {
               const offlineSec = Math.min(86400, timeDiffSec); // Limit 24h
               
               const offlineRep = {
