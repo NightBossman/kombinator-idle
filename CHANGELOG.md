@@ -4,6 +4,34 @@ Wszystkie istotne zmiany i wydania projektu będą dokumentowane w tym pliku.
 
 ---
 
+## [4.4.0] - 2026-07-04
+Wdrożenie Fazy W – Mordor na Domaniewskiej (Lata 2010.).
+
+### Dodano
+- **Nowa era: Faza W - Lata 2010.**: Odblokowywana po spłacie kredytu CHF, zakończeniu Recesji 2008 i uzbieraniu 100 000 000 PLN.
+- **Korporacyjny Mordor na Domaniewskiej (BPO/SSC)**:
+  - Budowanie kolejnych pięter biurowca i zatrudnianie pracowników korporacyjnych.
+  - Pasywna produkcja waluty EURO (EUR/s) na podstawie liczby pracowników.
+  - Mechanika wypalenia zawodowego (morale) spowalnianego benefitami pozapłacowymi (owocowe czwartki, chillout zone, wejściówki na siłownię).
+- **Samozatrudnienie B2B (JDG)**:
+  - Przenoszenie pracowników korporacji na kontrakty B2B w celu drastycznego obniżenia kosztów ich utrzymania.
+  - Optymalizacja podatkowa JDG (od skali podatkowej po spółkę komandytowo-akcyjną).
+  - Ryzyko kontroli Państwowej Inspekcji Pracy (PIP) i potencjalne kary finansowe rosnące wraz z liczbą kontraktów B2B.
+- **Rynek Obligacji Europejskich**:
+  - Spekulacja papierami dłużnymi krajów strefy euro (Niemcy, Hiszpania, Włochy, Grecja).
+  - Mechanika bankructwa państw (np. Grecji) z określonym procentem ryzyka i potencjalną utratą kapitału.
+- **Kantor NBP**: Możliwość wymiany zarobionych EUR na PLN po płynnym kursie rynkowym.
+- **Integracja UI**:
+  - Dodano kolumnę waluty **EURO** na głównym pasku HUD.
+  - Zakładka nawigacji **MORDOR (2010.)** ładowana dynamicznie po odblokowaniu fazy.
+  - Uzupełnienie statystyk pasywnego przychodu i kosztów w kalkulatorze Casio fx-3600P o wartości z Mordoru.
+  - Opcje deweloperskie ułatwiające testowanie Fazy W w ustawieniach (+1M EUR, +100M PLN, natychmiastowe odblokowanie).
+
+### Naprawiono
+- Usunięto bony Baltona z głównego paska HUD na rzecz logicznego uszeregowania głównych walut (PLN, USD, EUR).
+
+---
+
 ## [4.3.0] - 2026-07-03
 Domknięcie WSZYSTKICH punktów `docs/KIERUNEK.md` (2, 3, 4, 7.4) + rzadszy autozapis — Claude.
 Mechanika gry bez zmian, stare zapisy wczytują się bez utraty czegokolwiek.

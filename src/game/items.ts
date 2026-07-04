@@ -94,7 +94,7 @@ export const PLN_UPGRADES: PlnUpgrade[] = [
   { id: 'kozuch', name: 'Ciepły Kożuch', costPln: 800, desc: 'Skraca czas stania w kolejce o 10%' },
 ];
 
-export interface HistoryEvent { id: string; name: string; desc: string; durationSec: number; era?: 'lata2000'; }
+export interface HistoryEvent { id: string; name: string; desc: string; durationSec: number; era?: 'lata2000' | 'lata2010'; }
 export const HISTORY_EVENTS: HistoryEvent[] = [
   {
     id: 'czarnobyl',
@@ -161,6 +161,27 @@ export const HISTORY_EVENTS: HistoryEvent[] = [
     name: 'Czarny Wtorek (Panika Walutowa)',
     desc: 'Panika na rynku walutowym! Kurs dolara na czarnym rynku rośnie o +100% przez 60 sekund.',
     durationSec: 60
+  },
+  {
+    id: 'greek_haircut',
+    name: 'Umorzenie Długu (Greek Haircut)',
+    desc: 'Grecja ogłasza niewypłacalność! Ceny greckich obligacji spadają o 50% przez 3 minuty.',
+    durationSec: 180,
+    era: 'lata2010'
+  },
+  {
+    id: 'draghi_speech',
+    name: 'Przemówienie Draghi (Whatever it takes)',
+    desc: 'Szef EBC obiecuje obronę strefy euro. Rentowności obligacji rosną o 40%, a przyrost ryzyka w Mordorze spada o połowę na 2 minuty.',
+    durationSec: 120,
+    era: 'lata2010'
+  },
+  {
+    id: 'euro_cup_2012',
+    name: 'Euro 2012 w Polsce',
+    desc: 'Szał inwestycyjny w Polsce! Napływ kibiców generuje jednorazową dotację +50,000 PLN i zwiększa morale w Mordorze o 30%.',
+    durationSec: 60,
+    era: 'lata2010'
   }
 ];
 
@@ -1113,3 +1134,65 @@ export const HELPER_UPGRADE_COSTS: Record<string, { resource: string; label: str
   widmo: { resource: 'wyroby_hutnicze', label: 'Wyroby Hutnicze' },
   konspiracja: { resource: 'czesci', label: 'Części' },
 };
+
+// ===== FAZA W: MORDOR NA DOMANIEWSKIEJ (LATA 2010.) =====
+
+export interface MordorUpgrade {
+  id: string;
+  name: string;
+  desc: string;
+  costPln: number;
+  moraleRegenBonus: number;
+}
+
+export const MORDOR_UPGRADES: MordorUpgrade[] = [
+  { id: 'owocowe_czwartki', name: 'Owocowe Czwartki', desc: 'Darmowe banany i jabłka w kuchni. Zmniejsza spadek morale o 30%.', costPln: 500000, moraleRegenBonus: 0.15 },
+  { id: 'multisport', name: 'Karnety MultiSport', desc: 'Dofinansowanie do siłowni. Zmniejsza spadek morale o kolejne 20%.', costPln: 1500000, moraleRegenBonus: 0.10 },
+  { id: 'pingpong', name: 'Stół do Ping-Ponga', desc: 'Szybki mecz w przerwie. Zwiększa tempo rekrutacji i morale.', costPln: 2000000, moraleRegenBonus: 0.10 },
+  { id: 'chillout_room', name: 'Chillout Room', desc: 'Pufy, konsola do gier i relaks. Drastycznie poprawia samopoczucie pracowników.', costPln: 5000000, moraleRegenBonus: 0.20 }
+];
+
+export interface JdgTaxLevel {
+  level: number;
+  name: string;
+  desc: string;
+  costPln: number;
+  upkeepReduction: number;
+  riskFactor: number;
+}
+
+export const JDG_TAX_LEVELS: JdgTaxLevel[] = [
+  { level: 0, name: 'Standardowa Umowa o Pracę', desc: 'Pełne składki ZUS, zero ryzyka, wysokie koszty.', costPln: 0, upkeepReduction: 1.0, riskFactor: 0.0 },
+  { level: 1, name: 'Samozatrudnienie (Ryczałt 8.5%)', desc: 'Przejście na fakturę. Redukuje koszty utrzymania o 15%, lekki wzrost ryzyka.', costPln: 250000, upkeepReduction: 0.85, riskFactor: 0.5 },
+  { level: 2, name: 'Podatek Liniowy B2B (19%)', desc: 'Kreatywne koszty uzyskania przychodów. Koszty -30%, średnie ryzyko.', costPln: 1000000, upkeepReduction: 0.70, riskFactor: 1.0 },
+  { level: 3, name: 'Raj Podatkowy (Estonia)', desc: 'Spółka w Tallinnie. Koszty -45%, wysokie ryzyko kontroli.', costPln: 5000000, upkeepReduction: 0.55, riskFactor: 2.0 }
+];
+
+export interface EuroBondType {
+  id: string;
+  country: string;
+  name: string;
+  interestRate: number;
+  riskOfCrash: number;
+  costEur: number;
+  durationSec: number;
+  desc: string;
+}
+
+export const EURO_BOND_TYPES: EuroBondType[] = [
+  { id: 'bond_greece', country: 'Grecja', name: 'Greckie obligacje skarbowe (10-letnie)', interestRate: 0.60, riskOfCrash: 40, costEur: 50000, durationSec: 90, desc: 'Ekstremalnie rentowne, ale na granicy bankructwa kraju. Wysokie ryzyko straty.' },
+  { id: 'bond_spain', country: 'Hiszpania', name: 'Hiszpańskie obligacje rządowe', interestRate: 0.25, riskOfCrash: 15, costEur: 100000, durationSec: 120, desc: 'Umiarkowane ryzyko rentowności po pęknięciu hiszpańskiej bańki nieruchomościowej.' },
+  { id: 'bond_italy', country: 'Włochy', name: 'Włoskie obligacje państwowe', interestRate: 0.15, riskOfCrash: 5, costEur: 200000, durationSec: 150, desc: 'Relatywnie stabilne papiery z niskim, ale pewnym zyskiem.' }
+];
+
+export interface EuroBond {
+  uuid: string;
+  id: string;
+  country: string;
+  buyPriceEur: number;
+  nominalAmountEur: number;
+  timeLeft: number;
+  interestRate: number;
+  riskOfCrash: number;
+}
+

@@ -13,7 +13,7 @@
 // (zdarzenia celowo nie działają, gdy gra jest wyłączona - tak było od zawsze).
 
 import type { GameState } from '../hooks/useGameState';
-import { LUXURY_ITEMS, VAT_GOODS } from './items';
+import { LUXURY_ITEMS, VAT_GOODS, JDG_TAX_LEVELS } from './items';
 
 export interface FormulaOpts {
   zZdarzeniami?: boolean;
@@ -197,4 +197,37 @@ export const vatCarouselRiskGainPerSec = (s: GameState): number => {
   const turnoverScaling = 1 + (totalTurnover / 1000000);
 
   return totalRisk * riskMult * turnoverScaling;
+};
+
+/** Przychód z Mordoru w EUR na sekundę: 25 EUR/s za pracownika * morale. */
+export const mordorIncomePerSec = (s: GameState): number => {
+  if (!s.fazaWUnlocked) return 0;
+  return s.mordorEmployees * 25 * (s.mordorMorale / 100);
+};
+
+/** Spadek morale w Mordorze na sekundę (bazowo 0.5%/s, redukowane przez ulepszenia). */
+export const mordorMoraleDecayPerSec = (s: GameState): number => {
+  if (!s.fazaWUnlocked || s.mordorEmployees <= 0) return 0;
+  let decay = 0.5;
+  if (s.mordorUpgrades?.['owocowe_czwartki']) decay *= 0.70;
+  if (s.mordorUpgrades?.['multisport']) decay *= 0.80;
+  if (s.mordorUpgrades?.['pingpong']) decay *= 0.85;
+  if (s.mordorUpgrades?.['chillout_room']) decay *= 0.75;
+  return decay;
+};
+
+/** Koszt utrzymania pracowników Mordoru w PLN na sekundę (bazowo 200 PLN/s za pracownika, redukowane przez JDG). */
+export const mordorEmployeeUpkeepPerSec = (s: GameState): number => {
+  if (!s.fazaWUnlocked) return 0;
+  const level = s.jdgTaxOptimizationLevel || 0;
+  const taxLevel = JDG_TAX_LEVELS.find(l => l.level === level) || JDG_TAX_LEVELS[0];
+  return s.mordorEmployees * 200 * taxLevel.upkeepReduction;
+};
+
+/** Przyrost ryzyka kontroli PIP na sekundę. Zależy od liczby kontraktów B2B i poziomu optymalizacji. */
+export const jdgRiskGainPerSec = (s: GameState): number => {
+  if (!s.fazaWUnlocked || s.jdgContracts <= 0) return 0;
+  const level = s.jdgTaxOptimizationLevel || 0;
+  const taxLevel = JDG_TAX_LEVELS.find(l => l.level === level) || JDG_TAX_LEVELS[0];
+  return s.jdgContracts * 0.05 * taxLevel.riskFactor;
 };

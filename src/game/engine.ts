@@ -12,7 +12,7 @@ import { generateBlackMarketOffers } from '../hooks/useGameState';
 import { fmtNum } from '../utils/format';
 // [Claude] KIERUNEK 1.3: wspolne wzory mnoznikow - jedno zrodlo prawdy dla silnika,
 // symulacji offline (useGameState) i paneli UI (Casio, Bazar)
-import { helperSpeedMult, businessProductionMult, cinkciarzRate, queueTimeMs, chfInstallmentPerSec, vatCarouselRefundPerSec, vatCarouselRiskGainPerSec } from './formulas';
+import { helperSpeedMult, businessProductionMult, cinkciarzRate, queueTimeMs, chfInstallmentPerSec, vatCarouselRefundPerSec, vatCarouselRiskGainPerSec, mordorIncomePerSec, mordorMoraleDecayPerSec, mordorEmployeeUpkeepPerSec, jdgRiskGainPerSec } from './formulas';
 import {
   QUEUE_ITEMS, HELPERS, BUSINESSES, HISTORY_EVENTS, ACHIEVEMENTS, LUXURY_ITEMS,
   GPW_STOCKS, GPW_EVENTS, NOMENKLATURA_COMPANIES, OFFSHORE_DEPOSITS, COCOM_ITEMS,
@@ -253,7 +253,7 @@ export function tick(s: GameState, deltaSec: number, ctx: TickContext): { state:
         } else {
           nextEventIn -= deltaSec;
           if (nextEventIn <= 0) {
-            const availableEvents = HISTORY_EVENTS.filter(e => !e.era || (e.era === 'lata2000' && s.fazaSUnlocked));
+            const availableEvents = HISTORY_EVENTS.filter(e => !e.era || (e.era === 'lata2000' && s.fazaSUnlocked) || (e.era === 'lata2010' && s.fazaWUnlocked));
             const randomEvent = availableEvents[Math.floor(Math.random() * availableEvents.length)];
             activeEvent = randomEvent.id;
             eventTimeLeft = randomEvent.durationSec;
@@ -275,6 +275,18 @@ export function tick(s: GameState, deltaSec: number, ctx: TickContext): { state:
             } else if (randomEvent.id === 'toxic_options_scandal') {
               const penalty = Math.floor(nextState.pln * 0.15);
               nextState.pln = Math.max(0, nextState.pln - penalty);
+            } else if (randomEvent.id === 'greek_haircut') {
+              const updatedBonds = (nextState.euroBonds || []).map(bond => {
+                if (bond.id === 'bond_greece') {
+                  return { ...bond, nominalAmountEur: Math.floor(bond.nominalAmountEur * 0.5) };
+                }
+                return bond;
+              });
+              nextState.euroBonds = updatedBonds;
+            } else if (randomEvent.id === 'euro_cup_2012') {
+              nextState.pln += 50000;
+              nextState.stats.totalPlnEarned = (nextState.stats.totalPlnEarned || 0) + 50000;
+              nextState.mordorMorale = Math.min(100, (nextState.mordorMorale || 100) + 30);
             }
             
             setTimeout(() => {
@@ -283,8 +295,12 @@ export function tick(s: GameState, deltaSec: number, ctx: TickContext): { state:
                 ? `\n\n[DARMOWY WÓZ]: Do Twojego garażu trafia nowiutki polski pojazd!`
                 : randomEvent.id === 'papiez'
                 ? `\n\n[DAR]: Otrzymujesz +500 zł i tracisz 20% podejrzeń!`
+                : randomEvent.id === 'greek_haircut'
+                ? `\n\n[HAIRCUT]: Wartość nominalna Twoich greckich obligacji zostaje ścięta o 50%!`
+                : randomEvent.id === 'euro_cup_2012'
+                ? `\n\n[FESTIWAL]: Otrzymujesz +50 000 PLN, a morale pracowników w Mordorze rośnie o 30%!`
                 : ``;
-               showAlert(`--- ${randomEvent.name} ---\n\n${randomEvent.desc}${rewardNotice}`, 'TELEGRAM PAP (Wiadomości)', 'pap');
+              showAlert(`--- ${randomEvent.name} ---\n\n${randomEvent.desc}${rewardNotice}`, 'TELEGRAM PAP (Wiadomości)', 'pap');
             }, 50);
           }
         }
@@ -1599,6 +1615,99 @@ export function tick(s: GameState, deltaSec: number, ctx: TickContext): { state:
             }
             
             nextState.realEstateUnderConstruction = stillBuilding;
+          }
+        }
+
+        // ===== Faza W: Mordor na Domaniewskiej (Lata 2010.) - tick =====
+        if (s.fazaWUnlocked) {
+          // 1. Przychód z Mordoru (EUR)
+          const mordorIncome = mordorIncomePerSec(nextState) * deltaSec;
+          if (mordorIncome > 0) {
+            nextState.euros = (nextState.euros || 0) + mordorIncome;
+            nextState.stats.totalPlnEarned = (nextState.stats.totalPlnEarned || 0) + Math.floor(mordorIncome * nextState.euroExchangeRate);
+          }
+
+          // 2. Koszt utrzymania (ZUS/JDG/Płace w PLN)
+          const mordorUpkeep = mordorEmployeeUpkeepPerSec(nextState) * deltaSec;
+          if (mordorUpkeep > 0) {
+            nextState.pln = Math.max(0, nextState.pln - mordorUpkeep);
+          }
+
+          // 3. Spadek morale pracowników Mordoru
+          const decay = mordorMoraleDecayPerSec(nextState) * deltaSec;
+          if (decay > 0) {
+            nextState.mordorMorale = Math.max(0, nextState.mordorMorale - decay);
+            
+            // Jeśli morale spada poniżej 20, pracownicy odchodzą (1 na 30s)
+            if (nextState.mordorMorale < 20 && nextState.mordorEmployees > 0) {
+              if (Math.random() < 0.033 * deltaSec) {
+                nextState.mordorEmployees = Math.max(0, nextState.mordorEmployees - 1);
+                setTimeout(() => {
+                  playError();
+                  addToast('KORPO-REZYGNACJA', 'Pracownik odszedł z Mordoru z powodu tragicznego morale.');
+                }, 50);
+              }
+            }
+          }
+
+          // 4. Ryzyko kontroli PIP z kontraktów B2B (JDG)
+          const riskGain = jdgRiskGainPerSec(nextState) * deltaSec;
+          if (riskGain > 0) {
+            nextState.jdgRiskLevel = Math.min(100, (nextState.jdgRiskLevel || 0) + riskGain);
+            
+            // Kontrola PIP
+            if (nextState.jdgRiskLevel >= 100) {
+              nextState.jdgRiskLevel = 40; // reset do 40
+              const taxLevel = s.jdgTaxOptimizationLevel || 0;
+              const penaltyPln = nextState.jdgContracts * 15000 * (taxLevel + 1);
+              nextState.pln = Math.max(0, nextState.pln - penaltyPln);
+              setTimeout(() => {
+                playAlert();
+                showAlert(`KONTROLA PIP! Państwowa Inspekcja Pracy wykryła fikcyjne samozatrudnienie (syndrom B2B) w Twoich strukturach. Nałożono karę w wysokości ${penaltyPln.toLocaleString('pl-PL')} PLN.`, '🚨 INSPEKCJA PIP', 'error');
+              }, 50);
+            }
+          }
+
+          // 5. Wahania kursu EUR/PLN (wahania od 3.8 do 4.6)
+          const prev10sEuroTick = Math.floor((s.stats.totalTimePlayed || 0) / 10);
+          const current10sEuroTick = Math.floor(nextState.stats.totalTimePlayed / 10);
+          if (current10sEuroTick > prev10sEuroTick) {
+            const fluctuation = 1 + (Math.random() * 0.06 - 0.03); // +/- 3%
+            let newRate = nextState.euroExchangeRate * fluctuation;
+            if (newRate < 3.8) newRate = 3.8 + Math.random() * 0.1;
+            if (newRate > 4.6) newRate = 4.6 - Math.random() * 0.1;
+            nextState.euroExchangeRate = Math.max(3.6, Math.min(4.8, newRate));
+          }
+
+          // 6. Odliczanie obligacji skarbowych strefy euro
+          if ((nextState.euroBonds || []).length > 0) {
+            const remainingBonds: typeof nextState.euroBonds = [];
+            nextState.euroBonds.forEach(bond => {
+              const newTime = bond.timeLeft - deltaSec;
+              if (newTime <= 0) {
+                // Rozliczenie obligacji!
+                const isCrash = Math.random() * 100 < bond.riskOfCrash;
+                if (isCrash) {
+                  // Krach - tracimy wszystko
+                  setTimeout(() => {
+                    playError();
+                    showAlert(`BANKRUCTWO KRAJU! Państwo ${bond.country} ogłosiło niewypłacalność. Twoje obligacje o wartości nominalnej ${bond.nominalAmountEur.toLocaleString('pl-PL')} EUR są bezwartościowe.`, '📉 KRACH OBLIGACJI', 'error');
+                  }, 50);
+                } else {
+                  // Wypłata zysku nominalnego + odsetki
+                  const revenue = Math.floor(bond.nominalAmountEur * (1 + bond.interestRate));
+                  nextState.euros = (nextState.euros || 0) + revenue;
+                  nextState.stats.totalPlnEarned = (nextState.stats.totalPlnEarned || 0) + Math.floor(revenue * nextState.euroExchangeRate);
+                  setTimeout(() => {
+                    playSuccess();
+                    addToast('OBLIGACJE ROZLICZONE', `Wypłacono nominalną wartość obligacji ${bond.country}. Zysk: +${revenue.toLocaleString('pl-PL')} EUR.`);
+                  }, 50);
+                }
+              } else {
+                remainingBonds.push({ ...bond, timeLeft: newTime });
+              }
+            });
+            nextState.euroBonds = remainingBonds;
           }
         }
 

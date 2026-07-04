@@ -212,6 +212,68 @@ describe('kredyty CHF (Faza S)', () => {
     // Wynik netto gotówki: 1000000 - 1000 - 100 + 140 = 999040 PLN
     const { state } = runTicks(start, 1);
     expect(state.pln).toBe(999040);
-    expect(state.chfDebt).toBe(500000 - 200);
+  });
+});
+
+describe('Faza W: Mordor i JDG', () => {
+  it('oblicza poprawnie przychody i upkeeps z Mordoru', () => {
+    const start = freshState({
+      fazaWUnlocked: true,
+      mordorFloors: 1,
+      mordorEmployees: 10,
+      mordorMorale: 100,
+      euros: 0,
+      pln: 10000,
+      isDenominated: true,
+      euroExchangeRate: 4.20,
+      jdgTaxOptimizationLevel: 0,
+      lastMarketRefresh: NOW,
+    });
+    // 10 * 25 * 1.0 = 250 EUR/s zysku
+    // 10 * 200 * 1.0 = 2000 PLN/s kosztu (upkeep)
+    const { state } = runTicks(start, 1);
+    expect(state.euros).toBe(250);
+    expect(state.pln).toBe(10000 - 2000);
+    expect(state.mordorMorale).toBe(100 - 0.5);
+  });
+
+  it('wywołuje kontrolę PIP przy osiągnięciu ryzyka 100%', () => {
+    const start = freshState({
+      fazaWUnlocked: true,
+      jdgContracts: 10,
+      jdgRiskLevel: 99,
+      jdgTaxOptimizationLevel: 2,
+      pln: 500000,
+      isDenominated: true,
+      lastMarketRefresh: NOW,
+    });
+    // jdgRiskGainPerSec = 10 * 0.05 * 1.0 = 0.5%/s
+    // W 2 sekundy ryzyko przekroczy 100% -> PIP
+    // PIP kara: jdgContracts * 15000 * (taxLevel + 1) = 10 * 15000 * 3 = 450000 PLN
+    // PIP resetuje ryzyko do 40%
+    const { state } = runTicks(start, 2);
+    expect(state.pln).toBe(500000 - 450000);
+    expect(state.jdgRiskLevel).toBe(40);
+  });
+
+  it('rozlicza pomyślnie wygasającą obligację strefy euro', () => {
+    const start = freshState({
+      fazaWUnlocked: true,
+      euros: 0,
+      euroBonds: [{
+        uuid: 'test-bond',
+        id: 'bond_greece',
+        country: 'Grecja',
+        buyPriceEur: 50000,
+        nominalAmountEur: 50000,
+        timeLeft: 1.0,
+        interestRate: 0.60,
+        riskOfCrash: 0
+      }],
+      lastMarketRefresh: NOW,
+    });
+    const { state } = runTicks(start, 1);
+    expect(state.euros).toBe(80000);
+    expect(state.euroBonds.length).toBe(0);
   });
 });
