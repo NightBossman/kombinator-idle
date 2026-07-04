@@ -1230,4 +1230,18 @@ export const AI_UPGRADES: AiUpgrade[] = [
   { id: 'nocod_framework', name: 'Generator Promptów Low-Code', desc: 'Przyśpiesza trenowanie modeli AI o 50%.', costPln: 2500000 }
 ];
 
+export interface TaxFormInfo {
+  id: 'ryczalt' | 'skala' | 'liniowy';
+  name: string;
+  desc: string;
+  baseTaxRate: number;
+  usRiskFactor: number;
+}
+
+export const POLISH_DEAL_TAXES: TaxFormInfo[] = [
+  { id: 'ryczalt', name: 'Ryczałt ewidencjonowany', desc: 'Płacisz stałe 12% podatku od przychodów bez możliwości odliczeń. Bardzo niskie ryzyko kontroli.', baseTaxRate: 0.12, usRiskFactor: 0.2 },
+  { id: 'liniowy', name: 'Podatek Liniowy (19%)', desc: 'Stałe 19% podatku dochodowego. Średnie ryzyko kontroli skarbowej.', baseTaxRate: 0.19, usRiskFactor: 0.5 },
+  { id: 'skala', name: 'Skala Podatkowa (12% / 32%)', desc: '12% podatku, ale po przekroczeniu progu (120 000 zł/s) stawka skacze do 32%. Bardzo wysokie ryzyko kontroli przy dużych dochodach.', baseTaxRate: 0.12, usRiskFactor: 1.5 }
+];
+
 

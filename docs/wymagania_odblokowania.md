@@ -58,6 +58,7 @@ graph TD
     DEN -->|50M PLN| L2000[Lata 2000. - Deweloperka & UE]
     L2000 -->|100M PLN + Spłata CHF + Koniec Recesji| MOR[Mordor - Lata 2010.]
     MOR -->|25M EUR w tym 15M EUR kosztu| STA[Startupy & AI - Lata 2020.]
+    STA -->|50M PLN + Faza X odblokowana| PLY[Polski Ład & WIBOR - Lata 2022-2023]
 ```
 
 ### 🗳️ Wybory 4 Czerwca (Faza K)
@@ -103,3 +104,8 @@ graph TD
   - Posiadanie co najmniej **25 000 000 EUR** na kontach walutowych.
   - Koszt wejścia: **15 000 000 EUR** (pozostałe 10M EUR zostaje na Twoim koncie).
 - **Efekt:** Odblokowuje zakładkę *Startupy (2020.)* (koparki kryptowalut RTX/ASIC, kurs BTC, giełda KombinatorCoin pod lupą KNF oraz software house trenujący modele AI).
+
+### 📉 Polski Ład & WIBOR (Kryzys Energetyczny - Faza Y - Opcja B)
+- **Wymogi widoczności zakładki:** Odblokowana *Faza X (Startupy)*.
+- **Koszt odblokowania:** **50 000 000 PLN** gotówki w PLN.
+- **Efekt:** Odblokowuje zakładkę *Polski Ład (2022-2023)* (podatki Polskiego Ładu, kredyt obrotowy PLN powiązany ze stopami WIBOR, ryzyko Urzędu Skarbowego, amortyzację przez biura rachunkowe oraz zasilanie farmami wiatrowymi obniżającymi potrojone rachunki za prąd w kryzysie energetycznym).

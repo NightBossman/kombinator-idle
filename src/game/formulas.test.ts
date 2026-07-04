@@ -1,7 +1,7 @@
 // [Claude] testy wspólnych wzorów (KIERUNEK 1.3) - pilnują, żeby mnożniki
 // nie rozjechały się ponownie między silnikiem, symulacją offline i UI.
 import { describe, it, expect } from 'vitest';
-import { helperSpeedMult, businessProductionMult, queueTimeMs, cinkciarzRate, bazarPlnUnitPrice, bazarUsdUnitPrice, generalProductionMult, chfInstallmentPerSec, vatCarouselRefundPerSec, vatCarouselRiskGainPerSec, mordorIncomePerSec, mordorMoraleDecayPerSec, mordorEmployeeUpkeepPerSec, jdgRiskGainPerSec, seaSmuggleTime, seaSmuggleRisk, cryptoMiningYield, cryptoPowerUpkeepPln, aiTrainSpeed, knfRiskGrowthRate } from './formulas';
+import { helperSpeedMult, businessProductionMult, queueTimeMs, cinkciarzRate, bazarPlnUnitPrice, bazarUsdUnitPrice, generalProductionMult, chfInstallmentPerSec, vatCarouselRefundPerSec, vatCarouselRiskGainPerSec, mordorIncomePerSec, mordorMoraleDecayPerSec, mordorEmployeeUpkeepPerSec, jdgRiskGainPerSec, seaSmuggleTime, seaSmuggleRisk, cryptoMiningYield, cryptoPowerUpkeepPln, aiTrainSpeed, knfRiskGrowthRate, wiborInstallmentPerSec, polishDealTaxPerSec, usRiskGrowthRate, energyPowerUpkeepPln } from './formulas';
 import { INITIAL_STATE } from '../hooks/useGameState';
 import type { GameState } from '../hooks/useGameState';
 
@@ -176,6 +176,55 @@ describe('wzory mnożników (formulas.ts)', () => {
 
     const sDiscount = freshState({ fazaXUnlocked: true, kmbTokensOwned: 1000, aiUpgrades: { dubaj_shell: true } });
     expect(knfRiskGrowthRate(sDiscount)).toBeCloseTo(0.1, 4);
+  });
+
+  it('wiborInstallmentPerSec: calculates interest installment with holidays', () => {
+    const s = freshState({ fazaYUnlocked: true, plnDebt: 10000000, wiborRate: 6.5, creditHolidaysTimer: 0 });
+    // 10,000,000 * 0.085 * 0.0001 = 85 PLN/s
+    expect(wiborInstallmentPerSec(s)).toBeCloseTo(85, 4);
+
+    const sHols = freshState({ fazaYUnlocked: true, plnDebt: 10000000, wiborRate: 6.5, creditHolidaysTimer: 10 });
+    expect(wiborInstallmentPerSec(sHols)).toBe(0);
+  });
+
+  it('polishDealTaxPerSec: calculates taxes depending on taxForm', () => {
+    const sRyczalt = freshState({ fazaYUnlocked: true, taxForm: 'ryczalt' });
+    expect(polishDealTaxPerSec(sRyczalt, 10000)).toBe(1200);
+
+    const sLiniowy = freshState({ fazaYUnlocked: true, taxForm: 'liniowy' });
+    expect(polishDealTaxPerSec(sLiniowy, 10000)).toBe(1900);
+
+    const sSkalaLow = freshState({ fazaYUnlocked: true, taxForm: 'skala' });
+    expect(polishDealTaxPerSec(sSkalaLow, 100000)).toBe(12000);
+
+    const sSkalaHigh = freshState({ fazaYUnlocked: true, taxForm: 'skala' });
+    // 120,000 * 0.12 + 30,000 * 0.32 = 14,400 + 9,600 = 24,000
+    expect(polishDealTaxPerSec(sSkalaHigh, 150000)).toBe(24000);
+  });
+
+  it('usRiskGrowthRate: calculates US audit risk growth with accountants', () => {
+    const s = freshState({ fazaYUnlocked: true, taxForm: 'skala', accountingOffices: 0 });
+    expect(usRiskGrowthRate(s, 100000)).toBeCloseTo(100000 * 0.000001 * 1.5, 6);
+
+    const sAcc = freshState({ fazaYUnlocked: true, taxForm: 'skala', accountingOffices: 2 });
+    // 0.15 * 0.7 = 0.105
+    expect(usRiskGrowthRate(sAcc, 100000)).toBeCloseTo(100000 * 0.000001 * 1.5 * 0.70, 6);
+  });
+
+  it('energyPowerUpkeepPln: calculates energy costs during crisis and with wind turbines', () => {
+    const sBase = freshState({ fazaYUnlocked: true, fazaXUnlocked: true, fazaWUnlocked: true, cryptoRigs: { rtx4090: 2 }, mordorEmployees: 10, energyCrisisActive: false, windTurbines: 0 });
+    // crypto cost = (2 * 0.45) * 5 = 4.5
+    // office cost = 10 * 15 = 150
+    // total = 154.5
+    expect(energyPowerUpkeepPln(sBase)).toBeCloseTo(154.5, 4);
+
+    const sCrisis = freshState({ fazaYUnlocked: true, fazaXUnlocked: true, fazaWUnlocked: true, cryptoRigs: { rtx4090: 2 }, mordorEmployees: 10, energyCrisisActive: true, windTurbines: 0 });
+    // 154.5 * 3 = 463.5
+    expect(energyPowerUpkeepPln(sCrisis)).toBeCloseTo(463.5, 4);
+
+    const sTurbine = freshState({ fazaYUnlocked: true, fazaXUnlocked: true, fazaWUnlocked: true, cryptoRigs: { rtx4090: 2 }, mordorEmployees: 10, energyCrisisActive: true, windTurbines: 2 });
+    // 463.5 * 0.75 * 0.75 = 260.71875
+    expect(energyPowerUpkeepPln(sTurbine)).toBeCloseTo(260.71875, 4);
   });
 });
 

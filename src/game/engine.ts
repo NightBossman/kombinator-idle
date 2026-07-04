@@ -12,7 +12,7 @@ import { generateBlackMarketOffers } from '../hooks/useGameState';
 import { fmtNum } from '../utils/format';
 // [Claude] KIERUNEK 1.3: wspolne wzory mnoznikow - jedno zrodlo prawdy dla silnika,
 // symulacji offline (useGameState) i paneli UI (Casio, Bazar)
-import { helperSpeedMult, businessProductionMult, cinkciarzRate, queueTimeMs, chfInstallmentPerSec, vatCarouselRefundPerSec, vatCarouselRiskGainPerSec, mordorIncomePerSec, mordorMoraleDecayPerSec, mordorEmployeeUpkeepPerSec, jdgRiskGainPerSec, cryptoMiningYield, cryptoPowerUpkeepPln, aiTrainSpeed, knfRiskGrowthRate } from './formulas';
+import { helperSpeedMult, businessProductionMult, cinkciarzRate, queueTimeMs, chfInstallmentPerSec, vatCarouselRefundPerSec, vatCarouselRiskGainPerSec, mordorIncomePerSec, mordorMoraleDecayPerSec, mordorEmployeeUpkeepPerSec, jdgRiskGainPerSec, cryptoMiningYield, cryptoPowerUpkeepPln, aiTrainSpeed, knfRiskGrowthRate, wiborInstallmentPerSec, polishDealTaxPerSec, usRiskGrowthRate, energyPowerUpkeepPln, grossPassiveIncomePlnPerSec } from './formulas';
 import {
   QUEUE_ITEMS, HELPERS, BUSINESSES, HISTORY_EVENTS, ACHIEVEMENTS, LUXURY_ITEMS,
   GPW_STOCKS, GPW_EVENTS, NOMENKLATURA_COMPANIES, OFFSHORE_DEPOSITS, COCOM_ITEMS,
@@ -1770,10 +1770,12 @@ export function tick(s: GameState, deltaSec: number, ctx: TickContext): { state:
             nextState.bitcoins = (nextState.bitcoins || 0) + btcMined;
           }
 
-          // 2. Pasywny koszt prądu (PLN/s)
-          const powerCost = cryptoPowerUpkeepPln(nextState) * deltaSec;
-          if (powerCost > 0) {
-            nextState.pln = Math.max(0, nextState.pln - powerCost);
+          // 2. Pasywny koszt prądu (PLN/s) - tylko jeśli Faza Y nie jest aktywna
+          if (!nextState.fazaYUnlocked) {
+            const powerCost = cryptoPowerUpkeepPln(nextState) * deltaSec;
+            if (powerCost > 0) {
+              nextState.pln = Math.max(0, nextState.pln - powerCost);
+            }
           }
 
           // 3. Pasywne płace Prompt Engineerów (PLN/s)
@@ -1833,6 +1835,63 @@ export function tick(s: GameState, deltaSec: number, ctx: TickContext): { state:
             if (newBtcPrice < 40000) newBtcPrice = 40000 + Math.random() * 5000;
             if (newBtcPrice > 450000) newBtcPrice = 450000 - Math.random() * 20000;
             nextState.bitcoinPricePln = Math.round(newBtcPrice);
+          }
+        }
+
+
+        // Faza Y: Polski Ład, WIBOR i Kryzys Energetyczny (Lata 2022-2023)
+        if (s.fazaYUnlocked) {
+          // 1. Wakacje kredytowe i cooldown
+          if (nextState.creditHolidaysTimer > 0) {
+            nextState.creditHolidaysTimer = Math.max(0, nextState.creditHolidaysTimer - deltaSec);
+          }
+          if (nextState.creditHolidaysCooldown > 0) {
+            nextState.creditHolidaysCooldown = Math.max(0, nextState.creditHolidaysCooldown - deltaSec);
+          }
+
+          // 2. Wahania WIBOR co 10 sekund
+          const prev10sWiborTick = Math.floor((s.stats.totalTimePlayed || 0) / 10);
+          const current10sWiborTick = Math.floor(nextState.stats.totalTimePlayed / 10);
+          if (current10sWiborTick > prev10sWiborTick) {
+            const fluctuation = (Math.random() * 0.8 - 0.4);
+            nextState.wiborRate = Math.max(1.0, Math.min(15.0, Number((nextState.wiborRate + fluctuation).toFixed(2))));
+          }
+
+          // 3. Pasywny koszt kredytu obrotowego PLN (WIBOR)
+          const wiborCost = wiborInstallmentPerSec(nextState) * deltaSec;
+          if (wiborCost > 0) {
+            nextState.pln = Math.max(0, nextState.pln - wiborCost);
+          }
+
+          // 4. Podatki Polskiego Ładu
+          const grossIncomeRate = grossPassiveIncomePlnPerSec(nextState);
+          const taxCost = polishDealTaxPerSec(nextState, grossIncomeRate) * deltaSec;
+          if (taxCost > 0) {
+            nextState.pln = Math.max(0, nextState.pln - taxCost);
+          }
+
+          // 5. Pasywny przyrost ryzyka kontroli skarbowej US
+          const usRisk = usRiskGrowthRate(nextState, grossIncomeRate) * deltaSec;
+          if (usRisk > 0) {
+            nextState.usRiskLevel = Math.min(100, (nextState.usRiskLevel || 0) + usRisk);
+            
+            // Nalot skarbowy US przy 100%
+            if (nextState.usRiskLevel >= 100) {
+              nextState.usRiskLevel = 20; // reset do 20%
+              const penalty = Math.max(100000, Math.floor(nextState.pln * 0.25));
+              nextState.pln = Math.max(0, nextState.pln - penalty);
+              setTimeout(() => {
+                playAlert();
+                showAlert(`KONTROLA SKARBOWA! Urząd Skarbowy zakwestionował Twoje odliczenia w Polskim Ładzie. Nałożono domiar podatkowy i karę w wysokości ${penalty.toLocaleString('pl-PL')} PLN!`, '🚨 URZĄD SKARBOWY', 'error');
+              }, 50);
+            }
+          }
+
+          // 6. Kryzys Energetyczny (zawsze aktywny w tej fazie) i koszt energii
+          nextState.energyCrisisActive = true;
+          const totalPowerCost = energyPowerUpkeepPln(nextState) * deltaSec;
+          if (totalPowerCost > 0) {
+            nextState.pln = Math.max(0, nextState.pln - totalPowerCost);
           }
         }
 

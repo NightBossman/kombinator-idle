@@ -4,6 +4,7 @@
 import { describe, it, expect } from 'vitest';
 import { tick } from './engine';
 import type { GameEvent } from './engine';
+
 import { INITIAL_STATE } from '../hooks/useGameState';
 import type { GameState } from '../hooks/useGameState';
 
@@ -332,6 +333,69 @@ describe('Faza X: Startupy i Kryptowaluty', () => {
     expect(state.pln).toBe(2000000 - 600000);
     expect(state.kmbTokensOwned).toBe(0);
     expect(state.knfRiskLevel).toBe(30);
+  });
+});
+
+describe('Faza Y: Polski Ład i WIBOR', () => {
+  it('nalicza koszty odsetkowe WIBOR i podatki Polskiego Ładu oraz koszt prądu w kryzysie', () => {
+    const start = freshState({
+      fazaYUnlocked: true,
+      fazaSUnlocked: true,
+      plnDebt: 1000000,
+      wiborRate: 6.5,
+      taxForm: 'ryczalt',
+      zmywakWorkers: 20, // 20 * 5 * 0.15 * 6 = 90 PLN/s przychodu brutto
+      pln: 100000,
+      isDenominated: true,
+      lastMarketRefresh: NOW
+    });
+    // WIBOR installment = 1,000,000 * 0.085 * 0.0001 = 8.5 PLN/s
+    // Dotcom passive income = 100 * 0.5 = 50 PLN/s (dotcomServerCapacity is 1000 in INITIAL_STATE)
+    // Zmywak passive income = 20 * 5 * 0.15 * 6 = 90 PLN/s
+    // Total gross passive income = 140 PLN/s
+    // Polish deal tax = 140 * 0.12 = 16.8 PLN/s
+    // Energy power cost (crypto=0, mordor=0) = 0 PLN/s
+    // Net PLN/s = +140 (przychód) - 8.5 (wibor) - 16.8 (podatek) = +114.7 PLN/s
+    // Po 1s: 100000 + 114.7 = 100114.7
+    const { state } = runTicks(start, 1);
+    expect(state.pln).toBeCloseTo(100114.7, 1);
+  });
+
+  it('zawiesza raty WIBOR podczas wakacji kredytowych', () => {
+    const start = freshState({
+      fazaYUnlocked: true,
+      plnDebt: 1000000,
+      wiborRate: 6.5,
+      creditHolidaysTimer: 10,
+      taxForm: 'ryczalt',
+      zmywakWorkers: 0,
+      pln: 100000,
+      isDenominated: true,
+      lastMarketRefresh: NOW
+    });
+    // Rata wibor = 0 z powodu wakacji kredytowych
+    // Po 1s: pln = 100000, timer = 9s
+    const { state } = runTicks(start, 1);
+    expect(state.pln).toBe(100000);
+    expect(state.creditHolidaysTimer).toBeCloseTo(9, 1);
+  });
+
+  it('wyzwala kontrolę Urzędu Skarbowego przy 100% ryzyka', () => {
+    const start = freshState({
+      fazaYUnlocked: true,
+      fazaSUnlocked: true,
+      taxForm: 'skala',
+      zmywakWorkers: 22223, // 22223 * 5 * 0.15 * 6 = 100003.5 PLN/s
+      usRiskLevel: 99.9,
+      pln: 1000000,
+      isDenominated: true,
+      lastMarketRefresh: NOW
+    });
+    // usRiskGrowthRate = 100003.5 * 0.000001 * 1.5 = 0.15%/s
+    // po 1s risk >= 100% -> kara 25% = 250000 PLN, risk reset to 20%
+    const { state } = runTicks(start, 1);
+    expect(state.pln).toBeLessThanOrEqual(750000 + 100003.5); // 1,000,000 - 250,000 + zysk
+    expect(state.usRiskLevel).toBe(20);
   });
 });
 

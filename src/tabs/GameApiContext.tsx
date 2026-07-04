@@ -190,6 +190,13 @@ export interface GameApi {
   unlockFazaN: () => void;
   unlockFazaS: () => void;
   unlockFazaW: () => void;
+  unlockFazaY: () => void;
+  changeTaxForm: (form: 'ryczalt' | 'skala' | 'liniowy') => void;
+  takePlnLoan: (amount: number) => void;
+  payPlnLoan: (amount: number) => void;
+  triggerCreditHolidays: () => void;
+  buyAccountingOffice: () => void;
+  buyWindTurbine: () => void;
   unlockSyndicate: () => void;
   updateState: (updates: Partial<GameState> | ((s: GameState) => GameState)) => void;
   upgradeBazarWarehouse: (upgradeId: string) => void;
