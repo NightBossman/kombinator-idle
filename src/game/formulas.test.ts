@@ -1,7 +1,7 @@
 // [Claude] testy wspólnych wzorów (KIERUNEK 1.3) - pilnują, żeby mnożniki
 // nie rozjechały się ponownie między silnikiem, symulacją offline i UI.
 import { describe, it, expect } from 'vitest';
-import { helperSpeedMult, businessProductionMult, queueTimeMs, cinkciarzRate, bazarPlnUnitPrice, bazarUsdUnitPrice, generalProductionMult, chfInstallmentPerSec, vatCarouselRefundPerSec, vatCarouselRiskGainPerSec } from './formulas';
+import { helperSpeedMult, businessProductionMult, queueTimeMs, cinkciarzRate, bazarPlnUnitPrice, bazarUsdUnitPrice, generalProductionMult, chfInstallmentPerSec, vatCarouselRefundPerSec, vatCarouselRiskGainPerSec, mordorIncomePerSec, mordorMoraleDecayPerSec, mordorEmployeeUpkeepPerSec, jdgRiskGainPerSec } from './formulas';
 import { INITIAL_STATE } from '../hooks/useGameState';
 import type { GameState } from '../hooks/useGameState';
 
@@ -85,6 +85,45 @@ describe('wzory mnożników (formulas.ts)', () => {
     // turnover mult = 1 + 150000 / 1000000 = 1.15
     // expected risk gain = 0.7 * 1.15 = 0.805
     expect(vatCarouselRiskGainPerSec(s)).toBeCloseTo(0.805, 4);
+  });
+
+  it('mordorIncomePerSec: calculates correct EUR income', () => {
+    const s = freshState({ fazaWUnlocked: true, mordorEmployees: 10, mordorMorale: 100 });
+    // 10 * 25 * 1.0 = 250 EUR/s
+    expect(mordorIncomePerSec(s)).toBe(250);
+
+    const sLowMorale = freshState({ fazaWUnlocked: true, mordorEmployees: 10, mordorMorale: 40 });
+    // 10 * 25 * 0.4 = 100 EUR/s
+    expect(mordorIncomePerSec(sLowMorale)).toBe(100);
+  });
+
+  it('mordorMoraleDecayPerSec: calculates decay with upgrades', () => {
+    const s = freshState({ fazaWUnlocked: true, mordorEmployees: 5, mordorUpgrades: {} });
+    expect(mordorMoraleDecayPerSec(s)).toBeCloseTo(0.5, 4);
+
+    const sUpgrades = freshState({
+      fazaWUnlocked: true,
+      mordorEmployees: 5,
+      mordorUpgrades: { owocowe_czwartki: true, multisport: true }
+    });
+    // 0.5 * 0.7 * 0.8 = 0.28
+    expect(mordorMoraleDecayPerSec(sUpgrades)).toBeCloseTo(0.28, 4);
+  });
+
+  it('mordorEmployeeUpkeepPerSec: calculates PLN upkeep depending on tax level', () => {
+    const s = freshState({ fazaWUnlocked: true, mordorEmployees: 10, jdgTaxOptimizationLevel: 0 });
+    // 10 * 200 * 1.0 = 2000 PLN/s
+    expect(mordorEmployeeUpkeepPerSec(s)).toBe(2000);
+
+    const sOpt = freshState({ fazaWUnlocked: true, mordorEmployees: 10, jdgTaxOptimizationLevel: 2 });
+    // 10 * 200 * 0.7 = 1400 PLN/s
+    expect(mordorEmployeeUpkeepPerSec(sOpt)).toBe(1400);
+  });
+
+  it('jdgRiskGainPerSec: calculates risk gain depending on B2B contracts and tax level', () => {
+    const s = freshState({ fazaWUnlocked: true, jdgContracts: 5, jdgTaxOptimizationLevel: 2 });
+    // 5 * 0.05 * 1.0 = 0.25% per second
+    expect(jdgRiskGainPerSec(s)).toBeCloseTo(0.25, 4);
   });
 });
 

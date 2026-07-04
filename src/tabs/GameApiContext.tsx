@@ -37,6 +37,7 @@ export interface GameApi {
   buyCounterIntel: () => void;
   buyCrisisRealEstate: (projectId: string) => void;
   buyCurrencyOption: (presetId: string) => void;
+  buyEuroBond: (bondId: string) => void;
   buyDollarPremium: () => void;
   buyDotcomUpgrade: (upgradeId: string) => void;
   buyElectionUpgrade: (upgradeId: string) => void;
@@ -52,6 +53,8 @@ export interface GameApi {
   buyPaper: () => void;
   buyPrintingSupplies: (type: 'paper' | 'ink', payWith: 'pln' | 'usd') => void;
   buyProgramLicense: (programId: string) => void;
+  buyMordorFloor: () => void;
+  buyMordorUpgrade: (upgradeId: string) => void;
   buyRealEstate: (projectId: string, useChf: boolean) => void;
   buyShares: (stockId: string, amount: number) => void;
   buySyndicateUpgrade: (upgradeId: string) => void;
@@ -88,6 +91,7 @@ export interface GameApi {
   hireRedDirector: (companyId: string) => void;
   interactDebate: (optionId: string) => void;
   isKartkiRequired: (item: { kartkiCost?: number }) => boolean;
+  issueJdgContract: () => void;
   lata2000SubTab: 'ue' | 'dotcom' | 'deweloperka' | 'zmywak' | 'polityka' | 'raje';
   lata90SubTab: 'bazar' | 'nfi' | 'media' | 'mafia';
   launchRally: (regionId: string, leaderId: string) => void;
@@ -102,6 +106,7 @@ export interface GameApi {
   offshoreWashAmount: string;
   openRegionalCommittee: (regionId: string) => void;
   openSwissAccount: (payWith: 'pln' | 'dollars') => void;
+  organizeMordorPizza: () => void;
   pacifyNfiStrike: (compId: string) => void;
   payOffshoreCredit: () => void;
   pracuj: () => void;
@@ -111,6 +116,7 @@ export interface GameApi {
   queueProgress2: number;
   realTime: Date;
   recruitTwInNomenklatura: (companyId: string) => void;
+  recruitMordorEmployee: () => void;
   redeemSolidarnosBonds: () => void;
   registerLiechtensteinTrust: () => void;
   registerNomenklaturaCompany: (companyId: string) => void;
@@ -127,6 +133,7 @@ export interface GameApi {
   sellBazarItem: (itemId: string, amount: number) => void;
   sellBonyPewex: (amount: number) => void;
   sellCrisisRealEstate: (projectId: string) => void;
+  sellEurosToPln: () => void;
   sellItem: (id: string, price: number, amount?: number) => void;
   sellItemDollars: (id: string, price: number, amount?: number) => void;
   sellRealEstate: (projectId: string) => void;
@@ -170,11 +177,13 @@ export interface GameApi {
   unlockFazaM: () => void;
   unlockFazaN: () => void;
   unlockFazaS: () => void;
+  unlockFazaW: () => void;
   unlockSyndicate: () => void;
   updateState: (updates: Partial<GameState> | ((s: GameState) => GameState)) => void;
   upgradeBazarWarehouse: (upgradeId: string) => void;
   upgradeHelper: (helperId: string) => void;
   upgradeLeasing: (companyId: string) => void;
+  upgradeTaxLevel: () => void;
   vatOffshoreAmountInput: string;
   washOffshoreMoney: (amount: number) => void;
   wholesalePrices: Record<string, { pln: number, usd: number }>;

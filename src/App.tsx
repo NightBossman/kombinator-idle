@@ -23,15 +23,17 @@ const TabSyndykat = lazy(() => import('./tabs/TabSyndykat'));
 const TabWybory = lazy(() => import('./tabs/TabWybory'));
 const TabLata90 = lazy(() => import('./tabs/TabLata90'));
 const TabMiasto = lazy(() => import('./tabs/TabMiasto'));
+const TabMordor = lazy(() => import('./tabs/TabMordor'));
 import { GameApiContext } from './tabs/GameApiContext';
 import type { GameApi } from './tabs/GameApiContext';
+import { MORDOR_UPGRADES, JDG_TAX_LEVELS, EURO_BOND_TYPES } from './game/items';
 // [Claude] KIERUNEK 1.3: wspolne wzory - panel Casio i Bazar pokazuja to, co liczy silnik
-import { helperSpeedMult, businessProductionMult, cinkciarzRate, queueTimeMs, bazarPlnUnitPrice, bazarUsdUnitPrice, realEstateCostPln, realEstateBuildTimeSec, chfInstallmentPerSec, vatCarouselRefundPerSec } from './game/formulas';
+import { helperSpeedMult, businessProductionMult, cinkciarzRate, queueTimeMs, bazarPlnUnitPrice, bazarUsdUnitPrice, realEstateCostPln, realEstateBuildTimeSec, chfInstallmentPerSec, vatCarouselRefundPerSec, mordorIncomePerSec, mordorEmployeeUpkeepPerSec } from './game/formulas';
 // [Claude] silnik gry (KIERUNEK.md pkt 1.1) - czysta pętla + zdarzenia; stamtąd też calculateLuxurySuspicionReduction
 import { tick, calculateLuxurySuspicionReduction } from './game/engine';
 import type { GameEvent, SoundId } from './game/engine';
 
-export type TabId = 'praca' | 'bazar' | 'przemyt' | 'partia' | 'czarnyRynek' | 'odznaczenia' | 'gpw' | 'offshore' | 'syndykat' | 'wybory' | 'lata90' | 'miasto' | 'lata2000';
+export type TabId = 'praca' | 'bazar' | 'przemyt' | 'partia' | 'czarnyRynek' | 'odznaczenia' | 'gpw' | 'offshore' | 'syndykat' | 'wybory' | 'lata90' | 'miasto' | 'lata2000' | 'mordor';
 
 function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -2378,6 +2380,145 @@ function App() {
     showAlert('Wkraczasz w lata 2000.! Polska zbliża się do Unii Europejskiej, rodzi się nowa klasa deweloperów, a inwestorzy szaleją na punkcie startupów dot-com.', '🌐 NOWA ERA: LATA 2000.', 'success');
   };
 
+  // ===== Faza W: Mordor na Domaniewskiej (Lata 2010.) - Funkcje Transakcyjne =====
+
+  const unlockFazaW = () => {
+    if (state.fazaWUnlocked) { playError(); return; }
+    const cost = 100000000;
+    if (state.pln < cost || !state.fazaSUnlocked || state.recessionActive || state.chfDebt > 0) {
+      playError();
+      showAlert('Aby wejść w lata 2010., musisz spłacić cały kredyt CHF, zakończyć Recesję 2008 i posiadać 100 000 000 PLN.', 'WYMAGANIA BLOKADY', 'error');
+      return;
+    }
+
+    updateState(s => ({
+      ...s,
+      pln: s.pln - cost,
+      fazaWUnlocked: true
+    }));
+    setCurrentTab('mordor');
+    playSuccess();
+    showAlert('Wkraczasz w lata 2010.! Polska staje się zagłębiem outsourcingowym Europy, powstaje warszawski Mordor na Domaniewskiej, a programiści i menedżerowie masowo zakładają jednoosobowe działalności gospodarcze (JDG). Witaj w nowej rzeczywistości!', '🏢 NOWA ERA: LATA 2010.', 'success');
+  };
+
+  const buyEuroBond = (bondId: string) => {
+    const bondDef = EURO_BOND_TYPES.find(b => b.id === bondId);
+    if (!bondDef || (state.euros || 0) < bondDef.costEur) { playError(); return; }
+
+    updateState(s => ({
+      ...s,
+      euros: (s.euros || 0) - bondDef.costEur,
+      euroBonds: [...(s.euroBonds || []), {
+        uuid: uniqueId('bond'),
+        id: bondDef.id,
+        country: bondDef.country,
+        buyPriceEur: bondDef.costEur,
+        nominalAmountEur: bondDef.costEur,
+        timeLeft: bondDef.durationSec,
+        interestRate: bondDef.interestRate,
+        riskOfCrash: bondDef.riskOfCrash
+      }]
+    }));
+    playSuccess();
+    addToast('RYNEK OBLIGACJI', `Zakupiono obligacje skarbowe kraju: ${bondDef.country}.`);
+  };
+
+  const buyMordorFloor = () => {
+    const cost = 5000000;
+    if (state.pln < cost) { playError(); return; }
+
+    updateState(s => ({
+      ...s,
+      pln: s.pln - cost,
+      mordorFloors: (s.mordorFloors || 0) + 1
+    }));
+    playSuccess();
+    addToast('BIUROWIEC', 'Wybudowano kolejne piętro w korporacyjnej wieży.');
+  };
+
+  const buyMordorUpgrade = (upgradeId: string) => {
+    const upg = MORDOR_UPGRADES.find(u => u.id === upgradeId);
+    if (!upg || state.pln < upg.costPln || state.mordorUpgrades?.[upgradeId]) { playError(); return; }
+
+    updateState(s => ({
+      ...s,
+      pln: s.pln - upg.costPln,
+      mordorUpgrades: {
+        ...(s.mordorUpgrades || {}),
+        [upgradeId]: true
+      }
+    }));
+    playSuccess();
+    addToast('ULEPSZENIE BIURA', `Wdrożono: ${upg.name}.`);
+  };
+
+  const recruitMordorEmployee = () => {
+    const cost = 200000;
+    const maxCapacity = (state.mordorFloors || 0) * 10;
+    if (state.pln < cost || (state.mordorEmployees || 0) >= maxCapacity) { playError(); return; }
+
+    updateState(s => ({
+      ...s,
+      pln: s.pln - cost,
+      mordorEmployees: (s.mordorEmployees || 0) + 1,
+      mordorMorale: Math.min(100, (s.mordorMorale || 0) + 5)
+    }));
+    playSuccess();
+    addToast('REKRUTACJA', 'Zatrudniono nowego pracownika w zespole.');
+  };
+
+  const organizeMordorPizza = () => {
+    const cost = 50000;
+    if (state.pln < cost || (state.mordorMorale || 0) >= 100) { playError(); return; }
+
+    updateState(s => ({
+      ...s,
+      pln: s.pln - cost,
+      mordorMorale: Math.min(100, (s.mordorMorale || 0) + 20)
+    }));
+    playSuccess();
+    addToast('INTEGRACJA', 'Dostawca dowiózł pizzę do kuchni. Morale rośnie!');
+  };
+
+  const issueJdgContract = () => {
+    const cost = 50000;
+    if (state.pln < cost || (state.jdgContracts || 0) >= (state.mordorEmployees || 0)) { playError(); return; }
+
+    updateState(s => ({
+      ...s,
+      pln: s.pln - cost,
+      jdgContracts: (s.jdgContracts || 0) + 1
+    }));
+    playSuccess();
+    addToast('UMOWA B2B', 'Pracownik podpisał samozatrudnienie (redukcja kosztów).');
+  };
+
+  const upgradeTaxLevel = () => {
+    const nextLvl = JDG_TAX_LEVELS.find(l => l.level === (state.jdgTaxOptimizationLevel || 0) + 1);
+    if (!nextLvl || state.pln < nextLvl.costPln) { playError(); return; }
+
+    updateState(s => ({
+      ...s,
+      pln: s.pln - nextLvl.costPln,
+      jdgTaxOptimizationLevel: nextLvl.level
+    }));
+    playSuccess();
+    addToast('PODATKI', `Wdrożono nowy poziom optymalizacji: ${nextLvl.name}.`);
+  };
+
+  const sellEurosToPln = () => {
+    if ((state.euros || 0) <= 0) { playError(); return; }
+    const plnGain = Math.floor(state.euros * state.euroExchangeRate);
+
+    updateState(s => ({
+      ...s,
+      pln: s.pln + plnGain,
+      euros: 0
+    }));
+    playSuccess();
+    addToast('KANTOR NBP', `Wymieniono EUR na PLN. Otrzymano +${plnGain.toLocaleString('pl-PL')} PLN.`);
+  };
+
   const startEuProject = (projectId: string) => {
     const proj = EU_PROJECTS.find(p => p.id === projectId);
     if (!proj) return;
@@ -2674,6 +2815,12 @@ function App() {
           isDenominated: true,
           fazaNUnlocked: true,
           fazaSUnlocked: true,
+          fazaWUnlocked: true,
+          euros: 50000,
+          euroExchangeRate: 4.20,
+          mordorFloors: 1,
+          mordorEmployees: 5,
+          mordorMorale: 80,
           mediaUnlocked: true,
           gpwUnlocked: true,
           pewexItems: { ...s.pewexItems, casio: true },
@@ -4273,7 +4420,14 @@ function App() {
     vatCarouselPlnRate = vatCarouselRefundPerSec(state);
   }
 
-  const totalPassiveIncome = businessPlnRate + mediaPlnRate + dotcomPlnRate + zmywakPlnRate + nfiPlnRate + gpwPlnRate + cyprusInterestPlnRate;
+  let mordorPlnIncomeRate = 0;
+  let mordorUpkeepCost = 0;
+  if (state.fazaWUnlocked) {
+    mordorPlnIncomeRate = mordorIncomePerSec(state) * state.euroExchangeRate;
+    mordorUpkeepCost = mordorEmployeeUpkeepPerSec(state);
+  }
+
+  const totalPassiveIncome = businessPlnRate + mediaPlnRate + dotcomPlnRate + zmywakPlnRate + nfiPlnRate + gpwPlnRate + cyprusInterestPlnRate + mordorPlnIncomeRate;
   let lobbyBribeCost = 0;
   if (state.fazaSUnlocked) {
     LOBBY_BILLS.forEach(bill => {
@@ -4283,9 +4437,10 @@ function App() {
     });
   }
 
-  const totalPassiveExpenses = Math.abs(cinkciarzPlnRate) + gangPlnCost + chfPlnCost + lobbyBribeCost;
+  const totalPassiveExpenses = Math.abs(cinkciarzPlnRate) + gangPlnCost + chfPlnCost + lobbyBribeCost + mordorUpkeepCost;
   const plnRate = totalPassiveIncome - totalPassiveExpenses;
   const dollarsRate = businessUsdRate + cinkciarzUsdRate + widmoUsdRate;
+  const eurosRate = mordorIncomePerSec(state);
 
   const currentEventData = HISTORY_EVENTS.find(e => e.id === state.activeEvent);
 
@@ -4321,6 +4476,7 @@ function App() {
     buyCounterIntel,
     buyCrisisRealEstate,
     buyCurrencyOption,
+    buyEuroBond,
     buyDollarPremium,
     buyDotcomUpgrade,
     buyElectionUpgrade,
@@ -4336,6 +4492,8 @@ function App() {
     buyPaper,
     buyPrintingSupplies,
     buyProgramLicense,
+    buyMordorFloor,
+    buyMordorUpgrade,
     buyRealEstate,
     buyShares,
     buySyndicateUpgrade,
@@ -4372,6 +4530,7 @@ function App() {
     hireRedDirector,
     interactDebate,
     isKartkiRequired,
+    issueJdgContract,
     lata2000SubTab,
     lata90SubTab,
     launchRally,
@@ -4386,6 +4545,7 @@ function App() {
     offshoreWashAmount,
     openRegionalCommittee,
     openSwissAccount,
+    organizeMordorPizza,
     pacifyNfiStrike,
     payOffshoreCredit,
     pracuj,
@@ -4395,6 +4555,7 @@ function App() {
     queueProgress2,
     realTime,
     recruitTwInNomenklatura,
+    recruitMordorEmployee,
     redeemSolidarnosBonds,
     registerLiechtensteinTrust,
     registerNomenklaturaCompany,
@@ -4411,6 +4572,7 @@ function App() {
     sellBazarItem,
     sellBonyPewex,
     sellCrisisRealEstate,
+    sellEurosToPln,
     sellItem,
     sellItemDollars,
     sellRealEstate,
@@ -4454,11 +4616,13 @@ function App() {
     unlockFazaM,
     unlockFazaN,
     unlockFazaS,
+    unlockFazaW,
     unlockSyndicate,
     updateState,
     upgradeBazarWarehouse,
     upgradeHelper,
     upgradeLeasing,
+    upgradeTaxLevel,
     vatOffshoreAmountInput,
     washOffshoreMoney,
     wholesalePrices,
@@ -4639,6 +4803,56 @@ function App() {
                   onClick={() => {
                     updateState(s => ({
                       ...s,
+                      euros: (s.euros || 0) + 1000000
+                    }));
+                    setSettingsOpen(false);
+                    setTimeout(() => addToast("DEV CHEAT", "Dodano 1 000 000 EUR!"), 50);
+                  }}
+                  style={{
+                    width: '100%',
+                    background: 'rgba(0, 225, 217, 0.2)',
+                    border: '1px solid #00e1d9',
+                    color: '#00e1d9',
+                    padding: '6px',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    fontWeight: 'bold',
+                    boxShadow: '0 0 3px #00e1d9',
+                    marginTop: '4px'
+                  }}
+                >
+                  🔧 DEV: +1M EUR
+                </button>
+                <button 
+                  onClick={() => {
+                    updateState(s => ({
+                      ...s,
+                      pln: s.pln + 100000000
+                    }));
+                    setSettingsOpen(false);
+                    setTimeout(() => addToast("DEV CHEAT", "Dodano 100 000 000 PLN!"), 50);
+                  }}
+                  style={{
+                    width: '100%',
+                    background: 'rgba(46, 204, 113, 0.2)',
+                    border: '1px solid #2ecc71',
+                    color: '#2ecc71',
+                    padding: '6px',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    fontWeight: 'bold',
+                    boxShadow: '0 0 3px #2ecc71',
+                    marginTop: '4px'
+                  }}
+                >
+                  🔧 DEV: +100M PLN
+                </button>
+                <button 
+                  onClick={() => {
+                    updateState(s => ({
+                      ...s,
                       offshoreCyprusBalance: (s.offshoreCyprusBalance || 0) + 1000000
                     }));
                     setSettingsOpen(false);
@@ -4764,6 +4978,12 @@ function App() {
            <span style={{fontSize: '0.8rem', color: 'var(--prl-gray)'}}>DOLARY</span>
            <span style={{fontSize: '1.2rem'}}>${Math.floor(state.dollars).toLocaleString('pl-PL')}</span>
         </div>
+        {state.fazaWUnlocked && (
+          <div className="flex-col" style={{color: '#00e1d9'}}>
+             <span style={{fontSize: '0.8rem', color: 'var(--prl-gray)'}}>EURO</span>
+             <span style={{fontSize: '1.2rem'}}>{fmtNum(state.euros || 0, 2)} €</span>
+          </div>
+        )}
         {(state.activeDestination === 'usa' || (state.bonyPewex || 0) > 0) && (
           <div className="flex-col" style={{color: 'var(--dollar-green)'}}>
              <span style={{fontSize: '0.8rem', color: 'var(--prl-gray)'}}>BONY PEWEX</span>
@@ -4795,10 +5015,7 @@ function App() {
            {/* [Claude] KIERUNEK 7.4: "Rub" -> "rub." - spójnie z resztą skrótów (szt./bon./oz) */}
            <span style={{fontSize: '1.2rem'}}>{Math.floor(state.ruble)} rub.</span>
         </div>
-        <div className="flex-col" style={{color: 'var(--prl-yellow)'}}>
-           <span style={{fontSize: '0.8rem', color: 'var(--prl-gray)'}}>BONY BALTONA</span>
-           <span style={{fontSize: '1.2rem'}}>{state.bonyBaltona} bon.</span>
-        </div>
+
         <div className="flex-col" style={{color: state.suspicion > 50 ? 'var(--prl-red)' : 'var(--crt-text)'}}>
            <span style={{fontSize: '0.8rem', color: 'var(--prl-gray)'}}>MILICJA</span>
            <span style={{fontSize: '1.2rem'}}>{Math.floor(state.suspicion)}%</span>
@@ -4847,6 +5064,9 @@ function App() {
                 <strong style={{color: 'var(--crt-text)'}}>WALUTY I KARTKI (netto/s):</strong>
                 <div style={{marginTop: '5px'}}>Złotówki: <span style={{color: plnRate >= 0 ? '#33ff33' : 'var(--prl-red)'}}>{plnRate >= 0 ? '+' : ''}{fmtNum(plnRate, 2)} zł/s</span></div>
                 <div>Dolary: <span style={{color: 'var(--dollar-green)'}}>+{fmtNum(dollarsRate, 3)} $/s</span></div>
+                {state.fazaWUnlocked && (
+                  <div>Euro: <span style={{color: '#00e1d9'}}>+{fmtNum(eurosRate, 3)} €/s</span></div>
+                )}
                 <div>Kartki: <span style={{color: 'var(--prl-yellow)'}}>+{fmtNum(kartkiRate, 3)} szt/s</span></div>
               </div>
               <div>
@@ -4888,6 +5108,9 @@ function App() {
                  {state.gpwUnlocked && (
                    <div>Dywidendy GPW (śr): <span style={{color: '#33ff33'}}>+{fmtNum(gpwPlnRate, 2)} zł/s</span></div>
                  )}
+                 {state.fazaWUnlocked && (
+                   <div>Mordor BPO (EUR): <span style={{color: '#33ff33'}}>+{fmtNum(mordorPlnIncomeRate, 2)} zł/s</span></div>
+                 )}
                  <div style={{borderTop: '1px dashed #33ff33', marginTop: '8px', paddingTop: '5px'}}>Suma Przychodów (Realne PLN): <strong>+{fmtNum(totalPassiveIncome, 2)} zł/s</strong></div>
                  {vatCarouselPlnRate > 0 && (
                    <div style={{marginTop: '5px', color: 'var(--prl-yellow)'}}>Należności VAT: <strong>+{fmtNum(vatCarouselPlnRate, 2)} zł/s</strong> (oczekujące)</div>
@@ -4904,6 +5127,9 @@ function App() {
                  )}
                  {state.fazaSUnlocked && lobbyBribeCost > 0 && (
                    <div style={{color: '#ff6666'}}>Koszty lobbingu rządowego: <span>-{fmtNum(lobbyBribeCost, 2)} zł/s</span></div>
+                 )}
+                 {state.fazaWUnlocked && mordorUpkeepCost > 0 && (
+                   <div style={{color: '#ff6666'}}>Koszty biura (Mordor): <span>-{fmtNum(mordorUpkeepCost, 2)} zł/s</span></div>
                  )}
                  <div style={{borderTop: '1px dashed var(--prl-red)', marginTop: '8px', paddingTop: '5px', color: 'var(--prl-red)'}}>Suma Kosztów: <strong>-{fmtNum(totalPassiveExpenses, 2)} zł/s</strong></div>
                </div>
@@ -4973,6 +5199,9 @@ function App() {
           {state.fazaSUnlocked && (
             <button onClick={() => { playClick(); setCurrentTab('lata2000'); }} style={{flex: 1, backgroundColor: currentTab === 'lata2000' ? '#ffffff' : 'transparent', color: currentTab === 'lata2000' ? '#3498db' : '#ffffff', borderColor: '#3498db'}}>LATA 2000.</button>
           )}
+          {state.fazaWUnlocked && (
+            <button onClick={() => { playClick(); setCurrentTab('mordor'); }} style={{flex: 1, backgroundColor: currentTab === 'mordor' ? '#8e44ad' : 'transparent', color: currentTab === 'mordor' ? '#fff' : '#8e44ad', borderColor: '#8e44ad'}}>MORDOR (2010.)</button>
+          )}
       </div>
 
       <div className="game-grid" style={{gridTemplateColumns: '1fr'}}>
@@ -4982,6 +5211,7 @@ function App() {
         {/* TAB: PRACA / KOLEJKA */}
 
         {currentTab === 'lata2000' && <TabLata2000 />}
+        {currentTab === 'mordor' && <TabMordor />}
         {currentTab === 'praca' && <TabPraca />}
 
         {/* TAB: BAZAR / CINKCIARZ */}

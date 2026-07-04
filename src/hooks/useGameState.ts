@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { HELPERS, BUSINESSES, GPW_STOCKS, NOMENKLATURA_COMPANIES, OFFSHORE_DEPOSITS, COCOM_PERSONNEL } from '../game/items';
+import type { EuroBond } from '../game/items';
 // [Claude] KIERUNEK 1.3: symulacja offline liczy mnozniki tym samym wzorem co silnik
 // (bez opcji zZdarzeniami - zdarzenia historyczne celowo nie dzialaja offline, jak dotad)
 import { helperSpeedMult, businessProductionMult } from '../game/formulas';
@@ -336,9 +337,24 @@ export interface GameState {
   vatRefundTimer: number;
   vatRefundPendingAmount: number;
   vatAuditRisk: number;
-  offshoreCyprusBalance: number;
   vatUpgrades: Record<string, boolean>;
+  offshoreCyprusBalance: number;
   // [Claude] usunięto devFreezeVatRisk - flaga była czytana w pętli gry, ale ŻADEN kod jej nie ustawiał
+
+  // Faza W: Mordor na Domaniewskiej (Lata 2010.)
+  fazaWUnlocked: boolean;
+  jdgContracts: number;
+  jdgRiskLevel: number;
+  jdgTaxOptimizationLevel: number;
+  pipInspectionTimer: number;
+  mordorFloors: number;
+  mordorEmployees: number;
+  mordorMorale: number;
+  mordorUpgrades: Record<string, boolean>;
+  euroBonds: EuroBond[];
+  euroBondEvents: string[];
+  euros: number;
+  euroExchangeRate: number;
 }
 
 export const INITIAL_STATE: GameState = {
@@ -623,7 +639,22 @@ export const INITIAL_STATE: GameState = {
   vatRefundPendingAmount: 0,
   vatAuditRisk: 0,
   offshoreCyprusBalance: 0,
-  vatUpgrades: {}
+  vatUpgrades: {},
+
+  // Faza W: Mordor na Domaniewskiej (Lata 2010.)
+  fazaWUnlocked: false,
+  jdgContracts: 0,
+  jdgRiskLevel: 0,
+  jdgTaxOptimizationLevel: 0,
+  pipInspectionTimer: 0,
+  mordorFloors: 0,
+  mordorEmployees: 0,
+  mordorMorale: 100,
+  mordorUpgrades: {},
+  euroBonds: [],
+  euroBondEvents: [],
+  euros: 0,
+  euroExchangeRate: 4.20
 };
 
 const isPlainObject = (v: unknown): v is Record<string, unknown> =>
