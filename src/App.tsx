@@ -768,7 +768,15 @@ function App() {
     if (state.kartki < actualKartkiCost) { playError(); return; }
     
     playClick();
-    updateState(s => ({ ...s, pln: s.pln - finalCost, kartki: s.kartki - actualKartkiCost }));
+    updateState(s => {
+      const next = { ...s, pln: s.pln - finalCost, kartki: s.kartki - actualKartkiCost };
+      if (targetSlot === 1) {
+        next.zeszytDidRequeue = false;
+      } else {
+        next.zeszyt2DidRequeue = false;
+      }
+      return next;
+    });
     if (targetSlot === 1) {
       setQueueProgress(0);
       setActiveQueue(id);
