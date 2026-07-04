@@ -154,6 +154,9 @@ export const TabMiasto = memo(function TabMiasto() {
                         w = 100;
                       }
 
+                      const firstActive = p > 0 ? 'p' : (pr > 0 ? 'pr' : 'w');
+                      const lastActive = w > 0 ? 'w' : (pr > 0 ? 'pr' : 'p');
+
                       return (
                         <div key={dist.id} style={{ backgroundColor: '#111', padding: '15px', borderRadius: '4px', border: '1px solid #333' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
@@ -162,19 +165,55 @@ export const TabMiasto = memo(function TabMiasto() {
                           </div>
                           <div style={{ fontSize: '0.85em', color: '#aaa', marginBottom: '10px' }}>{dist.desc}</div>
                           
-                          <div style={{ display: 'flex', height: '20px', borderRadius: '10px', overflow: 'hidden', border: '1px solid #555' }}>
+                          <div style={{ display: 'flex', height: '20px', borderRadius: '10px', overflow: 'hidden', border: '1px solid #555', backgroundColor: '#222' }}>
                             {p > 0 && (
-                              <div style={{ width: `${p}%`, backgroundColor: '#8e44ad', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7em', fontWeight: 'bold' }}>
+                              <div style={{ 
+                                width: `${p}%`, 
+                                backgroundColor: '#8e44ad', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center', 
+                                fontSize: '0.7em', 
+                                fontWeight: 'bold',
+                                borderTopLeftRadius: firstActive === 'p' ? '9px' : '0',
+                                borderBottomLeftRadius: firstActive === 'p' ? '9px' : '0',
+                                borderTopRightRadius: lastActive === 'p' ? '9px' : '0',
+                                borderBottomRightRadius: lastActive === 'p' ? '9px' : '0'
+                              }}>
                                 {p > 5 ? `${fmtNum(p, 1)}%` : ''}
                               </div>
                             )}
                             {pr > 0 && (
-                              <div style={{ width: `${pr}%`, backgroundColor: '#e67e22', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7em', fontWeight: 'bold' }}>
+                              <div style={{ 
+                                width: `${pr}%`, 
+                                backgroundColor: '#e67e22', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center', 
+                                fontSize: '0.7em', 
+                                fontWeight: 'bold',
+                                borderTopLeftRadius: firstActive === 'pr' ? '9px' : '0',
+                                borderBottomLeftRadius: firstActive === 'pr' ? '9px' : '0',
+                                borderTopRightRadius: lastActive === 'pr' ? '9px' : '0',
+                                borderBottomRightRadius: lastActive === 'pr' ? '9px' : '0'
+                              }}>
                                 {pr > 5 ? `${fmtNum(pr, 1)}% (P)` : ''}
                               </div>
                             )}
                             {w > 0 && (
-                              <div style={{ width: `${w}%`, backgroundColor: '#c0392b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7em', fontWeight: 'bold' }}>
+                              <div style={{ 
+                                width: `${w}%`, 
+                                backgroundColor: '#c0392b', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center', 
+                                fontSize: '0.7em', 
+                                fontWeight: 'bold',
+                                borderTopLeftRadius: firstActive === 'w' ? '9px' : '0',
+                                borderBottomLeftRadius: firstActive === 'w' ? '9px' : '0',
+                                borderTopRightRadius: lastActive === 'w' ? '9px' : '0',
+                                borderBottomRightRadius: lastActive === 'w' ? '9px' : '0'
+                              }}>
                                 {w > 5 ? `${fmtNum(w, 1)}% (W)` : ''}
                               </div>
                             )}
