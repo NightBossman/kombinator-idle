@@ -233,6 +233,57 @@ export const jdgRiskGainPerSec = (s: GameState): number => {
 };
 
 /** 
+ * Wydobycie krypto (BTC/s) na podstawie posiadanych koparek.
+ */
+export const cryptoMiningYield = (s: GameState): number => {
+  if (!s.fazaXUnlocked) return 0;
+  let yieldBtc = 0;
+  const rtxCount = s.cryptoRigs?.['rtx4090'] || 0;
+  const asicCount = s.cryptoRigs?.['asic'] || 0;
+  yieldBtc += rtxCount * 0.00005;
+  yieldBtc += asicCount * 0.00025;
+  return yieldBtc;
+};
+
+/**
+ * Koszt prądu (PLN/s) z kopalni kryptowalut.
+ * Z ulepszeniem fotowoltaiki koszt spada o 40%.
+ */
+export const cryptoPowerUpkeepPln = (s: GameState): number => {
+  if (!s.fazaXUnlocked) return 0;
+  const rtxCount = s.cryptoRigs?.['rtx4090'] || 0;
+  const asicCount = s.cryptoRigs?.['asic'] || 0;
+  const totalKw = (rtxCount * 0.45) + (asicCount * 3.0);
+  let cost = totalKw * 5;
+  if (s.aiUpgrades?.['fotowoltaika']) cost *= 0.6;
+  return cost;
+};
+
+/**
+ * Postęp trenowania modeli AI (%/s).
+ * Bazowo 0.5% na sekundę. Każdy komputer H100 zwiększa o +0.5%/s, a Prompt Engineer o +0.2%/s.
+ * Low-Code framework ulepszenie zwiększa prędkość o 50%.
+ */
+export const aiTrainSpeed = (s: GameState): number => {
+  if (!s.fazaXUnlocked || !s.isTrainingAi) return 0;
+  let speed = 0.5 + (s.aiComputers * 0.5) + (s.aiPromptEngineers * 0.2);
+  if (s.aiUpgrades?.['nocod_framework']) speed *= 1.5;
+  return speed;
+};
+
+/**
+ * Przyrost ryzyka KNF przy emisji KombinatorCoin (%/s).
+ * Pasywnie rośnie o 0.2%/s za posiadanie tokenów.
+ * Słup w Dubaju zmniejsza przyrost o 50%.
+ */
+export const knfRiskGrowthRate = (s: GameState): number => {
+  if (!s.fazaXUnlocked) return 0;
+  let risk = (s.kmbTokensOwned || 0) > 0 ? 0.2 : 0;
+  if (s.aiUpgrades?.['dubaj_shell']) risk *= 0.5;
+  return risk;
+};
+
+/** 
  * Oblicza ostateczny czas trwania szmuglu morskiego.
  * - Sztorm: +50% czasu
  * - Dzień Marynarza: -30% czasu

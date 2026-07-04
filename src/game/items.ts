@@ -1202,3 +1202,32 @@ export interface EuroBond {
   riskOfCrash: number;
 }
 
+export interface CryptoRigType {
+  id: string;
+  name: string;
+  costPln: number;
+  hashrateBtcSec: number;
+  powerKw: number;
+  desc: string;
+}
+
+export const CRYPTO_RIGS: CryptoRigType[] = [
+  { id: 'rtx4090', name: 'Koparka RTX 4090', costPln: 10000, hashrateBtcSec: 0.00005, powerKw: 0.45, desc: 'Pobór prądu: 450W. Daje 0,00005 BTC/s. Niezawodny klasyk graczy.' },
+  { id: 'asic', name: 'Antminer ASIC S19', costPln: 40000, hashrateBtcSec: 0.00025, powerKw: 3.0, desc: 'Pobór prądu: 3.0 kW! Daje 0,00025 BTC/s. Przemysłowa machina o ogromnym apetycie na prąd.' }
+];
+
+export interface AiUpgrade {
+  id: string;
+  name: string;
+  desc: string;
+  costPln: number;
+}
+
+export const AI_UPGRADES: AiUpgrade[] = [
+  { id: 'fotowoltaika', name: 'Farmy Fotowoltaiczne', desc: 'Własne zasilanie. Obniża rachunki za prąd z koparek krypto o 40%.', costPln: 1200000 },
+  { id: 'hype_marketing', name: 'Token Hype Agency', desc: 'Podwaja zyski z pompowania tokena KombinatorCoin (KMB).', costPln: 5000000 },
+  { id: 'dubaj_shell', name: 'Słup w Zjednoczonych Emiratach', desc: 'Rejestracja w Dubaju. Zmniejsza przyrost wskaźnika inwigilacji KNF o 50%.', costPln: 10000000 },
+  { id: 'nocod_framework', name: 'Generator Promptów Low-Code', desc: 'Przyśpiesza trenowanie modeli AI o 50%.', costPln: 2500000 }
+];
+
+

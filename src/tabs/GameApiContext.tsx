@@ -26,6 +26,16 @@ export interface GameApi {
   buyAsset: (assetType: 'srebro' | 'krugerrand' | 'sztabkaZlota', payWith: 'pln' | 'dollars') => void;
   buyBaltonaUpgrade: (upgradeId: string) => void;
   buySeaUpgrade: (upgradeId: string) => void;
+  buyCryptoRig: (rigId: 'rtx4090' | 'asic') => void;
+  sellBitcoin: (amount: number) => void;
+  buyAiComputer: () => void;
+  hirePromptEngineer: () => void;
+  startAiTraining: () => void;
+  generatePitchDeck: () => void;
+  pumpKmbToken: () => void;
+  sellKmbTokens: () => void;
+  buyAiUpgrade: (upgradeId: string) => void;
+  unlockFazaX: () => void;
   buyBazarItem: (itemId: string, amount: number) => void;
   buyBlackMarketOffer: (offerId: string) => void;
   buyBlackMarketWeapon: (weaponId: string, qty?: number) => void;

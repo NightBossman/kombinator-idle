@@ -24,16 +24,17 @@ const TabWybory = lazy(() => import('./tabs/TabWybory'));
 const TabLata90 = lazy(() => import('./tabs/TabLata90'));
 const TabMiasto = lazy(() => import('./tabs/TabMiasto'));
 const TabMordor = lazy(() => import('./tabs/TabMordor'));
+const TabStartup = lazy(() => import('./tabs/TabStartup'));
 import { GameApiContext } from './tabs/GameApiContext';
 import type { GameApi } from './tabs/GameApiContext';
-import { MORDOR_UPGRADES, JDG_TAX_LEVELS, EURO_BOND_TYPES } from './game/items';
+import { MORDOR_UPGRADES, JDG_TAX_LEVELS, EURO_BOND_TYPES, AI_UPGRADES } from './game/items';
 // [Claude] KIERUNEK 1.3: wspolne wzory - panel Casio i Bazar pokazuja to, co liczy silnik
-import { helperSpeedMult, businessProductionMult, cinkciarzRate, queueTimeMs, bazarPlnUnitPrice, bazarUsdUnitPrice, realEstateCostPln, realEstateBuildTimeSec, chfInstallmentPerSec, vatCarouselRefundPerSec, mordorIncomePerSec, mordorEmployeeUpkeepPerSec, seaSmuggleTime, seaSmuggleRisk } from './game/formulas';
+import { helperSpeedMult, businessProductionMult, cinkciarzRate, queueTimeMs, bazarPlnUnitPrice, bazarUsdUnitPrice, realEstateCostPln, realEstateBuildTimeSec, chfInstallmentPerSec, vatCarouselRefundPerSec, mordorIncomePerSec, mordorEmployeeUpkeepPerSec, seaSmuggleTime, seaSmuggleRisk, cryptoMiningYield, cryptoPowerUpkeepPln } from './game/formulas';
 // [Claude] silnik gry (KIERUNEK.md pkt 1.1) - czysta pętla + zdarzenia; stamtąd też calculateLuxurySuspicionReduction
 import { tick, calculateLuxurySuspicionReduction } from './game/engine';
 import type { GameEvent, SoundId } from './game/engine';
 
-export type TabId = 'praca' | 'bazar' | 'przemyt' | 'partia' | 'czarnyRynek' | 'odznaczenia' | 'gpw' | 'offshore' | 'syndykat' | 'wybory' | 'lata90' | 'miasto' | 'lata2000' | 'mordor';
+export type TabId = 'praca' | 'bazar' | 'przemyt' | 'partia' | 'czarnyRynek' | 'odznaczenia' | 'gpw' | 'offshore' | 'syndykat' | 'wybory' | 'lata90' | 'miasto' | 'lata2000' | 'mordor' | 'startups';
 
 function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -2448,6 +2449,203 @@ function App() {
     showAlert('Wkraczasz w lata 2010.! Polska staje się zagłębiem outsourcingowym Europy, powstaje warszawski Mordor na Domaniewskiej, a programiści i menedżerowie masowo zakładają jednoosobowe działalności gospodarcze (JDG). Witaj w nowej rzeczywistości!', '🏢 NOWA ERA: LATA 2010.', 'success');
   };
 
+  // ===== Faza X: Startupy, AI i Kopalnia Krypto (Lata 2020.) - Funkcje Transakcyjne =====
+
+  const unlockFazaX = () => {
+    if (state.fazaXUnlocked) { playError(); return; }
+    const costEur = 15000000;
+    if ((state.euros || 0) < 25000000 || !state.fazaWUnlocked) {
+      playError();
+      showAlert('Aby wejść w lata 2020. (Opcja A), musisz posiadać co najmniej 25 000 000 EUR. Wejście kosztuje 15 000 000 EUR (resztę zachowujesz).', 'WYMAGANIA BLOKADY', 'error');
+      return;
+    }
+
+    updateState(s => ({
+      ...s,
+      euros: s.euros - costEur,
+      fazaXUnlocked: true,
+      bitcoinPricePln: 150000,
+      kmbTokenPricePln: 1.0
+    }));
+    setCurrentTab('startups');
+    playSuccess();
+    showAlert('Wkraczasz w lata 2020.! Era cyfryzacji, baniek kryptowalutowych i szaleństwa sztucznej inteligencji. Twórz startupy, kop Bitcoiny i pompuj KombinatorCoin pod czujnym okiem KNF!', '🚀 NOWA ERA: LATA 2020. (STARTUPY & AI)', 'success');
+  };
+
+  const buyCryptoRig = (rigId: 'rtx4090' | 'asic') => {
+    const costMap = { 'rtx4090': 10000, 'asic': 40000 };
+    const cost = costMap[rigId];
+    if (state.pln < cost) {
+      playError();
+      showAlert('Brak środków w PLN na zakup koparki!', 'BRAK PLNu', 'error');
+      return;
+    }
+
+    playSuccess();
+    updateState(s => {
+      const rigs = { ...s.cryptoRigs };
+      rigs[rigId] = (rigs[rigId] || 0) + 1;
+      return {
+        ...s,
+        pln: s.pln - cost,
+        cryptoRigs: rigs
+      };
+    });
+  };
+
+  const sellBitcoin = (amount: number) => {
+    if ((state.bitcoins || 0) < amount) {
+      playError();
+      return;
+    }
+    const yieldPln = Math.floor(amount * state.bitcoinPricePln);
+    playSuccess();
+    updateState(s => ({
+      ...s,
+      bitcoins: s.bitcoins - amount,
+      pln: s.pln + yieldPln,
+      stats: {
+        ...s.stats,
+        totalPlnEarned: (s.stats.totalPlnEarned || 0) + yieldPln
+      }
+    }));
+    addToast('BTC SPRZEDANE', `Sprzedano ${amount.toFixed(4)} BTC za ${yieldPln.toLocaleString('pl-PL')} PLN.`);
+  };
+
+  const buyAiComputer = () => {
+    const cost = 120000;
+    if (state.pln < cost) {
+      playError();
+      showAlert('Brak środków na zakup stacji roboczej H100!', 'BRAK PLNu', 'error');
+      return;
+    }
+
+    playSuccess();
+    updateState(s => ({
+      ...s,
+      pln: s.pln - cost,
+      aiComputers: (s.aiComputers || 0) + 1
+    }));
+  };
+
+  const hirePromptEngineer = () => {
+    const cost = 30000;
+    if (state.pln < cost) {
+      playError();
+      showAlert('Brak środków w PLN na rekrutację Prompt Engineera!', 'BRAK PLNu', 'error');
+      return;
+    }
+
+    playSuccess();
+    updateState(s => ({
+      ...s,
+      pln: s.pln - cost,
+      aiPromptEngineers: (s.aiPromptEngineers || 0) + 1
+    }));
+  };
+
+  const startAiTraining = () => {
+    if (state.isTrainingAi) return;
+    playClick();
+    updateState(s => ({
+      ...s,
+      isTrainingAi: true,
+      aiTrainProgress: 0
+    }));
+  };
+
+  const generatePitchDeck = () => {
+    if (state.aiModelsTrained <= 0) {
+      playError();
+      showAlert('Musisz mieć przynajmniej jeden wytrenowany model AI, aby stworzyć Pitch Deck!', 'BRAK MODELU', 'error');
+      return;
+    }
+
+    playSuccess();
+    const reward = state.aiModelsTrained * (500000 + Math.floor(Math.random() * 1500000));
+    updateState(s => ({
+      ...s,
+      aiModelsTrained: 0,
+      aiPitchDecks: (s.aiPitchDecks || 0) + 1,
+      pln: s.pln + reward,
+      stats: {
+        ...s.stats,
+        totalPlnEarned: (s.stats.totalPlnEarned || 0) + reward
+      }
+    }));
+    showAlert(`Sukces Pitch Decku! Pozyskano finansowanie od Venture Capital w wysokości ${reward.toLocaleString('pl-PL')} PLN!`, '💰 VC FUNDING', 'success');
+  };
+
+  const pumpKmbToken = () => {
+    const cost = 50000;
+    if (state.pln < cost) {
+      playError();
+      showAlert('Brak środków na akcję promocyjną (pump) tokena!', 'BRAK PLNu', 'error');
+      return;
+    }
+
+    const multiplier = 1.3 + Math.random() * 0.4;
+    const marketingMult = state.aiUpgrades?.['hype_marketing'] ? 2.0 : 1.0;
+    const finalMultiplier = 1 + (multiplier - 1) * marketingMult;
+    
+    updateState(s => {
+      const newPrice = s.kmbTokenPricePln * finalMultiplier;
+      const riskAdd = s.aiUpgrades?.['dubaj_shell'] ? 8 : 15;
+      return {
+        ...s,
+        pln: s.pln - cost,
+        kmbTokenPricePln: Number(newPrice.toFixed(4)),
+        kmbTokensOwned: (s.kmbTokensOwned || 0) + 10000,
+        knfRiskLevel: Math.min(100, (s.knfRiskLevel || 0) + riskAdd)
+      };
+    });
+    playSuccess();
+    addToast('PUMP IT!', 'Kurs KombinatorCoin wystrzelił! Zakupiono 10 000 KMB.');
+  };
+
+  const sellKmbTokens = () => {
+    if ((state.kmbTokensOwned || 0) <= 0) {
+      playError();
+      return;
+    }
+
+    playSuccess();
+    const yieldPln = Math.floor(state.kmbTokensOwned * state.kmbTokenPricePln);
+    updateState(s => ({
+      ...s,
+      kmbTokensOwned: 0,
+      pln: s.pln + yieldPln,
+      kmbTokenPricePln: Number((s.kmbTokenPricePln * 0.2).toFixed(4)),
+      stats: {
+        ...s.stats,
+        totalPlnEarned: (s.stats.totalPlnEarned || 0) + yieldPln
+      }
+    }));
+    showAlert(`Zrzut (Dump) zakończony! Sprzedano wszystkie tokeny KombinatorCoin za ${yieldPln.toLocaleString('pl-PL')} PLN. Cena tokena załamała się.`, '📉 TOKEN DUMP', 'success');
+  };
+
+  const buyAiUpgrade = (upgradeId: string) => {
+    if (state.aiUpgrades[upgradeId]) { playError(); return; }
+    const upgrade = AI_UPGRADES.find(u => u.id === upgradeId);
+    if (!upgrade) return;
+
+    if (state.pln < upgrade.costPln) {
+      playError();
+      showAlert(`Brak środków! Wymagane: ${upgrade.costPln.toLocaleString('pl-PL')} PLN.`, 'BRAK PLNu', 'error');
+      return;
+    }
+
+    playSuccess();
+    updateState(s => ({
+      ...s,
+      pln: s.pln - upgrade.costPln,
+      aiUpgrades: {
+        ...s.aiUpgrades,
+        [upgradeId]: true
+      }
+    }));
+  };
+
   const buyEuroBond = (bondId: string) => {
     const bondDef = EURO_BOND_TYPES.find(b => b.id === bondId);
     if (!bondDef || (state.euros || 0) < bondDef.costEur) { playError(); return; }
@@ -4497,6 +4695,13 @@ function App() {
     mordorUpkeepCost = mordorEmployeeUpkeepPerSec(state);
   }
 
+  let cryptoPowerCost = 0;
+  let aiEngineersCost = 0;
+  if (state.fazaXUnlocked) {
+    cryptoPowerCost = cryptoPowerUpkeepPln(state);
+    aiEngineersCost = (state.aiPromptEngineers || 0) * 150;
+  }
+
   const totalPassiveIncome = businessPlnRate + mediaPlnRate + dotcomPlnRate + zmywakPlnRate + nfiPlnRate + gpwPlnRate + cyprusInterestPlnRate + mordorPlnIncomeRate;
   let lobbyBribeCost = 0;
   if (state.fazaSUnlocked) {
@@ -4507,10 +4712,11 @@ function App() {
     });
   }
 
-  const totalPassiveExpenses = Math.abs(cinkciarzPlnRate) + gangPlnCost + chfPlnCost + lobbyBribeCost + mordorUpkeepCost;
+  const totalPassiveExpenses = Math.abs(cinkciarzPlnRate) + gangPlnCost + chfPlnCost + lobbyBribeCost + mordorUpkeepCost + cryptoPowerCost + aiEngineersCost;
   const plnRate = totalPassiveIncome - totalPassiveExpenses;
   const dollarsRate = businessUsdRate + cinkciarzUsdRate + widmoUsdRate;
   const eurosRate = mordorIncomePerSec(state);
+  const btcRate = cryptoMiningYield(state);
 
   const currentEventData = HISTORY_EVENTS.find(e => e.id === state.activeEvent);
 
@@ -4535,6 +4741,16 @@ function App() {
     buyAsset,
     buyBaltonaUpgrade,
     buySeaUpgrade,
+    buyCryptoRig,
+    sellBitcoin,
+    buyAiComputer,
+    hirePromptEngineer,
+    startAiTraining,
+    generatePitchDeck,
+    pumpKmbToken,
+    sellKmbTokens,
+    buyAiUpgrade,
+    unlockFazaX,
     buyBazarItem,
     buyBlackMarketOffer,
     buyBlackMarketWeapon,
@@ -4971,6 +5187,34 @@ function App() {
                 >
                   🔧 DEV: RYZYKO 100% & ZAMROŹ
                 </button>
+                <button 
+                  onClick={() => {
+                    updateState(s => ({
+                      ...s,
+                      bitcoins: (s.bitcoins || 0) + 10,
+                      pln: s.pln + 100000000,
+                      fazaXUnlocked: true
+                    }));
+                    setCurrentTab('startups');
+                    setSettingsOpen(false);
+                    setTimeout(() => addToast("DEV CHEAT", "Odblokowano Fazę X i dodano 10 BTC + 100M PLN!"), 50);
+                  }}
+                  style={{
+                    width: '100%',
+                    background: 'rgba(242, 169, 0, 0.2)',
+                    border: '1px solid #f2a900',
+                    color: '#f2a900',
+                    padding: '6px',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    fontWeight: 'bold',
+                    boxShadow: '0 0 3px #f2a900',
+                    marginTop: '4px'
+                  }}
+                >
+                  🔧 DEV: ODBLOKUJ FAZĘ X & +10 BTC
+                </button>
               </div>
 
               {/* Hard Reset */}
@@ -5058,6 +5302,12 @@ function App() {
              <span style={{fontSize: '1.2rem'}}>{fmtNum(state.euros || 0, 2)} €</span>
           </div>
         )}
+        {state.fazaXUnlocked && (
+          <div className="flex-col" style={{color: '#f2a900'}}>
+             <span style={{fontSize: '0.8rem', color: 'var(--prl-gray)'}}>BITCOIN</span>
+             <span style={{fontSize: '1.2rem'}}>{(state.bitcoins || 0).toFixed(4)} ₿</span>
+          </div>
+        )}
         {(state.activeDestination === 'usa' || (state.bonyPewex || 0) > 0) && (
           <div className="flex-col" style={{color: 'var(--dollar-green)'}}>
              <span style={{fontSize: '0.8rem', color: 'var(--prl-gray)'}}>BONY PEWEX</span>
@@ -5141,6 +5391,9 @@ function App() {
                 {state.fazaWUnlocked && (
                   <div>Euro: <span style={{color: '#00e1d9'}}>+{fmtNum(eurosRate, 3)} €/s</span></div>
                 )}
+                {state.fazaXUnlocked && (
+                  <div>Bitcoin: <span style={{color: '#f2a900'}}>+{btcRate.toFixed(5)} ₿/s</span></div>
+                )}
                 <div>Kartki: <span style={{color: 'var(--prl-yellow)'}}>+{fmtNum(kartkiRate, 3)} szt/s</span></div>
               </div>
               <div>
@@ -5203,7 +5456,13 @@ function App() {
                    <div style={{color: '#ff6666'}}>Koszty lobbingu rządowego: <span>-{fmtNum(lobbyBribeCost, 2)} zł/s</span></div>
                  )}
                  {state.fazaWUnlocked && mordorUpkeepCost > 0 && (
-                   <div style={{color: '#ff6666'}}>Koszty biura (Mordor): <span>-{fmtNum(mordorUpkeepCost, 2)} zł/s</span></div>
+                   <div style={{color: '#ff6666'}}>Koszty biura (Mordor): <span>-{fmtNum(mordorUpkeepCost, 2)}
+                  {state.fazaXUnlocked && cryptoPowerCost > 0 && (
+                    <div style={{color: '#ff6666'}}>Koszty prądu (Kopalnia): <span>-{fmtNum(cryptoPowerCost, 2)} zł/s</span></div>
+                  )}
+                  {state.fazaXUnlocked && aiEngineersCost > 0 && (
+                    <div style={{color: '#ff6666'}}>Płace Prompt Engineerów: <span>-{fmtNum(aiEngineersCost, 2)} zł/s</span></div>
+                  )} zł/s</span></div>
                  )}
                  <div style={{borderTop: '1px dashed var(--prl-red)', marginTop: '8px', paddingTop: '5px', color: 'var(--prl-red)'}}>Suma Kosztów: <strong>-{fmtNum(totalPassiveExpenses, 2)} zł/s</strong></div>
                </div>
@@ -5278,6 +5537,9 @@ function App() {
           {state.fazaWUnlocked && (
             <button onClick={() => { playClick(); setCurrentTab('mordor'); }} style={{flex: 1, backgroundColor: currentTab === 'mordor' ? '#8e44ad' : 'transparent', color: currentTab === 'mordor' ? '#fff' : '#8e44ad', borderColor: '#8e44ad'}}>MORDOR (2010.)</button>
           )}
+          {state.fazaXUnlocked && (
+            <button onClick={() => { playClick(); setCurrentTab('startups'); }} style={{flex: 1, backgroundColor: currentTab === 'startups' ? '#f2a900' : 'transparent', color: currentTab === 'startups' ? '#fff' : '#f2a900', borderColor: '#f2a900'}}>STARTUPY (2020.)</button>
+          )}
       </div>
 
       <div className="game-grid" style={{gridTemplateColumns: '1fr'}}>
@@ -5288,6 +5550,7 @@ function App() {
 
         {currentTab === 'lata2000' && <TabLata2000 />}
         {currentTab === 'mordor' && <TabMordor />}
+        {currentTab === 'startups' && <TabStartup />}
         {currentTab === 'praca' && <TabPraca />}
 
         {/* TAB: BAZAR / CINKCIARZ */}

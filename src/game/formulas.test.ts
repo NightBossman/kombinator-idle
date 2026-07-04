@@ -1,7 +1,7 @@
 // [Claude] testy wspólnych wzorów (KIERUNEK 1.3) - pilnują, żeby mnożniki
 // nie rozjechały się ponownie między silnikiem, symulacją offline i UI.
 import { describe, it, expect } from 'vitest';
-import { helperSpeedMult, businessProductionMult, queueTimeMs, cinkciarzRate, bazarPlnUnitPrice, bazarUsdUnitPrice, generalProductionMult, chfInstallmentPerSec, vatCarouselRefundPerSec, vatCarouselRiskGainPerSec, mordorIncomePerSec, mordorMoraleDecayPerSec, mordorEmployeeUpkeepPerSec, jdgRiskGainPerSec, seaSmuggleTime, seaSmuggleRisk } from './formulas';
+import { helperSpeedMult, businessProductionMult, queueTimeMs, cinkciarzRate, bazarPlnUnitPrice, bazarUsdUnitPrice, generalProductionMult, chfInstallmentPerSec, vatCarouselRefundPerSec, vatCarouselRiskGainPerSec, mordorIncomePerSec, mordorMoraleDecayPerSec, mordorEmployeeUpkeepPerSec, jdgRiskGainPerSec, seaSmuggleTime, seaSmuggleRisk, cryptoMiningYield, cryptoPowerUpkeepPln, aiTrainSpeed, knfRiskGrowthRate } from './formulas';
 import { INITIAL_STATE } from '../hooks/useGameState';
 import type { GameState } from '../hooks/useGameState';
 
@@ -142,6 +142,40 @@ describe('wzory mnożników (formulas.ts)', () => {
     const s2 = freshState({ seaState: 'sailor_day', seaUpgrades: { celnicy: true } });
     // 20 - 10 - 15 = -5 => clamped to 0
     expect(seaSmuggleRisk(20, s2)).toBe(0);
+  });
+
+  it('cryptoMiningYield: calculates BTC mined correctly', () => {
+    const s = freshState({ fazaXUnlocked: true, cryptoRigs: { rtx4090: 2, asic: 1 } });
+    // 2 * 0.00005 + 1 * 0.00025 = 0.00035
+    expect(cryptoMiningYield(s)).toBeCloseTo(0.00035, 6);
+  });
+
+  it('cryptoPowerUpkeepPln: calculates power cost with photovoltiac discount', () => {
+    const s = freshState({ fazaXUnlocked: true, cryptoRigs: { rtx4090: 2, asic: 1 } });
+    // (2 * 0.45 + 1 * 3.0) * 5 = 3.9 * 5 = 19.5 PLN/s
+    expect(cryptoPowerUpkeepPln(s)).toBeCloseTo(19.5, 4);
+
+    const sDiscount = freshState({ fazaXUnlocked: true, cryptoRigs: { rtx4090: 2, asic: 1 }, aiUpgrades: { fotowoltaika: true } });
+    // 19.5 * 0.6 = 11.7 PLN/s
+    expect(cryptoPowerUpkeepPln(sDiscount)).toBeCloseTo(11.7, 4);
+  });
+
+  it('aiTrainSpeed: calculates speed depending on PCs, prompt engineers, and framework', () => {
+    const s = freshState({ fazaXUnlocked: true, isTrainingAi: true, aiComputers: 2, aiPromptEngineers: 3 });
+    // 0.5 + 2 * 0.5 + 3 * 0.2 = 2.1%/s
+    expect(aiTrainSpeed(s)).toBeCloseTo(2.1, 4);
+
+    const sDiscount = freshState({ fazaXUnlocked: true, isTrainingAi: true, aiComputers: 2, aiPromptEngineers: 3, aiUpgrades: { nocod_framework: true } });
+    // 2.1 * 1.5 = 3.15%/s
+    expect(aiTrainSpeed(sDiscount)).toBeCloseTo(3.15, 4);
+  });
+
+  it('knfRiskGrowthRate: calculates KNF risk growth rate', () => {
+    const s = freshState({ fazaXUnlocked: true, kmbTokensOwned: 1000 });
+    expect(knfRiskGrowthRate(s)).toBeCloseTo(0.2, 4);
+
+    const sDiscount = freshState({ fazaXUnlocked: true, kmbTokensOwned: 1000, aiUpgrades: { dubaj_shell: true } });
+    expect(knfRiskGrowthRate(sDiscount)).toBeCloseTo(0.1, 4);
   });
 });
 
