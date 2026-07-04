@@ -9,7 +9,7 @@ import type { AuctionState } from '../game/items';
 // [Claude] KIERUNEK 2: wersja formatu zapisu. Podbij TYLKO, gdy zmienia sie ZNACZENIE
 // istniejacego pola (i dopisz migracje w mergeSavedState). Samo dodanie nowego pola
 // nie wymaga niczego - glebokie scalenie z INITIAL_STATE uzupelni je automatycznie.
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 export interface BlackMarketOffer {
   id: string;
@@ -378,6 +378,18 @@ export interface GameState {
   kmbTokenPricePln: number;
   kmbTokensOwned: number;
   aiUpgrades: Record<string, boolean>;
+
+  // Faza Y: Polski Ład, WIBOR i Kryzys Energetyczny (Lata 2022-2023)
+  fazaYUnlocked: boolean;
+  plnDebt: number;
+  wiborRate: number;
+  taxForm: 'ryczalt' | 'skala' | 'liniowy';
+  usRiskLevel: number;
+  accountingOffices: number;
+  energyCrisisActive: boolean;
+  windTurbines: number;
+  creditHolidaysTimer: number;
+  creditHolidaysCooldown: number;
 }
 
 export const INITIAL_STATE: GameState = {
@@ -700,7 +712,19 @@ export const INITIAL_STATE: GameState = {
   knfRiskLevel: 0,
   kmbTokenPricePln: 1.0,
   kmbTokensOwned: 0,
-  aiUpgrades: {}
+  aiUpgrades: {},
+
+  // Faza Y: Polski Ład, WIBOR i Kryzys Energetyczny (Lata 2022-2023)
+  fazaYUnlocked: false,
+  plnDebt: 0,
+  wiborRate: 6.5,
+  taxForm: 'ryczalt',
+  usRiskLevel: 0,
+  accountingOffices: 0,
+  energyCrisisActive: false,
+  windTurbines: 0,
+  creditHolidaysTimer: 0,
+  creditHolidaysCooldown: 0
 };
 
 const isPlainObject = (v: unknown): v is Record<string, unknown> =>

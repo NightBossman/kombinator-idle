@@ -13,7 +13,7 @@
 // (zdarzenia celowo nie działają, gdy gra jest wyłączona - tak było od zawsze).
 
 import type { GameState } from '../hooks/useGameState';
-import { LUXURY_ITEMS, VAT_GOODS, JDG_TAX_LEVELS } from './items';
+import { LUXURY_ITEMS, VAT_GOODS, JDG_TAX_LEVELS, BUSINESSES, MEDIA_ANTENNA_REGIONS, MEDIA_STATIONS, MEDIA_PROGRAMS, NFI_COMPANIES, GPW_STOCKS } from './items';
 
 export interface FormulaOpts {
   zZdarzeniami?: boolean;
@@ -315,5 +315,217 @@ export const seaSmuggleRisk = (baseRisk: number, s: GameState): number => {
   if (s.seaUpgrades?.['celnicy']) risk -= 15;
   
   return Math.max(0, Math.min(100, risk));
+};
+
+/**
+ * Rata odsetek kredytu obrotowego PLN powiązana z wskaźnikiem WIBOR.
+ */
+export const wiborInstallmentPerSec = (s: GameState): number => {
+  if (!s.fazaYUnlocked || (s.plnDebt || 0) <= 0) return 0;
+  // Jeśli aktywne wakacje kredytowe, raty wynoszą 0
+  if (s.creditHolidaysTimer > 0) return 0;
+  
+  // Rata na sekundę: zadłużenie * (WIBOR + marża 2%) * mnożnik (np. 0.0001)
+  return s.plnDebt * ((s.wiborRate + 2) / 100) * 0.0001;
+};
+
+/**
+ * Podatek dochodowy Polskiego Ładu naliczany na sekundę od pasywnego dochodu brutto.
+ */
+export const polishDealTaxPerSec = (s: GameState, incomePlnPerSec: number): number => {
+  if (!s.fazaYUnlocked || incomePlnPerSec <= 0) return 0;
+  
+  if (s.taxForm === 'ryczalt') {
+    return incomePlnPerSec * 0.12;
+  }
+  if (s.taxForm === 'liniowy') {
+    return incomePlnPerSec * 0.19;
+  }
+  // Skala podatkowa: 12% do progu 120k PLN/s, 32% od nadwyżki
+  if (incomePlnPerSec <= 120000) {
+    return incomePlnPerSec * 0.12;
+  }
+  return (120000 * 0.12) + (incomePlnPerSec - 120000) * 0.32;
+};
+
+/**
+ * Przyrost ryzyka kontroli skarbowej Urzędu Skarbowego na sekundę (%/s).
+ * Zależy od przychodu brutto i wybranej formy podatkowej.
+ * Biura rachunkowe amortyzują to ryzyko o 15% za biuro (maksymalnie do 90%).
+ */
+export const usRiskGrowthRate = (s: GameState, incomePlnPerSec: number): number => {
+  if (!s.fazaYUnlocked || incomePlnPerSec <= 0) return 0;
+  
+  let rate = incomePlnPerSec * 0.000001; // bazowy przyrost
+  if (s.taxForm === 'ryczalt') rate *= 0.2;
+  else if (s.taxForm === 'liniowy') rate *= 0.5;
+  else if (s.taxForm === 'skala') rate *= 1.5;
+  
+  const reduction = Math.max(0.1, 1 - (s.accountingOffices || 0) * 0.15);
+  return rate * reduction;
+};
+
+/**
+ * Koszt prądu (PLN/s) z uwzględnieniem kryzysu energetycznego i turbin wiatrowych.
+ */
+export const energyPowerUpkeepPln = (s: GameState): number => {
+  if (!s.fazaYUnlocked) return 0;
+  
+  // Koszt z kopalni krypto
+  let cryptoCost = 0;
+  if (s.fazaXUnlocked) {
+    const rtxCount = s.cryptoRigs?.['rtx4090'] || 0;
+    const asicCount = s.cryptoRigs?.['asic'] || 0;
+    cryptoCost = (rtxCount * 0.45 + asicCount * 3.0) * 5;
+    if (s.aiUpgrades?.['fotowoltaika']) cryptoCost *= 0.6;
+  }
+  
+  // Koszt z biura Mordor
+  let officeCost = 0;
+  if (s.fazaWUnlocked) {
+    officeCost = s.mordorEmployees * 15;
+  }
+  
+  let total = cryptoCost + officeCost;
+  if (s.energyCrisisActive) {
+    total *= 3; // Kryzys energetyczny potraja koszty
+  }
+  
+  const windReduction = Math.pow(0.75, s.windTurbines || 0);
+  return total * windReduction;
+};
+
+/**
+ * Łączny pasywny przychód brutto w PLN na sekundę (przed kosztami i podatkami).
+ * Używany jako podstawa opodatkowania i wyznaczania ryzyka kontroli skarbowej.
+ */
+export const grossPassiveIncomePlnPerSec = (s: GameState): number => {
+  // 1. Biznesy
+  let businessPlnRate = 0;
+  const plnMult = businessProductionMult(s, 'pln', { zZdarzeniami: true });
+  BUSINESSES.forEach(b => {
+    const count = s.businesses[b.id] || 0;
+    if (count > 0 && b.generateType === 'pln') {
+      businessPlnRate += count * b.ratePerTick * plnMult;
+    }
+  });
+
+  // 2. Wolne Media
+  let mediaPlnRate = 0;
+  if (s.mediaUnlocked) {
+    let coverageMult = 1.0;
+    MEDIA_ANTENNA_REGIONS.forEach(reg => {
+      if (s.mediaAntennas[reg.id]) coverageMult += reg.coverageMultiplier;
+    });
+
+    MEDIA_STATIONS.forEach(station => {
+      if (!s.mediaStations[station.id]) return;
+      let rating = station.baseRating;
+      let totalIncomeMult = 0;
+      let activePrograms = 0;
+      const slots = s.activeMediaPrograms[station.id] || { rano: null, poludnie: null, wieczor: null };
+      Object.values(slots).forEach(progId => {
+        if (progId) {
+          const prog = MEDIA_PROGRAMS.find(p => p.id === progId);
+          if (prog) {
+            rating += prog.ratingBonus;
+            totalIncomeMult += prog.incomeMult;
+            activePrograms++;
+          }
+        }
+      });
+      rating *= coverageMult;
+      const trust = s.mediaTrust[station.id] !== undefined ? s.mediaTrust[station.id] : 100;
+      rating = Math.floor(rating * (0.5 + (trust / 200)));
+
+      if (activePrograms > 0 && rating > 0) {
+        const rev = rating * 8 * totalIncomeMult;
+        const mult = s.isDenominated ? 1 : (s.plzInflationMult || 1);
+        mediaPlnRate += Math.floor(rev * mult);
+      }
+    });
+  }
+
+  // 3. Portal Dot-Com
+  let dotcomPlnRate = 0;
+  if (s.fazaSUnlocked && s.dotcomServerCapacity > 0) {
+    const adRevenue = s.dotcomUpgrades['agresywne_seo'] ? 0.8 : 0.5;
+    dotcomPlnRate = Math.floor(s.dotcomUsers * adRevenue);
+    if (s.lobbyActiveBills?.['zamowienia_publiczne']) {
+      dotcomPlnRate = Math.floor(dotcomPlnRate * 2.0);
+    }
+  }
+
+  // 4. Emigracja
+  let zmywakPlnRate = 0;
+  if (s.fazaSUnlocked && s.zmywakWorkers > 0) {
+    zmywakPlnRate = Math.floor(s.zmywakWorkers * 5 * 0.15 * 6);
+    if (s.lobbyActiveBills?.['ustawa_hazardowa']) {
+      zmywakPlnRate = Math.floor(zmywakPlnRate * 3.0);
+    }
+  }
+
+  // 5. NFI
+  let nfiPlnRate = 0;
+  if (s.fazaMUnlocked) {
+    Object.keys(s.nfiCompanies || {}).forEach(compId => {
+      if (s.nfiCompanies[compId]) {
+        const comp = NFI_COMPANIES.find(c => c.id === compId);
+        if (comp) {
+          const status = Object.assign({
+            employment: comp.baseEmployment,
+            infrastructure: comp.baseInfrastructure,
+            morale: 100,
+            unionStrength: comp.baseUnionStrength,
+            strikeActive: false
+          }, s.nfiCompanyStatus[compId] || {});
+
+          const mult = s.isDenominated ? 1 : (s.plzInflationMult || 1);
+          if (!status.strikeActive) {
+            const baseWages = comp.baseEmployment * 5;
+            const currentWages = status.employment * 5;
+            const grossRevenue = (comp.dividendPerSecPln + baseWages)
+              * (status.infrastructure / comp.baseInfrastructure)
+              * (Math.min(status.employment, comp.baseEmployment * 1.2) / comp.baseEmployment);
+            const netProfit = grossRevenue - currentWages;
+            nfiPlnRate += Math.max(0, Math.floor(netProfit * mult));
+          }
+        }
+      }
+    });
+    if (s.lobbyActiveBills?.['ustawa_liniowa']) {
+      nfiPlnRate = Math.floor(nfiPlnRate * 1.5);
+    }
+  }
+
+  // 6. GPW
+  let gpwPlnRate = 0;
+  if (s.gpwUnlocked) {
+    const hasInvestor = s.unlockedAchievements?.['gpw_investor'];
+    const divMult = hasInvestor ? 1.2 : 1.0;
+    let divAmount = 0;
+    GPW_STOCKS.forEach(stock => {
+      const owned = s.sharesOwned[stock.id] || 0;
+      if (owned > 0) {
+        const price = s.stockPrices[stock.id] || stock.basePrice;
+        divAmount += owned * price * stock.dividendRate * divMult;
+      }
+    });
+    gpwPlnRate = Math.floor(divAmount / 30);
+  }
+
+  // 7. Cypr
+  let cyprusInterestPlnRate = 0;
+  if (s.fazaSUnlocked && s.offshoreCyprusBalance > 0) {
+    cyprusInterestPlnRate = s.offshoreCyprusBalance * (0.0005 / 60);
+  }
+
+  // 8. Mordor
+  let mordorPlnIncomeRate = 0;
+  if (s.fazaWUnlocked) {
+    mordorPlnIncomeRate = mordorIncomePerSec(s) * s.euroExchangeRate;
+  }
+
+  return businessPlnRate + mediaPlnRate + dotcomPlnRate + zmywakPlnRate + nfiPlnRate + gpwPlnRate + cyprusInterestPlnRate + mordorPlnIncomeRate;
 };
 

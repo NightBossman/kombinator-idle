@@ -25,16 +25,17 @@ const TabLata90 = lazy(() => import('./tabs/TabLata90'));
 const TabMiasto = lazy(() => import('./tabs/TabMiasto'));
 const TabMordor = lazy(() => import('./tabs/TabMordor'));
 const TabStartup = lazy(() => import('./tabs/TabStartup'));
+const TabPolskiLad = lazy(() => import('./tabs/TabPolskiLad'));
 import { GameApiContext } from './tabs/GameApiContext';
 import type { GameApi } from './tabs/GameApiContext';
 import { MORDOR_UPGRADES, JDG_TAX_LEVELS, EURO_BOND_TYPES, AI_UPGRADES } from './game/items';
 // [Claude] KIERUNEK 1.3: wspolne wzory - panel Casio i Bazar pokazuja to, co liczy silnik
-import { helperSpeedMult, businessProductionMult, cinkciarzRate, queueTimeMs, bazarPlnUnitPrice, bazarUsdUnitPrice, realEstateCostPln, realEstateBuildTimeSec, chfInstallmentPerSec, vatCarouselRefundPerSec, mordorIncomePerSec, mordorEmployeeUpkeepPerSec, seaSmuggleTime, seaSmuggleRisk, cryptoMiningYield, cryptoPowerUpkeepPln } from './game/formulas';
+import { helperSpeedMult, businessProductionMult, cinkciarzRate, queueTimeMs, bazarPlnUnitPrice, bazarUsdUnitPrice, realEstateCostPln, realEstateBuildTimeSec, chfInstallmentPerSec, vatCarouselRefundPerSec, mordorIncomePerSec, mordorEmployeeUpkeepPerSec, seaSmuggleTime, seaSmuggleRisk, cryptoMiningYield, cryptoPowerUpkeepPln, wiborInstallmentPerSec, polishDealTaxPerSec, energyPowerUpkeepPln } from './game/formulas';
 // [Claude] silnik gry (KIERUNEK.md pkt 1.1) - czysta pętla + zdarzenia; stamtąd też calculateLuxurySuspicionReduction
 import { tick, calculateLuxurySuspicionReduction } from './game/engine';
 import type { GameEvent, SoundId } from './game/engine';
 
-export type TabId = 'praca' | 'bazar' | 'przemyt' | 'partia' | 'czarnyRynek' | 'odznaczenia' | 'gpw' | 'offshore' | 'syndykat' | 'wybory' | 'lata90' | 'miasto' | 'lata2000' | 'mordor' | 'startups';
+export type TabId = 'praca' | 'bazar' | 'przemyt' | 'partia' | 'czarnyRynek' | 'odznaczenia' | 'gpw' | 'offshore' | 'syndykat' | 'wybory' | 'lata90' | 'miasto' | 'lata2000' | 'mordor' | 'startups' | 'polski_lad';
 
 function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -2646,6 +2647,106 @@ function App() {
     }));
   };
 
+  // ===== Faza Y: Polski Ład, WIBOR i Kryzys Energetyczny (Lata 2022-2023) - Funkcje Transakcyjne =====
+
+  const unlockFazaY = () => {
+    if (state.fazaYUnlocked) { playError(); return; }
+    const costPln = 50000000;
+    if (state.pln < costPln || !state.fazaXUnlocked) {
+      playError();
+      showAlert('Aby wejść w lata 2022-2023 (Faza Y - Polski Ład, WIBOR i Kryzys Energetyczny), musisz posiadać co najmniej 50 000 000 PLN oraz odblokowaną Fazę X.', 'WYMAGANIA BLOKADY', 'error');
+      return;
+    }
+
+    updateState(s => ({
+      ...s,
+      pln: s.pln - costPln,
+      fazaYUnlocked: true,
+      wiborRate: 6.5,
+      energyCrisisActive: true
+    }));
+    setCurrentTab('polski_lad');
+    playSuccess();
+    showAlert('Wkraczasz w lata 2022-2023! Pandemia minęła, ale nadszedł Polski Ład ze swoimi podatkami, stopy procentowe WIBOR wystrzeliły w kosmos, a kryzys energetyczny potraja rachunki za prąd. Czas na kombinowanie na najwyższym szczeblu!', '📉 NOWA ERA: LATA 2022-2023 (POLSKI ŁAD & WIBOR)', 'success');
+  };
+
+  const changeTaxForm = (form: 'ryczalt' | 'skala' | 'liniowy') => {
+    playSuccess();
+    updateState(s => ({
+      ...s,
+      taxForm: form
+    }));
+  };
+
+  const takePlnLoan = (amount: number) => {
+    if (amount <= 0) return;
+    playSuccess();
+    updateState(s => ({
+      ...s,
+      pln: s.pln + amount,
+      plnDebt: (s.plnDebt || 0) + amount
+    }));
+  };
+
+  const payPlnLoan = (amount: number) => {
+    if (amount <= 0 || (state.plnDebt || 0) <= 0) return;
+    const actualPay = Math.min(amount, state.plnDebt, state.pln);
+    if (actualPay <= 0) {
+      playError();
+      return;
+    }
+    playSuccess();
+    updateState(s => ({
+      ...s,
+      pln: Math.max(0, s.pln - actualPay),
+      plnDebt: Math.max(0, (s.plnDebt || 0) - actualPay)
+    }));
+  };
+
+  const triggerCreditHolidays = () => {
+    if (state.creditHolidaysTimer > 0 || state.creditHolidaysCooldown > 0) {
+      playError();
+      return;
+    }
+    playSuccess();
+    updateState(s => ({
+      ...s,
+      creditHolidaysTimer: 60,
+      creditHolidaysCooldown: 120
+    }));
+    showAlert('Wakacje kredytowe aktywowane! Przez najbliższe 60 sekund bank zawiesza pobieranie rat odsetkowych kredytu WIBOR.', '🏖️ WAKACJE KREDYTOWE', 'success');
+  };
+
+  const buyAccountingOffice = () => {
+    const cost = 500000 * Math.pow(1.8, state.accountingOffices || 0);
+    if (state.pln < cost) {
+      playError();
+      showAlert(`Brak środków! Wymagane: ${cost.toLocaleString('pl-PL')} PLN.`, 'BRAK PLNu', 'error');
+      return;
+    }
+    playSuccess();
+    updateState(s => ({
+      ...s,
+      pln: s.pln - cost,
+      accountingOffices: (s.accountingOffices || 0) + 1
+    }));
+  };
+
+  const buyWindTurbine = () => {
+    const cost = 2000000 * Math.pow(2.0, state.windTurbines || 0);
+    if (state.pln < cost) {
+      playError();
+      showAlert(`Brak środków! Wymagane: ${cost.toLocaleString('pl-PL')} PLN.`, 'BRAK PLNu', 'error');
+      return;
+    }
+    playSuccess();
+    updateState(s => ({
+      ...s,
+      pln: s.pln - cost,
+      windTurbines: (s.windTurbines || 0) + 1
+    }));
+  };
+
   const buyEuroBond = (bondId: string) => {
     const bondDef = EURO_BOND_TYPES.find(b => b.id === bondId);
     if (!bondDef || (state.euros || 0) < bondDef.costEur) { playError(); return; }
@@ -4698,7 +4799,7 @@ function App() {
   let cryptoPowerCost = 0;
   let aiEngineersCost = 0;
   if (state.fazaXUnlocked) {
-    cryptoPowerCost = cryptoPowerUpkeepPln(state);
+    cryptoPowerCost = state.fazaYUnlocked ? 0 : cryptoPowerUpkeepPln(state);
     aiEngineersCost = (state.aiPromptEngineers || 0) * 150;
   }
 
@@ -4712,7 +4813,16 @@ function App() {
     });
   }
 
-  const totalPassiveExpenses = Math.abs(cinkciarzPlnRate) + gangPlnCost + chfPlnCost + lobbyBribeCost + mordorUpkeepCost + cryptoPowerCost + aiEngineersCost;
+  let wiborCost = 0;
+  let polishDealTax = 0;
+  let fazaYEnergyCost = 0;
+  if (state.fazaYUnlocked) {
+    wiborCost = wiborInstallmentPerSec(state);
+    polishDealTax = polishDealTaxPerSec(state, totalPassiveIncome);
+    fazaYEnergyCost = energyPowerUpkeepPln(state);
+  }
+
+  const totalPassiveExpenses = Math.abs(cinkciarzPlnRate) + gangPlnCost + chfPlnCost + lobbyBribeCost + mordorUpkeepCost + cryptoPowerCost + aiEngineersCost + wiborCost + polishDealTax + fazaYEnergyCost;
   const plnRate = totalPassiveIncome - totalPassiveExpenses;
   const dollarsRate = businessUsdRate + cinkciarzUsdRate + widmoUsdRate;
   const eurosRate = mordorIncomePerSec(state);
@@ -4905,6 +5015,13 @@ function App() {
     unlockFazaN,
     unlockFazaS,
     unlockFazaW,
+    unlockFazaY,
+    changeTaxForm,
+    takePlnLoan,
+    payPlnLoan,
+    triggerCreditHolidays,
+    buyAccountingOffice,
+    buyWindTurbine,
     unlockSyndicate,
     updateState,
     upgradeBazarWarehouse,
@@ -5215,6 +5332,36 @@ function App() {
                 >
                   🔧 DEV: ODBLOKUJ FAZĘ X & +10 BTC
                 </button>
+                <button 
+                  onClick={() => {
+                    updateState(s => ({
+                      ...s,
+                      pln: s.pln + 100000000,
+                      fazaXUnlocked: true,
+                      fazaYUnlocked: true,
+                      wiborRate: 6.5,
+                      energyCrisisActive: true
+                    }));
+                    setCurrentTab('polski_lad');
+                    setSettingsOpen(false);
+                    setTimeout(() => addToast("DEV CHEAT", "Odblokowano Fazę Y i dodano 100M PLN!"), 50);
+                  }}
+                  style={{
+                    width: '100%',
+                    background: 'rgba(39, 174, 96, 0.2)',
+                    border: '1px solid #27ae60',
+                    color: '#27ae60',
+                    padding: '6px',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    fontWeight: 'bold',
+                    boxShadow: '0 0 3px #27ae60',
+                    marginTop: '4px'
+                  }}
+                >
+                  🔧 DEV: ODBLOKUJ FAZĘ Y & +100M PLN
+                </button>
               </div>
 
               {/* Hard Reset */}
@@ -5464,6 +5611,15 @@ function App() {
                     <div style={{color: '#ff6666'}}>Płace Prompt Engineerów: <span>-{fmtNum(aiEngineersCost, 2)} zł/s</span></div>
                   )} zł/s</span></div>
                  )}
+                 {state.fazaYUnlocked && wiborCost > 0 && (
+                   <div style={{color: '#ff6666'}}>Kredyt WIBOR (PLN): <span>-{fmtNum(wiborCost, 2)} zł/s</span></div>
+                 )}
+                 {state.fazaYUnlocked && polishDealTax > 0 && (
+                   <div style={{color: '#ff6666'}}>Podatek Polski Ład: <span>-{fmtNum(polishDealTax, 2)} zł/s</span></div>
+                 )}
+                 {state.fazaYUnlocked && fazaYEnergyCost > 0 && (
+                   <div style={{color: '#ff6666'}}>Kryzys Energetyczny (prąd): <span>-{fmtNum(fazaYEnergyCost, 2)} zł/s</span></div>
+                 )}
                  <div style={{borderTop: '1px dashed var(--prl-red)', marginTop: '8px', paddingTop: '5px', color: 'var(--prl-red)'}}>Suma Kosztów: <strong>-{fmtNum(totalPassiveExpenses, 2)} zł/s</strong></div>
                </div>
                <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', borderLeft: '1px dashed var(--prl-yellow)', paddingLeft: '15px'}}>
@@ -5540,6 +5696,9 @@ function App() {
           {state.fazaXUnlocked && (
             <button onClick={() => { playClick(); setCurrentTab('startups'); }} style={{flex: 1, backgroundColor: currentTab === 'startups' ? '#f2a900' : 'transparent', color: currentTab === 'startups' ? '#fff' : '#f2a900', borderColor: '#f2a900'}}>STARTUPY (2020.)</button>
           )}
+          {state.fazaYUnlocked && (
+            <button onClick={() => { playClick(); setCurrentTab('polski_lad'); }} style={{flex: 1, backgroundColor: currentTab === 'polski_lad' ? '#27ae60' : 'transparent', color: currentTab === 'polski_lad' ? '#fff' : '#27ae60', borderColor: '#27ae60'}}>POLSKI ŁAD (2022-2023)</button>
+          )}
       </div>
 
       <div className="game-grid" style={{gridTemplateColumns: '1fr'}}>
@@ -5551,6 +5710,7 @@ function App() {
         {currentTab === 'lata2000' && <TabLata2000 />}
         {currentTab === 'mordor' && <TabMordor />}
         {currentTab === 'startups' && <TabStartup />}
+        {currentTab === 'polski_lad' && <TabPolskiLad />}
         {currentTab === 'praca' && <TabPraca />}
 
         {/* TAB: BAZAR / CINKCIARZ */}
