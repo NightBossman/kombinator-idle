@@ -30,6 +30,9 @@ export const HELPERS: Helper[] = [
   { id: 'halinka', name: 'Sąsiadka Halinka', costPln: 5000, generateId: 'cukier', ratePerTick: 0.02, desc: 'Załatwia cukier' },
   { id: 'basia', name: 'Sklepowa Basia', costPln: 20000, generateId: 'kawa', ratePerTick: 0.01, desc: 'Odkłada kawę' },
   { id: 'spekulant', name: 'Spekulant Giełdowy', costPln: 80000, generateId: 'dzinsy', ratePerTick: 0.005, desc: 'Kombinuje dżinsy' },
+  // [Claude] zweryfikowano z App.tsx: 'radio_predom' to wartownik nigdy nieczytany - logika rozgałęzia się
+  // po h.id === 'staszek' i dzieli produkcję 50/50 między 'predom' i 'kasprzak'. Nie zmieniać na id towaru,
+  // bo wtedy gałąź ogólna liczyłaby produkcję podwójnie względem gałęzi specjalnej.
   { id: 'staszek', name: 'Złota Rączka Staszek', costPln: 200000, generateId: 'radio_predom', ratePerTick: 0.003, desc: 'Generuje Radio lub Predom' },
   { id: 'zygmunt', name: 'Gierkowiec Zygmunt', costPln: 500000, generateId: 'neptun', ratePerTick: 0.001, desc: 'Generuje Telewizor' },
   { id: 'cinkciarz', name: 'Cinkciarz "Kolega"', costPln: 300000, generateId: 'dollars', ratePerTick: 0.01, desc: 'Skupuje 0.01$/sek' },
@@ -49,6 +52,8 @@ export const SMUGGLING_ROUTES: SmugglingRoute[] = [
   { id: 'turcja', name: 'Autobus do Turcji (Stambuł)', costPln: 5000, timeMs: 60000, riskPercent: 15, rewardDesc: 'Handel ciuchami (10$ - 30$)', minDollarsEarned: 10, maxDollarsEarned: 30 },
   { id: 'jugoslawia', name: 'Maluch do Jugosławii', costPln: 20000, timeMs: 180000, riskPercent: 25, rewardDesc: 'Przemyt elektroniki (50$ - 150$)', minDollarsEarned: 50, maxDollarsEarned: 150 },
   { id: 'vhs_route', name: 'Szmugiel kaset VHS', costPln: 50000, timeMs: 300000, riskPercent: 20, rewardDesc: 'Kasety z filmami ($150 - $400)', minDollarsEarned: 150, maxDollarsEarned: 400 },
+  // [Claude] zweryfikowano z App.tsx: nagroda rublowa (20-50, +2 z osiągnięciem 'smug_moskwa') jest zaszyta
+  // w logice ukończenia szmuglu dla route.id === 'moskwa'; opis jest zgodny z działaniem.
   { id: 'moskwa', name: 'Pociąg do Moskwy (ZSRR)', costPln: 8000, timeMs: 120000, riskPercent: 10, rewardDesc: 'Szary import towarów ($15 - $40 + 20-50 Rubli)', minDollarsEarned: 15, maxDollarsEarned: 40 },
 ];
 
@@ -92,6 +97,10 @@ export const PLN_UPGRADES: PlnUpgrade[] = [
   { id: 'wozek', name: 'Wózek na kółkach', costPln: 2500, desc: 'Odblokowuje przycisk "Sprzedaj x10"' },
   { id: 'zeszyt', name: 'Zeszyt Komitetu', costPln: 150, desc: 'Automatycznie zapisuje ponownie do kolejki' },
   { id: 'kozuch', name: 'Ciepły Kożuch', costPln: 800, desc: 'Skraca czas stania w kolejce o 10%' },
+  // [Claude] naprawa (niepodłączona funkcja): App.tsx (sellItem) od dawna sprawdza plnUpgrades['znajomosci']
+  // (10% szansy na Kartkę przy każdej sprzedaży), ale ulepszenia nie było na liście zakupów - martwa gałąź.
+  // Cena spójna z resztą listy (torba 500 / kożuch 800 / wózek 2500).
+  { id: 'znajomosci', name: 'Znajomości w Sklepie', costPln: 1200, desc: '10% szansy na dodatkową Kartkę przy każdej sprzedaży na Bazarze' },
 ];
 
 export interface HistoryEvent { id: string; name: string; desc: string; durationSec: number; era?: 'lata2000' | 'lata2010'; }
@@ -161,6 +170,24 @@ export const HISTORY_EVENTS: HistoryEvent[] = [
     name: 'Czarny Wtorek (Panika Walutowa)',
     desc: 'Panika na rynku walutowym! Kurs dolara na czarnym rynku rośnie o +100% przez 60 sekund.',
     durationSec: 60
+  },
+  // [Claude] naprawa (niepodłączona funkcja): silnik (engine.ts) od dawna implementuje natychmiastowe
+  // efekty zdarzeń 'lehman_recession' i 'toxic_options_scandal', ale samych zdarzeń nie było na liście -
+  // martwe gałęzie i jedyny powód, dla którego wariant unii era: 'lata2000' był nigdzie nieużywany.
+  // Losowanie w silniku filtruje po erze (lata2000 wymaga fazaSUnlocked), więc wpisy są bezpieczne.
+  {
+    id: 'lehman_recession',
+    name: 'Upadek Lehman Brothers (2008)',
+    desc: 'Globalny kryzys finansowy dociera do Polski! Recesja na 3 minuty: GPW nurkuje, rynek nieruchomości zamiera, a kurs franka skacze o +0.50 zł.',
+    durationSec: 180,
+    era: 'lata2000'
+  },
+  {
+    id: 'toxic_options_scandal',
+    name: 'Afera Opcji Toksycznych (2008)',
+    desc: 'Banki rozliczają toksyczne opcje walutowe polskich firm! Tracisz natychmiast 15% gotówki PLN.',
+    durationSec: 60,
+    era: 'lata2000'
   },
   {
     id: 'greek_haircut',
@@ -232,7 +259,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'pres_points', name: 'Kolekcjoner Marek', desc: 'Zgromadź łącznie 50 Marek (DM) z ucieczek', category: 'prestiz', rewardDesc: '+10% do prędkości pomocników' },
   { id: 'pres_transform', name: 'Wolny Rynek', desc: 'Kup Pakiet Prywatyzacyjny (1989)', category: 'prestiz', rewardDesc: 'Zwycięstwo! +50% do wszystkich zysków w nowej grze' },
   
-  // SZMUGI MORSKIE
+  // SZMUGLE MORSKIE
   { id: 'sea_smug_1', name: 'Wilk Morski', desc: 'Ukończ pomyślnie 5 rejsów szmuglerskich', category: 'przemyt', rewardDesc: '+10% zysków w Bonach Baltona' },
   { id: 'sea_smug_2', name: 'Kapitan Floty', desc: 'Ukończ pomyślnie 25 rejsów szmuglerskich', category: 'przemyt', rewardDesc: '+20% zysków w Bonach Baltona' },
   { id: 'sea_smug_3', name: 'Trójkąt Bermudzki', desc: 'Zarób łącznie 500 Bonów Baltona ze szmuglu morskiego', category: 'przemyt', rewardDesc: 'Czas rejsów morskich -15%' },
@@ -330,12 +357,12 @@ export interface SeaSmugglingRoute {
 }
 
 export const SEA_SMUGGLING_ROUTES: SeaSmugglingRoute[] = [
-  { id: 'szwecja', name: 'Prom do Ystad (Szwecja)', costPln: 10000, timeMs: 60000, riskPercent: 10, rewardDesc: 'Bony Balaton (2 - 8)', minBony: 2, maxBony: 8 },
-  { id: 'hamburg', name: 'Rejs do Hamburga (Niemcy)', costPln: 20000, timeMs: 120000, riskPercent: 15, rewardDesc: 'Bony Balaton (5 - 15)', minBony: 5, maxBony: 15 },
-  { id: 'rotterdam', name: 'Kontenerowiec do Rotterdamu', costPln: 50000, timeMs: 300000, riskPercent: 25, rewardDesc: 'Bony Balaton (15 - 45)', minBony: 15, maxBony: 45 },
-  { id: 'londyn', name: 'Rejs do Londynu (W. Brytania)', costPln: 90000, timeMs: 450000, riskPercent: 30, rewardDesc: 'Bony Balaton (30 - 80)', minBony: 30, maxBony: 80 },
-  { id: 'nowy_jork', name: 'Transatlantyk do Nowego Jorku', costPln: 150000, timeMs: 600000, riskPercent: 35, rewardDesc: 'Bony Balaton (50 - 150)', minBony: 50, maxBony: 150 },
-  { id: 'tokio', name: 'Rejs do Tokio (Japonia)', costPln: 300000, timeMs: 900000, riskPercent: 40, rewardDesc: 'Bony Balaton (100 - 300)', minBony: 100, maxBony: 300 }
+  { id: 'szwecja', name: 'Prom do Ystad (Szwecja)', costPln: 10000, timeMs: 60000, riskPercent: 10, rewardDesc: 'Bony Baltona (2 - 8)', minBony: 2, maxBony: 8 },
+  { id: 'hamburg', name: 'Rejs do Hamburga (Niemcy)', costPln: 20000, timeMs: 120000, riskPercent: 15, rewardDesc: 'Bony Baltona (5 - 15)', minBony: 5, maxBony: 15 },
+  { id: 'rotterdam', name: 'Kontenerowiec do Rotterdamu', costPln: 50000, timeMs: 300000, riskPercent: 25, rewardDesc: 'Bony Baltona (15 - 45)', minBony: 15, maxBony: 45 },
+  { id: 'londyn', name: 'Rejs do Londynu (W. Brytania)', costPln: 90000, timeMs: 450000, riskPercent: 30, rewardDesc: 'Bony Baltona (30 - 80)', minBony: 30, maxBony: 80 },
+  { id: 'nowy_jork', name: 'Transatlantyk do Nowego Jorku', costPln: 150000, timeMs: 600000, riskPercent: 35, rewardDesc: 'Bony Baltona (50 - 150)', minBony: 50, maxBony: 150 },
+  { id: 'tokio', name: 'Rejs do Tokio (Japonia)', costPln: 300000, timeMs: 900000, riskPercent: 40, rewardDesc: 'Bony Baltona (100 - 300)', minBony: 100, maxBony: 300 }
 ];
 
 export interface BaltonaItem {
@@ -462,6 +489,9 @@ export const EXPORT_CONTACTS: ExportContact[] = [
   { id: 'moscow_bureau', name: 'Komitet Planowania ZSRR', country: 'ZSRR', priceBonus: 0, riskBonus: 0, costUsd: 0, desc: 'Domyślny odbiorca. Pewny, ale nie nadpłaca.', unlockRequirement: 'default' },
   { id: 'stasi_net', name: 'Sieć Stasi (NRD)', country: 'NRD', priceBonus: 0.15, riskBonus: 0.05, costUsd: 5000, desc: 'Wschodnioniemiecki wywiad techniczny. +15% do ceny, +5% ryzyka.', unlockRequirement: 'sekretarz' },
   { id: 'belgrade_group', name: 'Jugosłowiańska sieć handlowa', country: 'SFRJ', priceBonus: 0.25, riskBonus: 0.10, costUsd: 15000, desc: 'Neutralny pośrednik bałkański. +25% ceny, +10% ryzyka.', unlockRequirement: 'offshore_zurich' },
+  // [Claude] zweryfikowano i podłączono: 'liechtenstein' mapuje na flagę stanu hasLiechtensteinTrust
+  // (rejestracja fundacji w Vaduz). Wymagania unlockRequirement są od teraz egzekwowane w App.tsx
+  // (meetsContactRequirement w unlockExportContact) - wcześniej pole nie było czytane nigdzie.
   { id: 'vienna_contact', name: 'Wiedeński pośrednik neutralny', country: 'Austria', priceBonus: 0.40, riskBonus: 0.15, costUsd: 30000, desc: 'Dyskretny makler w Wiedniu. +40% ceny, +15% ryzyka.', unlockRequirement: 'liechtenstein' },
   { id: 'cia_front', name: 'Agentura „Fundacja Wolności"', country: 'USA', priceBonus: 0.80, riskBonus: 0.20, costUsd: 50000, desc: 'Podwójni agenci CIA. Najwyższa marża, ale niebezpieczne. +80% ceny, +20% ryzyka.', unlockRequirement: 'cocom_nsa' }
 ];
@@ -718,6 +748,8 @@ export interface NfiCompany {
 }
 
 export const NFI_COMPANIES: NfiCompany[] = [
+  // [Claude] zweryfikowano z App.tsx: powtórzone id 'fso'/'ursus' są bezpieczne - NFI żyje w state.nfiCompanies
+  // (+ nfiCompanyStatus), a spółki nomenklaturowe w state.nomenklaturaCompanies (osobne mapy).
   { id: 'fso', name: 'FSO Warszawa', desc: 'Fabryka Samochodów Osobowych. Wymaga restrukturyzacji, ale generuje stały zysk z montowni.', vouchersRequired: 50, dividendPerSecPln: 100000, baseEmployment: 12000, baseInfrastructure: 40, baseUnionStrength: 50 },
   { id: 'ursus', name: 'Zakłady Ursus', desc: 'Produkcja ciągników. Rynek wschodni wciąż zgłasza zapotrzebowanie.', vouchersRequired: 150, dividendPerSecPln: 400000, baseEmployment: 18000, baseInfrastructure: 30, baseUnionStrength: 75 },
   { id: 'huta_katowice', name: 'Huta Katowice', desc: 'Kombinat metalurgiczny. Gigantyczny biznes dla prawdziwego oligarchy.', vouchersRequired: 500, dividendPerSecPln: 2000000, baseEmployment: 25000, baseInfrastructure: 25, baseUnionStrength: 90 }
@@ -1029,6 +1061,8 @@ export interface CurrencyOptionPreset {
 }
 
 export const CURRENCY_OPTION_PRESETS: CurrencyOptionPreset[] = [
+  // [Claude] porządek: id 'put_safeguard' sugeruje opcję PUT, ale name/type to CALL (finansowo poprawne
+  // dla zabezpieczenia kredytobiorcy przed wzrostem CHF). Id celowo pozostawiony, by nie unieważnić save'ów.
   { id: 'put_safeguard', name: 'Opcja CALL (Zabezpieczenie CHF)', desc: 'Zabezpieczenie przed wzrostem franka. Kurs wykonania: 3.50 PLN.', type: 'call', strikeRate: 3.50, premiumPln: 150000, amountChf: 1000000, durationSec: 60 },
   { id: 'call_speculate', name: 'Opcja CALL (Spekulacja CHF)', desc: 'Zarabiasz gdy frank drożeje. Kurs wykonania: 3.00 PLN.', type: 'call', strikeRate: 3.00, premiumPln: 250000, amountChf: 1500000, durationSec: 90 },
   { id: 'toxic_asymmetric', name: 'Toksyczna Opcja Asymetryczna', desc: 'Brak kosztu wstępnego. Zyski przy niskim franku, podwójna kara powyżej 4.20!', type: 'toxic', strikeRate: 4.20, premiumPln: 0, amountChf: 3000000, durationSec: 120 }
