@@ -27,7 +27,7 @@ const TabMordor = lazy(() => import('./tabs/TabMordor'));
 const TabStartup = lazy(() => import('./tabs/TabStartup'));
 const TabPolskiLad = lazy(() => import('./tabs/TabPolskiLad'));
 const TabFazaZ = lazy(() => import('./tabs/TabFazaZ'));
-import { Settings as SettingsIcon, Pause as PauseIcon, Volume2, VolumeX, Tv, Wrench, ShieldAlert, TrendingUp, Coins, DollarSign, Landmark, Package, CheckCircle2 } from 'lucide-react';
+import { Settings as SettingsIcon, Pause as PauseIcon, Volume2, VolumeX, Tv, Wrench, ShieldAlert, TrendingUp, Coins, DollarSign, Landmark, Package, CheckCircle2, Clock } from 'lucide-react';
 import { GameApiContext } from './tabs/GameApiContext';
 import type { GameApi } from './tabs/GameApiContext';
 import { MORDOR_UPGRADES, JDG_TAX_LEVELS, EURO_BOND_TYPES, AI_UPGRADES } from './game/items';
@@ -5248,26 +5248,6 @@ function App() {
     <GameApiContext.Provider value={api}>
     <div className={crtOn ? 'crt-screen' : 'crt-screen crt-off'}>
       <div style={{ position: 'absolute', top: '15px', right: '20px', display: 'flex', alignItems: 'center', gap: '15px', fontFamily: 'monospace', color: 'var(--crt-text)', fontSize: '1.2rem', textShadow: '0 0 5px var(--crt-text)' }}>
-        <button 
-          onClick={() => { playClick(); setSettingsOpen(!settingsOpen); }}
-          style={{
-            background: settingsOpen ? 'var(--crt-text)' : 'transparent',
-            border: '1px solid var(--crt-text)',
-            color: settingsOpen ? '#000' : 'var(--crt-text)',
-            padding: '2px 8px',
-            fontSize: '0.85rem',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-            textShadow: settingsOpen ? 'none' : 'inherit',
-            boxShadow: '0 0 3px var(--crt-text)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '5px'
-          }}
-        >
-          <SettingsIcon size={14} style={{ marginRight: '2px' }} /> USTAWIENIA
-        </button>
-
         {settingsOpen && (
           <div style={{
             position: 'fixed',
@@ -5614,9 +5594,24 @@ function App() {
 
         <div 
           onClick={() => { playClick(); setSettingsOpen(!settingsOpen); }} 
-          style={{ cursor: 'pointer' }}
+          style={{ 
+            cursor: 'pointer',
+            border: '1px solid var(--crt-text)',
+            padding: '2px 8px',
+            borderRadius: '4px',
+            background: settingsOpen ? 'var(--crt-text)' : 'rgba(0, 0, 0, 0.4)',
+            color: settingsOpen ? '#000' : 'var(--crt-text)',
+            boxShadow: settingsOpen ? 'none' : '0 0 5px var(--crt-text)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            fontSize: '0.95rem',
+            textShadow: settingsOpen ? 'none' : 'inherit',
+            userSelect: 'none'
+          }}
           title="Ustawienia"
         >
+          <Clock size={13} />
           {realTime.toLocaleTimeString('pl-PL')}
         </div>
       </div>
