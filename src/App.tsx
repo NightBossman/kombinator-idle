@@ -27,6 +27,7 @@ const TabMordor = lazy(() => import('./tabs/TabMordor'));
 const TabStartup = lazy(() => import('./tabs/TabStartup'));
 const TabPolskiLad = lazy(() => import('./tabs/TabPolskiLad'));
 const TabFazaZ = lazy(() => import('./tabs/TabFazaZ'));
+import { Settings as SettingsIcon, Pause as PauseIcon, Volume2, VolumeX, Tv, Wrench, ShieldAlert, TrendingUp, Coins, DollarSign, Landmark, Package, CheckCircle2 } from 'lucide-react';
 import { GameApiContext } from './tabs/GameApiContext';
 import type { GameApi } from './tabs/GameApiContext';
 import { MORDOR_UPGRADES, JDG_TAX_LEVELS, EURO_BOND_TYPES, AI_UPGRADES } from './game/items';
@@ -109,7 +110,7 @@ function App() {
 
   interface GameModal {
     title: string;
-    message: string;
+    message: string | React.ReactNode;
     type?: 'info' | 'error' | 'success' | 'raid' | 'pap';
     confirmText?: string;
     cancelText?: string;
@@ -211,28 +212,68 @@ function App() {
       const rep = state.offlineReport;
       const hours = Math.floor(rep.timeSec / 3600);
       const mins = Math.floor((rep.timeSec % 3600) / 60);
-      let msg = `Towarzyszu Obywatelu, pod Twoją nieobecność (${hours}h ${mins}m) nasz kombinat pracował pełną parą!\n\nOto wyniki produkcyjne:\n`;
-      if (rep.earnedPln > 0) msg += `- Gotówka (PLN): +${fmtNum(rep.earnedPln)}\n`;
-      if (rep.earnedDollars > 0) msg += `- Dewizy (USD): +$${fmtNum(rep.earnedDollars)}\n`;
-      if (rep.dividends > 0) msg += `- Dywidendy GPW/NFI: +${fmtNum(rep.dividends)} PLN\n`;
-      if (rep.interest > 0) msg += `- Odsetki: +${fmtNum(rep.interest)}\n`;
-      
       const itemKeys = Object.keys(rep.earnedItems);
-      if (itemKeys.length > 0) {
-        msg += `\nWyprodukowane dobra:\n`;
-        itemKeys.forEach(k => {
-          if (rep.earnedItems[k] > 0) {
-             msg += `- ${k}: +${fmtNum(rep.earnedItems[k], 2, true)}\n`;
-          }
-        });
-      }
-      
-      msg += `\nKu chwale ojczyzny!`;
+
+      const modalMessage = (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', textAlign: 'left', fontFamily: 'monospace' }}>
+          <p>
+            Towarzyszu Obywatelu, pod Twoją nieobecność (<strong>{hours}h {mins}m</strong>) nasz kombinat pracował pełną parą!
+          </p>
+          <div style={{ border: '1px solid var(--crt-text)', padding: '10px', background: 'rgba(0,0,0,0.3)', borderRadius: '4px' }}>
+            <div style={{ fontWeight: 'bold', marginBottom: '5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <TrendingUp size={16} /> Wyniki produkcyjne:
+            </div>
+            <ul style={{ listStyleType: 'none', paddingLeft: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              {rep.earnedPln > 0 && (
+                <li style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Coins size={14} color="#f1c40f" /> Gotówka (PLN): +{fmtNum(rep.earnedPln)}
+                </li>
+              )}
+              {rep.earnedDollars > 0 && (
+                <li style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <DollarSign size={14} color="#2ecc71" /> Dewizy (USD): +${fmtNum(rep.earnedDollars)}
+                </li>
+              )}
+              {rep.dividends > 0 && (
+                <li style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Landmark size={14} color="#9b59b6" /> Dywidendy GPW/NFI: +{fmtNum(rep.dividends)} PLN
+                </li>
+              )}
+              {rep.interest > 0 && (
+                <li style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <TrendingUp size={14} color="#3498db" /> Odsetki: +{fmtNum(rep.interest)}
+                </li>
+              )}
+            </ul>
+          </div>
+          
+          {itemKeys.some(k => rep.earnedItems[k] > 0) && (
+            <div style={{ border: '1px solid var(--crt-text)', padding: '10px', background: 'rgba(0,0,0,0.3)', borderRadius: '4px' }}>
+              <div style={{ fontWeight: 'bold', marginBottom: '5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Package size={16} /> Wyprodukowane dobra:
+              </div>
+              <ul style={{ listStyleType: 'none', paddingLeft: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                {itemKeys.map(k => {
+                  if (rep.earnedItems[k] <= 0) return null;
+                  return (
+                    <li key={k} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <CheckCircle2 size={14} color="#2ecc71" /> {k}: +{fmtNum(rep.earnedItems[k], 2, true)}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+          <p style={{ textAlign: 'center', fontWeight: 'bold', marginTop: '5px', color: 'var(--prl-yellow)' }}>
+            Ku chwale ojczyzny!
+          </p>
+        </div>
+      );
       
       // eslint-disable-next-line react-hooks/set-state-in-effect
       enqueueModal({
         title: 'RAPORT ZMIANY (OFFLINE)',
-        message: msg,
+        message: modalMessage,
         type: 'info',
         confirmText: 'ZROZUMIANO',
         onConfirm: () => {
@@ -5160,7 +5201,7 @@ function App() {
             gap: '5px'
           }}
         >
-          ⚙️ USTAWIENIA
+          <SettingsIcon size={14} style={{ marginRight: '2px' }} /> USTAWIENIA
         </button>
 
         {settingsOpen && (
@@ -5195,18 +5236,22 @@ function App() {
               
               {/* Header */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid var(--crt-text)', paddingBottom: '8px', marginBottom: '5px' }}>
-                <strong style={{ fontSize: '1.2em' }}>⚙️ USTAWIENIA</strong>
+                <strong style={{ fontSize: '1.2em', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <SettingsIcon size={18} /> USTAWIENIA
+                </strong>
                 <button onClick={() => { playClick(); setSettingsOpen(false); }} style={{ background: 'transparent', border: 'none', color: '#ff3333', cursor: 'pointer', fontWeight: 'bold', fontSize: '1.4rem', lineHeight: '1' }}>×</button>
               </div>
 
               {/* Status: Gra Zapauzowana */}
-              <div style={{ textAlign: 'center', color: '#e74c3c', fontWeight: 'bold', fontSize: '0.9em', border: '1px dashed #e74c3c', padding: '5px', borderRadius: '4px', letterSpacing: '1px', textShadow: '0 0 3px #e74c3c' }}>
-                ⏸️ GRA ZAPAUZOWANA
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', color: '#e74c3c', fontWeight: 'bold', fontSize: '0.9em', border: '1px dashed #e74c3c', padding: '5px', borderRadius: '4px', letterSpacing: '1px', textShadow: '0 0 3px #e74c3c' }}>
+                <PauseIcon size={16} /> GRA ZAPAUZOWANA
               </div>
 
               {/* Dźwięk */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.9rem' }}>Dźwięk systemowy:</span>
+                <span style={{ fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  {soundOn ? <Volume2 size={16} /> : <VolumeX size={16} />} Dźwięk systemowy:
+                </span>
                 <button 
                   onClick={toggleSound}
                   style={{
@@ -5220,13 +5265,15 @@ function App() {
                     boxShadow: '0 0 3px var(--crt-text)'
                   }}
                 >
-                  {soundOn ? '🔊 WŁĄCZONY' : '🔇 WYŁĄCZONY'}
+                  {soundOn ? 'WŁĄCZONY' : 'WYŁĄCZONY'}
                 </button>
               </div>
 
               {/* Efekt CRT (KIERUNEK 7.2) */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.9rem' }}>Efekt CRT (scanlines):</span>
+                <span style={{ fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Tv size={16} /> Efekt CRT (scanlines):
+                </span>
                 <button
                   onClick={() => { playClick(); toggleCrt(); }}
                   title="Wyłącz na słabszym komputerze - usuwa migotanie i linie ekranu kineskopowego"
@@ -5241,13 +5288,15 @@ function App() {
                     boxShadow: '0 0 3px var(--crt-text)'
                   }}
                 >
-                  {crtOn ? '📺 WŁĄCZONY' : '⬛ WYŁĄCZONY'}
+                  {crtOn ? 'WŁĄCZONY' : 'WYŁĄCZONY'}
                 </button>
               </div>
 
               {/* Dev Opcje */}
               <div style={{ borderTop: '1px dashed #444', paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <span style={{ color: 'var(--prl-yellow)', fontSize: '0.85rem', fontWeight: 'bold' }}>Narzędzia Deweloperskie:</span>
+                <span style={{ color: 'var(--prl-yellow)', fontSize: '0.85rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Wrench size={16} /> Narzędzia Deweloperskie:
+                </span>
                 <button 
                   onClick={devUnlockEverything}
                   style={{
@@ -5260,10 +5309,14 @@ function App() {
                     cursor: 'pointer',
                     fontFamily: 'inherit',
                     fontWeight: 'bold',
-                    boxShadow: state.devStateBackup ? '0 0 3px #2ecc71' : '0 0 3px #e74c3c'
+                    boxShadow: state.devStateBackup ? '0 0 3px #2ecc71' : '0 0 3px #e74c3c',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
                   }}
                 >
-                  {state.devStateBackup ? '🔧 DEV: ZABLOKUJ GRĘ' : '🔧 DEV: ODBLOKUJ GRĘ'}
+                  <ShieldAlert size={14} /> {state.devStateBackup ? 'DEV: ZABLOKUJ GRĘ' : 'DEV: ODBLOKUJ GRĘ'}
                 </button>
                 <button 
                   onClick={devClearDebt}
@@ -5277,10 +5330,14 @@ function App() {
                     cursor: 'pointer',
                     fontFamily: 'inherit',
                     fontWeight: 'bold',
-                    boxShadow: '0 0 3px #3498db'
+                    boxShadow: '0 0 3px #3498db',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
                   }}
                 >
-                  🔧 DEV: ZERUJ DŁUG CHF
+                  <Wrench size={14} /> DEV: ZERUJ DŁUG CHF
                 </button>
                 <button 
                   onClick={() => {
