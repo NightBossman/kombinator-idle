@@ -12,7 +12,7 @@ import { generateBlackMarketOffers } from '../hooks/useGameState';
 import { fmtNum } from '../utils/format';
 // [Claude] KIERUNEK 1.3: wspolne wzory mnoznikow - jedno zrodlo prawdy dla silnika,
 // symulacji offline (useGameState) i paneli UI (Casio, Bazar)
-import { helperSpeedMult, businessProductionMult, cinkciarzRate, queueTimeMs, chfInstallmentPerSec, vatCarouselRefundPerSec, vatCarouselRiskGainPerSec, mordorIncomePerSec, mordorMoraleDecayPerSec, mordorEmployeeUpkeepPerSec, jdgRiskGainPerSec, cryptoMiningYield, cryptoPowerUpkeepPln, aiTrainSpeed, knfRiskGrowthRate, wiborInstallmentPerSec, polishDealTaxPerSec, usRiskGrowthRate, energyPowerUpkeepPln, grossPassiveIncomePlnPerSec } from './formulas';
+import { helperSpeedMult, businessProductionMult, cinkciarzRate, queueTimeMs, chfInstallmentPerSec, vatCarouselRefundPerSec, vatCarouselRiskGainPerSec, mordorIncomePerSec, mordorMoraleDecayPerSec, mordorEmployeeUpkeepPerSec, jdgRiskGainPerSec, cryptoMiningYield, cryptoPowerUpkeepPln, aiTrainSpeed, knfRiskGrowthRate, wiborInstallmentPerSec, polishDealTaxPerSec, usRiskGrowthRate, energyPowerUpkeepPln, grossPassiveIncomePlnPerSec, coiBondYieldPerSec, edoBondYieldPerSec, aiSaaSProfitUsdPerSec, aiSaaSProfitEurPerSec, nbpInterestRateAffectingWibor } from './formulas';
 import {
   QUEUE_ITEMS, HELPERS, BUSINESSES, HISTORY_EVENTS, ACHIEVEMENTS, LUXURY_ITEMS,
   GPW_STOCKS, GPW_EVENTS, NOMENKLATURA_COMPANIES, OFFSHORE_DEPOSITS, COCOM_ITEMS,
@@ -128,7 +128,7 @@ export function tick(s: GameState, deltaSec: number, ctx: TickContext): { state:
           }
           const polisaMult = s.inflationUpgrades?.['polisaAsekuracyjna'] ? 0.75 : 1.0;
           nextState.inflationPercent = (s.inflationPercent || 0) + (inflationInc * polisaMult) * deltaSec;
-        } else {
+        } else if (!s.fazaZUnlocked) {
           nextState.inflationPercent = 0;
         }
 
@@ -1892,6 +1892,68 @@ export function tick(s: GameState, deltaSec: number, ctx: TickContext): { state:
           const totalPowerCost = energyPowerUpkeepPln(nextState) * deltaSec;
           if (totalPowerCost > 0) {
             nextState.pln = Math.max(0, nextState.pln - totalPowerCost);
+          }
+        }
+
+        // ===== Faza Z: KPO, AI SaaS, Obligacje COI/EDO (Lata 2024-2025) =====
+        if (s.fazaZUnlocked) {
+          // 1. Zyski z Obligacji detalicznych
+          const coiYield = coiBondYieldPerSec(nextState) * deltaSec;
+          const edoYield = edoBondYieldPerSec(nextState) * deltaSec;
+          const totalBondYield = coiYield + edoYield;
+          if (totalBondYield > 0) {
+            nextState.pln += totalBondYield;
+            nextState.stats.totalPlnEarned = (nextState.stats.totalPlnEarned || 0) + totalBondYield;
+          }
+
+          // 2. Zyski z AI SaaS (EUR i USD)
+          if (nextState.aiSaaSActive && nextState.gpuClusters > 0) {
+            const usdEarned = aiSaaSProfitUsdPerSec(nextState) * deltaSec;
+            const eurEarned = aiSaaSProfitEurPerSec(nextState) * deltaSec;
+            
+            if (usdEarned > 0) {
+              nextState.dollars = (nextState.dollars || 0) + usdEarned;
+              nextState.stats.totalDollarsEarned = (nextState.stats.totalDollarsEarned || 0) + usdEarned;
+            }
+            if (eurEarned > 0) {
+              nextState.euros = (nextState.euros || 0) + eurEarned;
+              nextState.stats.totalPlnEarned = (nextState.stats.totalPlnEarned || 0) + Math.floor(eurEarned * nextState.euroExchangeRate);
+            }
+          }
+
+          // 3. Posiedzenie RPP - wahania stóp procentowych
+          if (nextState.rppMeetingTimer > 0) {
+            nextState.rppMeetingTimer = Math.max(0, nextState.rppMeetingTimer - deltaSec);
+          } else {
+            // Posiedzenie RPP co 60 sekund
+            nextState.rppMeetingTimer = 60;
+            
+            // Zmiana inflacji
+            const inflationShift = (Math.random() * 2) - 1; // -1 do +1
+            nextState.inflationPercent = Math.max(0, Math.min(25, (nextState.inflationPercent || 0) + inflationShift));
+            
+            // Decyzja RPP oparta na inflacji
+            let rateChange: number;
+            if (nextState.inflationPercent > nextState.nbpInterestRate + 2) {
+              // Podwyżka stóp (walka z inflacją)
+              rateChange = 0.25 * (Math.floor(Math.random() * 3) + 1); // 0.25, 0.50, 0.75
+            } else if (nextState.inflationPercent < nextState.nbpInterestRate - 2) {
+              // Obniżka stóp
+              rateChange = -0.25 * (Math.floor(Math.random() * 2) + 1);
+            } else {
+              // Utrzymanie/nieznaczne wahania
+              rateChange = Math.random() > 0.5 ? 0.25 : -0.25;
+            }
+            
+            nextState.nbpInterestRate = Math.max(0.1, Math.min(20, nextState.nbpInterestRate + rateChange));
+            
+            // Aktualizacja WIBOR
+            nextState.wiborRate = nbpInterestRateAffectingWibor(nextState.nbpInterestRate);
+            
+            setTimeout(() => {
+              playAlert();
+              addToast("KOMUNIKAT RPP", `Rada Polityki Pieniężnej zmieniła stopy. Stopa NBP: ${nextState.nbpInterestRate.toFixed(2)}%, WIBOR: ${nextState.wiborRate.toFixed(2)}%`);
+            }, 50);
           }
         }
 

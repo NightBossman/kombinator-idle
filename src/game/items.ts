@@ -1244,4 +1244,32 @@ export const POLISH_DEAL_TAXES: TaxFormInfo[] = [
   { id: 'skala', name: 'Skala Podatkowa (12% / 32%)', desc: '12% podatku, ale po przekroczeniu progu (120 000 zł/s) stawka skacze do 32%. Bardzo wysokie ryzyko kontroli przy dużych dochodach.', baseTaxRate: 0.12, usRiskFactor: 1.5 }
 ];
 
+// ===== FAZA Z: KPO, GPU Clusters & AI SaaS, Obligacje COI/EDO oraz RPP (Lata 2024-2025) =====
 
+export interface KpoProject {
+  id: string;
+  name: string;
+  desc: string;
+  costPln: number;
+  grantPln: number;
+  effectDesc: string;
+}
+
+export const KPO_PROJECTS: KpoProject[] = [
+  { id: 'zielona_energia', name: 'Rozwój Zielonej Energii', desc: 'Dofinansowanie do OZE. Budowa infrastruktury dla przyszłych pokoleń.', costPln: 5000000, grantPln: 15000000, effectDesc: 'Otrzymujesz 15M PLN oraz 3 darmowe turbiny wiatrowe' },
+  { id: 'cyfryzacja_urzedow', name: 'Cyfryzacja Urzędów', desc: 'Wdrożenie AI w Ministerstwie Finansów.', costPln: 8000000, grantPln: 20000000, effectDesc: 'Otrzymujesz 20M PLN i na stałe obniżasz ryzyko US o 20%' }
+];
+
+export interface AiSaasUpgrade {
+  id: string;
+  name: string;
+  desc: string;
+  costEur: number;
+  revenueUsd: number;
+  revenueEur: number;
+  powerKw: number;
+}
+
+export const AI_SAAS_UPGRADES: AiSaasUpgrade[] = [
+  { id: 'h200_cluster', name: 'Klaster NVIDIA H200', desc: 'Potężna moc obliczeniowa wynajmowana firmom z USA i UE w modelu SaaS.', costEur: 5000000, revenueUsd: 1000, revenueEur: 500, powerKw: 200 }
+];

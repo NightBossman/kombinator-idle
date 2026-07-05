@@ -191,6 +191,12 @@ export interface GameApi {
   unlockFazaS: () => void;
   unlockFazaW: () => void;
   unlockFazaY: () => void;
+  unlockFazaZ: () => void;
+  fundKpoLobby: (amount: number, currency: 'pln' | 'usd' | 'eur') => void;
+  buyGpuCluster: () => void;
+  toggleAiSaaS: () => void;
+  buyBonds: (type: 'coi' | 'edo', amount: number) => void;
+  sellBonds: (type: 'coi' | 'edo', amount: number) => void;
   changeTaxForm: (form: 'ryczalt' | 'skala' | 'liniowy') => void;
   takePlnLoan: (amount: number) => void;
   payPlnLoan: (amount: number) => void;

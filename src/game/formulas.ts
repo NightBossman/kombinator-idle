@@ -386,7 +386,13 @@ export const energyPowerUpkeepPln = (s: GameState): number => {
     officeCost = s.mordorEmployees * 15;
   }
   
-  let total = cryptoCost + officeCost;
+  // Koszt z klastrów GPU (Faza Z)
+  let aiSaaSCost = 0;
+  if (s.fazaZUnlocked && s.aiSaaSActive && s.gpuClusters > 0) {
+    aiSaaSCost = s.gpuClusters * 200 * 5; // 200 kW * 5 PLN/kW
+  }
+  
+  let total = cryptoCost + officeCost + aiSaaSCost;
   if (s.energyCrisisActive) {
     total *= 3; // Kryzys energetyczny potraja koszty
   }
@@ -526,6 +532,41 @@ export const grossPassiveIncomePlnPerSec = (s: GameState): number => {
     mordorPlnIncomeRate = mordorIncomePerSec(s) * s.euroExchangeRate;
   }
 
-  return businessPlnRate + mediaPlnRate + dotcomPlnRate + zmywakPlnRate + nfiPlnRate + gpwPlnRate + cyprusInterestPlnRate + mordorPlnIncomeRate;
+  // 9. Obligacje Detaliczne COI/EDO (Faza Z)
+  let bondsPlnRate = 0;
+  if (s.fazaZUnlocked) {
+    bondsPlnRate = coiBondYieldPerSec(s) + edoBondYieldPerSec(s);
+  }
+
+  return businessPlnRate + mediaPlnRate + dotcomPlnRate + zmywakPlnRate + nfiPlnRate + gpwPlnRate + cyprusInterestPlnRate + mordorPlnIncomeRate + bondsPlnRate;
 };
+
+// ===== FAZA Z: KPO, AI SaaS, OBLIGACJE, RPP =====
+
+export const nbpInterestRateAffectingWibor = (nbpRate: number): number => {
+  return nbpRate + 1.5; // WIBOR to stopa NBP + 1.5% marży
+};
+
+export const coiBondYieldPerSec = (s: GameState): number => {
+  if (!s.fazaZUnlocked || (s.coiBondsPLN || 0) <= 0) return 0;
+  const yieldRate = Math.max(0, s.inflationPercent) + 1.5;
+  return (s.coiBondsPLN * (yieldRate / 100)) / 60;
+};
+
+export const edoBondYieldPerSec = (s: GameState): number => {
+  if (!s.fazaZUnlocked || (s.edoBondsPLN || 0) <= 0) return 0;
+  const yieldRate = Math.max(0, s.inflationPercent) + 2.0;
+  return (s.edoBondsPLN * (yieldRate / 100)) / 60;
+};
+
+export const aiSaaSProfitUsdPerSec = (s: GameState): number => {
+  if (!s.fazaZUnlocked || !s.aiSaaSActive || (s.gpuClusters || 0) <= 0) return 0;
+  return s.gpuClusters * 1000;
+};
+
+export const aiSaaSProfitEurPerSec = (s: GameState): number => {
+  if (!s.fazaZUnlocked || !s.aiSaaSActive || (s.gpuClusters || 0) <= 0) return 0;
+  return s.gpuClusters * 500;
+};
+
 
