@@ -456,7 +456,9 @@ export function tick(s: GameState, deltaSec: number, ctx: TickContext): { state:
         let nextAuctionIn = s.nextAuctionIn !== undefined ? s.nextAuctionIn : 600;
         let auction = s.auction;
 
-        if (auction) {
+        // [Antigravity] Uruchamiaj licytacje tylko, gdy Czarny Rynek jest odblokowany
+        if (s.czarnyRynekUnlocked) {
+          if (auction) {
           const newTimeLeft = auction.timeLeft - deltaSec;
           if (newTimeLeft <= 0) {
             const winner = auction.highestBidder;
@@ -581,6 +583,7 @@ export function tick(s: GameState, deltaSec: number, ctx: TickContext): { state:
               nextAuctionIn = 999999;
             }
           }
+        }
         }
 
         nextState.nextAuctionIn = Math.max(0, nextAuctionIn);

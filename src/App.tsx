@@ -206,10 +206,14 @@ function App() {
   }, [enqueueModal, closeActiveModal]);
 
   // Raport offline (wykonywany po wczytaniu save'a i ewentualnej symulacji)
+  const offlineShownRef = useRef(false);
   useEffect(() => {
     console.log('Checking offlineReport:', state.offlineReport);
-    if (state.offlineReport) {
+    if (state.offlineReport && !offlineShownRef.current) {
+      offlineShownRef.current = true;
       const rep = state.offlineReport;
+      // [Antigravity] Czyszczenie raportu ze stanu natychmiast, aby zapobiec duplikatowi w StrictMode
+      updateState(s => ({ ...s, offlineReport: null }));
       const hours = Math.floor(rep.timeSec / 3600);
       const mins = Math.floor((rep.timeSec % 3600) / 60);
       const itemKeys = Object.keys(rep.earnedItems);
@@ -270,16 +274,12 @@ function App() {
         </div>
       );
       
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       enqueueModal({
         title: 'RAPORT ZMIANY (OFFLINE)',
         message: modalMessage,
         type: 'info',
         confirmText: 'ZROZUMIANO',
-        onConfirm: () => {
-           updateState(s => ({ ...s, offlineReport: null }));
-           closeActiveModal();
-        }
+        onConfirm: closeActiveModal
       });
     }
   }, [state.offlineReport, enqueueModal, closeActiveModal, updateState]);
@@ -3738,6 +3738,9 @@ function App() {
     playAlert();
     const finalConfirm = window.prompt("🚨 OSTRZEŻENIE OSTATECZNE! 🚨\n\nTa operacja całkowicie wyczyści Twój zapis gry, cofając wszystkie postępy, pieniądze i odblokowane ery.\n\nAby potwierdzić, wpisz drukowanymi literami słowo:\n\nRESETUJ");
     if (finalConfirm === "RESETUJ") {
+      // [Antigravity] Ustawiamy flagę, aby zablokować save w zdarzeniu beforeunload podczas przeładowania strony
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).__isResetting = true;
       localStorage.removeItem('kombinator-save');
       window.location.reload();
     } else {
