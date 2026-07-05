@@ -5612,7 +5612,11 @@ function App() {
           </div>
         )}
 
-        <div>
+        <div 
+          onClick={() => { playClick(); setSettingsOpen(!settingsOpen); }} 
+          style={{ cursor: 'pointer' }}
+          title="Ustawienia"
+        >
           {realTime.toLocaleTimeString('pl-PL')}
         </div>
       </div>
@@ -5721,10 +5725,12 @@ function App() {
            <span style={{fontSize: '0.8rem', color: 'var(--prl-gray)'}}>MILICJA</span>
            <span style={{fontSize: '1.2rem'}}>{Math.floor(state.suspicion)}%</span>
         </div>
-        <div className="flex-col" style={{color: '#e63946'}}>
-           <span style={{fontSize: '0.8rem', color: 'var(--prl-gray)'}}>SOLIDARNOŚĆ</span>
-           <span style={{fontSize: '1.2rem'}}>{Math.floor(state.solidarnos)}/10000</span>
-        </div>
+        {state.solidarnos > 0 && (
+          <div className="flex-col" style={{color: '#e63946'}}>
+             <span style={{fontSize: '0.8rem', color: 'var(--prl-gray)'}}>SOLIDARNOŚĆ</span>
+             <span style={{fontSize: '1.2rem'}}>{Math.floor(state.solidarnos)}/10000</span>
+          </div>
+        )}
         {state.speedrunActive && (
           <div className="flex-col" style={{color: 'var(--prl-yellow)'}}>
              <span style={{fontSize: '0.8rem', color: 'var(--prl-gray)'}}>⏱️ SPEEDRUN</span>
