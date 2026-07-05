@@ -27,6 +27,7 @@ const TabMordor = lazy(() => import('./tabs/TabMordor'));
 const TabStartup = lazy(() => import('./tabs/TabStartup'));
 const TabPolskiLad = lazy(() => import('./tabs/TabPolskiLad'));
 const TabFazaZ = lazy(() => import('./tabs/TabFazaZ'));
+import { Settings as SettingsIcon, Pause as PauseIcon, Volume2, VolumeX, Tv, Wrench, ShieldAlert } from 'lucide-react';
 import { GameApiContext } from './tabs/GameApiContext';
 import type { GameApi } from './tabs/GameApiContext';
 import { MORDOR_UPGRADES, JDG_TAX_LEVELS, EURO_BOND_TYPES, AI_UPGRADES } from './game/items';
@@ -5160,7 +5161,7 @@ function App() {
             gap: '5px'
           }}
         >
-          ⚙️ USTAWIENIA
+          <SettingsIcon size={14} style={{ marginRight: '2px' }} /> USTAWIENIA
         </button>
 
         {settingsOpen && (
@@ -5195,18 +5196,22 @@ function App() {
               
               {/* Header */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid var(--crt-text)', paddingBottom: '8px', marginBottom: '5px' }}>
-                <strong style={{ fontSize: '1.2em' }}>⚙️ USTAWIENIA</strong>
+                <strong style={{ fontSize: '1.2em', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <SettingsIcon size={18} /> USTAWIENIA
+                </strong>
                 <button onClick={() => { playClick(); setSettingsOpen(false); }} style={{ background: 'transparent', border: 'none', color: '#ff3333', cursor: 'pointer', fontWeight: 'bold', fontSize: '1.4rem', lineHeight: '1' }}>×</button>
               </div>
 
               {/* Status: Gra Zapauzowana */}
-              <div style={{ textAlign: 'center', color: '#e74c3c', fontWeight: 'bold', fontSize: '0.9em', border: '1px dashed #e74c3c', padding: '5px', borderRadius: '4px', letterSpacing: '1px', textShadow: '0 0 3px #e74c3c' }}>
-                ⏸️ GRA ZAPAUZOWANA
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', color: '#e74c3c', fontWeight: 'bold', fontSize: '0.9em', border: '1px dashed #e74c3c', padding: '5px', borderRadius: '4px', letterSpacing: '1px', textShadow: '0 0 3px #e74c3c' }}>
+                <PauseIcon size={16} /> GRA ZAPAUZOWANA
               </div>
 
               {/* Dźwięk */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.9rem' }}>Dźwięk systemowy:</span>
+                <span style={{ fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  {soundOn ? <Volume2 size={16} /> : <VolumeX size={16} />} Dźwięk systemowy:
+                </span>
                 <button 
                   onClick={toggleSound}
                   style={{
@@ -5220,13 +5225,15 @@ function App() {
                     boxShadow: '0 0 3px var(--crt-text)'
                   }}
                 >
-                  {soundOn ? '🔊 WŁĄCZONY' : '🔇 WYŁĄCZONY'}
+                  {soundOn ? 'WŁĄCZONY' : 'WYŁĄCZONY'}
                 </button>
               </div>
 
               {/* Efekt CRT (KIERUNEK 7.2) */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.9rem' }}>Efekt CRT (scanlines):</span>
+                <span style={{ fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Tv size={16} /> Efekt CRT (scanlines):
+                </span>
                 <button
                   onClick={() => { playClick(); toggleCrt(); }}
                   title="Wyłącz na słabszym komputerze - usuwa migotanie i linie ekranu kineskopowego"
@@ -5241,13 +5248,15 @@ function App() {
                     boxShadow: '0 0 3px var(--crt-text)'
                   }}
                 >
-                  {crtOn ? '📺 WŁĄCZONY' : '⬛ WYŁĄCZONY'}
+                  {crtOn ? 'WŁĄCZONY' : 'WYŁĄCZONY'}
                 </button>
               </div>
 
               {/* Dev Opcje */}
               <div style={{ borderTop: '1px dashed #444', paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <span style={{ color: 'var(--prl-yellow)', fontSize: '0.85rem', fontWeight: 'bold' }}>Narzędzia Deweloperskie:</span>
+                <span style={{ color: 'var(--prl-yellow)', fontSize: '0.85rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Wrench size={16} /> Narzędzia Deweloperskie:
+                </span>
                 <button 
                   onClick={devUnlockEverything}
                   style={{
@@ -5260,10 +5269,14 @@ function App() {
                     cursor: 'pointer',
                     fontFamily: 'inherit',
                     fontWeight: 'bold',
-                    boxShadow: state.devStateBackup ? '0 0 3px #2ecc71' : '0 0 3px #e74c3c'
+                    boxShadow: state.devStateBackup ? '0 0 3px #2ecc71' : '0 0 3px #e74c3c',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
                   }}
                 >
-                  {state.devStateBackup ? '🔧 DEV: ZABLOKUJ GRĘ' : '🔧 DEV: ODBLOKUJ GRĘ'}
+                  <ShieldAlert size={14} /> {state.devStateBackup ? 'DEV: ZABLOKUJ GRĘ' : 'DEV: ODBLOKUJ GRĘ'}
                 </button>
                 <button 
                   onClick={devClearDebt}
@@ -5277,10 +5290,14 @@ function App() {
                     cursor: 'pointer',
                     fontFamily: 'inherit',
                     fontWeight: 'bold',
-                    boxShadow: '0 0 3px #3498db'
+                    boxShadow: '0 0 3px #3498db',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
                   }}
                 >
-                  🔧 DEV: ZERUJ DŁUG CHF
+                  <Wrench size={14} /> DEV: ZERUJ DŁUG CHF
                 </button>
                 <button 
                   onClick={() => {
