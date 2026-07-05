@@ -1020,7 +1020,18 @@ export function useGameState(isPaused: boolean = false) {
             merged.activeCocomSmugglingRuns = remainingSmugglingRuns;
           }
 
-          merged.offlineReport = offlineRep;
+          // [Antigravity] Zapisujemy raport offline tylko wtedy, gdy gracz rzeczywiście coś zarobił/wyprodukował
+          const hasEarnings = offlineRep.earnedPln > 0 ||
+                              offlineRep.earnedDollars > 0 ||
+                              offlineRep.dividends > 0 ||
+                              offlineRep.interest > 0 ||
+                              Object.values(offlineRep.earnedItems).some(v => v > 0);
+
+          if (hasEarnings) {
+            merged.offlineReport = offlineRep;
+          } else {
+            merged.offlineReport = null;
+          }
         }
 
         GPW_STOCKS.forEach(stock => {
