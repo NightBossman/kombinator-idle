@@ -27,7 +27,7 @@ const TabMordor = lazy(() => import('./tabs/TabMordor'));
 const TabStartup = lazy(() => import('./tabs/TabStartup'));
 const TabPolskiLad = lazy(() => import('./tabs/TabPolskiLad'));
 const TabFazaZ = lazy(() => import('./tabs/TabFazaZ'));
-import { Settings as SettingsIcon, Pause as PauseIcon, Volume2, VolumeX, Tv, Wrench, ShieldAlert } from 'lucide-react';
+import { Settings as SettingsIcon, Pause as PauseIcon, Volume2, VolumeX, Tv, Wrench, ShieldAlert, TrendingUp, Coins, DollarSign, Landmark, Package, CheckCircle2 } from 'lucide-react';
 import { GameApiContext } from './tabs/GameApiContext';
 import type { GameApi } from './tabs/GameApiContext';
 import { MORDOR_UPGRADES, JDG_TAX_LEVELS, EURO_BOND_TYPES, AI_UPGRADES } from './game/items';
@@ -110,7 +110,7 @@ function App() {
 
   interface GameModal {
     title: string;
-    message: string;
+    message: string | React.ReactNode;
     type?: 'info' | 'error' | 'success' | 'raid' | 'pap';
     confirmText?: string;
     cancelText?: string;
@@ -212,28 +212,68 @@ function App() {
       const rep = state.offlineReport;
       const hours = Math.floor(rep.timeSec / 3600);
       const mins = Math.floor((rep.timeSec % 3600) / 60);
-      let msg = `Towarzyszu Obywatelu, pod Twoją nieobecność (${hours}h ${mins}m) nasz kombinat pracował pełną parą!\n\nOto wyniki produkcyjne:\n`;
-      if (rep.earnedPln > 0) msg += `- Gotówka (PLN): +${fmtNum(rep.earnedPln)}\n`;
-      if (rep.earnedDollars > 0) msg += `- Dewizy (USD): +$${fmtNum(rep.earnedDollars)}\n`;
-      if (rep.dividends > 0) msg += `- Dywidendy GPW/NFI: +${fmtNum(rep.dividends)} PLN\n`;
-      if (rep.interest > 0) msg += `- Odsetki: +${fmtNum(rep.interest)}\n`;
-      
       const itemKeys = Object.keys(rep.earnedItems);
-      if (itemKeys.length > 0) {
-        msg += `\nWyprodukowane dobra:\n`;
-        itemKeys.forEach(k => {
-          if (rep.earnedItems[k] > 0) {
-             msg += `- ${k}: +${fmtNum(rep.earnedItems[k], 2, true)}\n`;
-          }
-        });
-      }
-      
-      msg += `\nKu chwale ojczyzny!`;
+
+      const modalMessage = (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', textAlign: 'left', fontFamily: 'monospace' }}>
+          <p>
+            Towarzyszu Obywatelu, pod Twoją nieobecność (<strong>{hours}h {mins}m</strong>) nasz kombinat pracował pełną parą!
+          </p>
+          <div style={{ border: '1px solid var(--crt-text)', padding: '10px', background: 'rgba(0,0,0,0.3)', borderRadius: '4px' }}>
+            <div style={{ fontWeight: 'bold', marginBottom: '5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <TrendingUp size={16} /> Wyniki produkcyjne:
+            </div>
+            <ul style={{ listStyleType: 'none', paddingLeft: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              {rep.earnedPln > 0 && (
+                <li style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Coins size={14} color="#f1c40f" /> Gotówka (PLN): +{fmtNum(rep.earnedPln)}
+                </li>
+              )}
+              {rep.earnedDollars > 0 && (
+                <li style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <DollarSign size={14} color="#2ecc71" /> Dewizy (USD): +${fmtNum(rep.earnedDollars)}
+                </li>
+              )}
+              {rep.dividends > 0 && (
+                <li style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Landmark size={14} color="#9b59b6" /> Dywidendy GPW/NFI: +{fmtNum(rep.dividends)} PLN
+                </li>
+              )}
+              {rep.interest > 0 && (
+                <li style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <TrendingUp size={14} color="#3498db" /> Odsetki: +{fmtNum(rep.interest)}
+                </li>
+              )}
+            </ul>
+          </div>
+          
+          {itemKeys.some(k => rep.earnedItems[k] > 0) && (
+            <div style={{ border: '1px solid var(--crt-text)', padding: '10px', background: 'rgba(0,0,0,0.3)', borderRadius: '4px' }}>
+              <div style={{ fontWeight: 'bold', marginBottom: '5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Package size={16} /> Wyprodukowane dobra:
+              </div>
+              <ul style={{ listStyleType: 'none', paddingLeft: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                {itemKeys.map(k => {
+                  if (rep.earnedItems[k] <= 0) return null;
+                  return (
+                    <li key={k} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <CheckCircle2 size={14} color="#2ecc71" /> {k}: +{fmtNum(rep.earnedItems[k], 2, true)}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+          <p style={{ textAlign: 'center', fontWeight: 'bold', marginTop: '5px', color: 'var(--prl-yellow)' }}>
+            Ku chwale ojczyzny!
+          </p>
+        </div>
+      );
       
       // eslint-disable-next-line react-hooks/set-state-in-effect
       enqueueModal({
         title: 'RAPORT ZMIANY (OFFLINE)',
-        message: msg,
+        message: modalMessage,
         type: 'info',
         confirmText: 'ZROZUMIANO',
         onConfirm: () => {
