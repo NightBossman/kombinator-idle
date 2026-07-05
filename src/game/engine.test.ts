@@ -399,3 +399,56 @@ describe('Faza Y: Polski Ład i WIBOR', () => {
   });
 });
 
+describe('Faza Z: KPO, AI SaaS, Obligacje, RPP', () => {
+  it('nalicza zyski z obligacji COI/EDO', () => {
+    const start = freshState({
+      fazaZUnlocked: true,
+      isDenominated: true,
+      coiBondsPLN: 1000000,
+      edoBondsPLN: 2000000,
+      inflationPercent: 10,
+      pln: 10000,
+      lastMarketRefresh: NOW
+    });
+
+    // COI Yield: 1,000,000 * (10 + 1.5)/100 / 60 = 1916.66 PLN/s
+    // EDO Yield: 2,000,000 * (10 + 2.0)/100 / 60 = 4000.00 PLN/s
+    // Total = 5916.66 PLN/s
+    const { state } = runTicks(start, 1);
+    expect(state.pln).toBeCloseTo(10000 + 5916.66, 1);
+  });
+
+  it('nalicza zyski z AI SaaS (EUR, USD)', () => {
+    const start = freshState({
+      fazaZUnlocked: true,
+      aiSaaSActive: true,
+      gpuClusters: 2,
+      lastMarketRefresh: NOW
+    });
+
+    // USD: 2 * 1000 = 2000 USD/s
+    // EUR: 2 * 500 = 1000 EUR/s
+    const { state } = runTicks(start, 1);
+    expect(state.dollars).toBe(2000);
+    expect(state.euros).toBe(1000);
+  });
+
+  it('aktualizuje stopy procentowe RPP i wyświetla komunikat', () => {
+    const start = freshState({
+      fazaZUnlocked: true,
+      rppMeetingTimer: 0,
+      inflationPercent: 20,
+      nbpInterestRate: 10,
+      lastMarketRefresh: NOW
+    });
+
+    // rppMeetingTimer <= 0 -> zresetowane do 60
+    // inflation >> nbpInterestRate + 2 (20 > 12) -> wzrost stóp
+    const { state, events } = runTicks(start, 1);
+    expect(state.rppMeetingTimer).toBeCloseTo(60, 1);
+    expect(state.nbpInterestRate).toBeGreaterThan(10);
+    expect(state.wiborRate).toBe(state.nbpInterestRate + 1.5);
+    const event = events.find(e => e.kind === 'toast' && e.title === 'KOMUNIKAT RPP');
+    expect(event).toBeDefined();
+  });
+});

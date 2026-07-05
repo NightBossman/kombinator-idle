@@ -26,16 +26,17 @@ const TabMiasto = lazy(() => import('./tabs/TabMiasto'));
 const TabMordor = lazy(() => import('./tabs/TabMordor'));
 const TabStartup = lazy(() => import('./tabs/TabStartup'));
 const TabPolskiLad = lazy(() => import('./tabs/TabPolskiLad'));
+const TabFazaZ = lazy(() => import('./tabs/TabFazaZ'));
 import { GameApiContext } from './tabs/GameApiContext';
 import type { GameApi } from './tabs/GameApiContext';
 import { MORDOR_UPGRADES, JDG_TAX_LEVELS, EURO_BOND_TYPES, AI_UPGRADES } from './game/items';
 // [Claude] KIERUNEK 1.3: wspolne wzory - panel Casio i Bazar pokazuja to, co liczy silnik
-import { helperSpeedMult, businessProductionMult, cinkciarzRate, queueTimeMs, bazarPlnUnitPrice, bazarUsdUnitPrice, realEstateCostPln, realEstateBuildTimeSec, chfInstallmentPerSec, vatCarouselRefundPerSec, mordorIncomePerSec, mordorEmployeeUpkeepPerSec, seaSmuggleTime, seaSmuggleRisk, cryptoMiningYield, cryptoPowerUpkeepPln, wiborInstallmentPerSec, polishDealTaxPerSec, energyPowerUpkeepPln } from './game/formulas';
+import { helperSpeedMult, businessProductionMult, cinkciarzRate, queueTimeMs, bazarPlnUnitPrice, bazarUsdUnitPrice, realEstateCostPln, realEstateBuildTimeSec, chfInstallmentPerSec, vatCarouselRefundPerSec, mordorIncomePerSec, mordorEmployeeUpkeepPerSec, seaSmuggleTime, seaSmuggleRisk, cryptoMiningYield, cryptoPowerUpkeepPln, wiborInstallmentPerSec, polishDealTaxPerSec, energyPowerUpkeepPln, coiBondYieldPerSec, edoBondYieldPerSec, aiSaaSProfitUsdPerSec, aiSaaSProfitEurPerSec } from './game/formulas';
 // [Claude] silnik gry (KIERUNEK.md pkt 1.1) - czysta pętla + zdarzenia; stamtąd też calculateLuxurySuspicionReduction
 import { tick, calculateLuxurySuspicionReduction } from './game/engine';
 import type { GameEvent, SoundId } from './game/engine';
 
-export type TabId = 'praca' | 'bazar' | 'przemyt' | 'partia' | 'czarnyRynek' | 'odznaczenia' | 'gpw' | 'offshore' | 'syndykat' | 'wybory' | 'lata90' | 'miasto' | 'lata2000' | 'mordor' | 'startups' | 'polski_lad';
+export type TabId = 'praca' | 'bazar' | 'przemyt' | 'partia' | 'czarnyRynek' | 'odznaczenia' | 'gpw' | 'offshore' | 'syndykat' | 'wybory' | 'lata90' | 'miasto' | 'lata2000' | 'mordor' | 'startups' | 'polski_lad' | 'faza_z';
 
 function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -441,7 +442,7 @@ function App() {
     }, tickMs);
     
     return () => clearInterval(interval);
-  }, [queue1Item, queue1TimeMs, updateState, settingsOpen, modalQueue.length]);
+  }, [queue1Item, queue1TimeMs, updateState, settingsOpen, modalQueue.length, getState]);
 
   // Queue Progression 2 (Double queue upgrade)
   // [Claude] KIERUNEK 1.3: jak w pierwszej kolejce - wspolny wzor queueTimeMs()
@@ -510,7 +511,7 @@ function App() {
     }, tickMs);
     
     return () => clearInterval(interval);
-  }, [queue2Item, queue2TimeMs, updateState, settingsOpen, modalQueue.length]);
+  }, [queue2Item, queue2TimeMs, updateState, settingsOpen, modalQueue.length, getState]);
 
   // Smuggling Progression
   useEffect(() => {
@@ -2747,6 +2748,93 @@ function App() {
     }));
   };
 
+  // ===== Faza Z: KPO, AI SaaS, Obligacje COI/EDO (Lata 2024-2025) =====
+
+  const unlockFazaZ = () => {
+    if (state.fazaZUnlocked) { playError(); return; }
+    const costPln = 500000000;
+    if (state.pln < costPln || !state.fazaYUnlocked) {
+      playError();
+      showAlert('Aby wejść w lata 2024-2025 (Faza Z - KPO i AI SaaS), musisz posiadać co najmniej 500 000 000 PLN oraz odblokowaną Fazę Y.', 'WYMAGANIA BLOKADY', 'error');
+      return;
+    }
+
+    updateState(s => ({
+      ...s,
+      pln: s.pln - costPln,
+      fazaZUnlocked: true,
+      nbpInterestRate: 5.75,
+      rppMeetingTimer: 30
+    }));
+    setCurrentTab('faza_z');
+    playSuccess();
+    showAlert('Wkraczasz w lata 2024-2025! Era sztucznej inteligencji, funduszy KPO i wysokich stóp procentowych RPP. Czas ugrać na tym swoje!', '🤖 NOWA ERA: FAZA Z', 'success');
+  };
+
+  const fundKpoLobby = (amount: number, currency: 'pln' | 'usd' | 'eur') => {
+    let cost = 0;
+    if (currency === 'pln') cost = amount;
+    else if (currency === 'usd') cost = amount;
+    else cost = amount;
+
+    if (currency === 'pln' && state.pln < cost) { playError(); return; }
+    if (currency === 'usd' && state.dollars < cost) { playError(); return; }
+    if (currency === 'eur' && state.euros < cost) { playError(); return; }
+
+    playSuccess();
+    updateState(s => ({
+      ...s,
+      pln: currency === 'pln' ? s.pln - cost : s.pln,
+      dollars: currency === 'usd' ? s.dollars - cost : s.dollars,
+      euros: currency === 'eur' ? s.euros - cost : s.euros,
+      kpoLobbyProgress: (s.kpoLobbyProgress || 0) + (currency === 'pln' ? amount / 1000 : amount)
+    }));
+  };
+
+  const buyGpuCluster = () => {
+    const costEur = 100000 * Math.pow(1.5, state.gpuClusters || 0);
+    if ((state.euros || 0) < costEur) { playError(); return; }
+
+    playSuccess();
+    updateState(s => ({
+      ...s,
+      euros: (s.euros || 0) - costEur,
+      gpuClusters: (s.gpuClusters || 0) + 1
+    }));
+  };
+
+  const toggleAiSaaS = () => {
+    playClick();
+    updateState(s => ({
+      ...s,
+      aiSaaSActive: !s.aiSaaSActive
+    }));
+  };
+
+  const buyBonds = (type: 'coi' | 'edo', amount: number) => {
+    if (state.pln < amount) { playError(); return; }
+    playSuccess();
+    updateState(s => ({
+      ...s,
+      pln: s.pln - amount,
+      coiBondsPLN: type === 'coi' ? (s.coiBondsPLN || 0) + amount : s.coiBondsPLN,
+      edoBondsPLN: type === 'edo' ? (s.edoBondsPLN || 0) + amount : s.edoBondsPLN
+    }));
+  };
+
+  const sellBonds = (type: 'coi' | 'edo', amount: number) => {
+    const current = type === 'coi' ? (state.coiBondsPLN || 0) : (state.edoBondsPLN || 0);
+    if (current < amount) { playError(); return; }
+    playSuccess();
+    updateState(s => ({
+      ...s,
+      pln: s.pln + amount,
+      coiBondsPLN: type === 'coi' ? current - amount : s.coiBondsPLN,
+      edoBondsPLN: type === 'edo' ? current - amount : s.edoBondsPLN
+    }));
+  };
+
+
   const buyEuroBond = (bondId: string) => {
     const bondDef = EURO_BOND_TYPES.find(b => b.id === bondId);
     if (!bondDef || (state.euros || 0) < bondDef.costEur) { playError(); return; }
@@ -4822,10 +4910,19 @@ function App() {
     fazaYEnergyCost = energyPowerUpkeepPln(state);
   }
 
+  let bondsPlnRate = 0;
+  let aiSaaSUsdRate = 0;
+  let aiSaaSEurRate = 0;
+  if (state.fazaZUnlocked) {
+    bondsPlnRate = coiBondYieldPerSec(state) + edoBondYieldPerSec(state);
+    aiSaaSUsdRate = aiSaaSProfitUsdPerSec(state);
+    aiSaaSEurRate = aiSaaSProfitEurPerSec(state);
+  }
+
   const totalPassiveExpenses = Math.abs(cinkciarzPlnRate) + gangPlnCost + chfPlnCost + lobbyBribeCost + mordorUpkeepCost + cryptoPowerCost + aiEngineersCost + wiborCost + polishDealTax + fazaYEnergyCost;
-  const plnRate = totalPassiveIncome - totalPassiveExpenses;
-  const dollarsRate = businessUsdRate + cinkciarzUsdRate + widmoUsdRate;
-  const eurosRate = mordorIncomePerSec(state);
+  const plnRate = totalPassiveIncome + bondsPlnRate - totalPassiveExpenses;
+  const dollarsRate = businessUsdRate + cinkciarzUsdRate + widmoUsdRate + aiSaaSUsdRate;
+  const eurosRate = mordorIncomePerSec(state) + aiSaaSEurRate;
   const btcRate = cryptoMiningYield(state);
 
   const currentEventData = HISTORY_EVENTS.find(e => e.id === state.activeEvent);
@@ -5016,6 +5113,12 @@ function App() {
     unlockFazaS,
     unlockFazaW,
     unlockFazaY,
+    unlockFazaZ,
+    fundKpoLobby,
+    buyGpuCluster,
+    toggleAiSaaS,
+    buyBonds,
+    sellBonds,
     changeTaxForm,
     takePlnLoan,
     payPlnLoan,
@@ -5429,10 +5532,16 @@ function App() {
 
       {/* GLOBAL HUD */}
       <div className="panel" style={{marginBottom: '20px', display: 'flex', justifyContent: 'space-around', alignItems: 'center', flexWrap: 'wrap', gap: '10px'}}>
-        {state.activeDestination === 'usa' && (
+        {(state.activeDestination === 'usa' || state.fazaZUnlocked) && (
           <div className="flex-col animate-pulse" style={{color: 'var(--prl-red)'}}>
              <span style={{fontSize: '0.8rem', color: 'var(--prl-gray)'}}>INFLACJA</span>
              <span style={{fontSize: '1.2rem'}}>{fmtNum(state.inflationPercent, 1)}%</span>
+          </div>
+        )}
+        {state.fazaZUnlocked && (
+          <div className="flex-col animate-pulse" style={{color: '#9b59b6'}}>
+             <span style={{fontSize: '0.8rem', color: 'var(--prl-gray)'}}>STOPA NBP</span>
+             <span style={{fontSize: '1.2rem'}}>{fmtNum(state.nbpInterestRate || 0, 2)}%</span>
           </div>
         )}
         <div className="flex-col">
@@ -5585,7 +5694,10 @@ function App() {
                  {state.fazaWUnlocked && (
                    <div>Mordor BPO (EUR): <span style={{color: '#33ff33'}}>+{fmtNum(mordorPlnIncomeRate, 2)} zł/s</span></div>
                  )}
-                 <div style={{borderTop: '1px dashed #33ff33', marginTop: '8px', paddingTop: '5px'}}>Suma Przychodów (Realne PLN): <strong>+{fmtNum(totalPassiveIncome, 2)} zł/s</strong></div>
+                 {state.fazaZUnlocked && bondsPlnRate > 0 && (
+                   <div>Odsetki z Obligacji (COI/EDO): <span style={{color: '#33ff33'}}>+{fmtNum(bondsPlnRate, 2)} zł/s</span></div>
+                 )}
+                 <div style={{borderTop: '1px dashed #33ff33', marginTop: '8px', paddingTop: '5px'}}>Suma Przychodów (Realne PLN): <strong>+{fmtNum(totalPassiveIncome + bondsPlnRate, 2)} zł/s</strong></div>
                  {vatCarouselPlnRate > 0 && (
                    <div style={{marginTop: '5px', color: 'var(--prl-yellow)'}}>Należności VAT: <strong>+{fmtNum(vatCarouselPlnRate, 2)} zł/s</strong> (oczekujące)</div>
                  )}
@@ -5699,6 +5811,9 @@ function App() {
           {state.fazaYUnlocked && (
             <button onClick={() => { playClick(); setCurrentTab('polski_lad'); }} style={{flex: 1, backgroundColor: currentTab === 'polski_lad' ? '#27ae60' : 'transparent', color: currentTab === 'polski_lad' ? '#fff' : '#27ae60', borderColor: '#27ae60'}}>POLSKI ŁAD (2022-2023)</button>
           )}
+          {state.fazaZUnlocked && (
+            <button onClick={() => { playClick(); setCurrentTab('faza_z'); }} style={{flex: 1, backgroundColor: currentTab === 'faza_z' ? '#e74c3c' : 'transparent', color: currentTab === 'faza_z' ? '#fff' : '#e74c3c', borderColor: '#e74c3c'}}>FAZA Z (2024+)</button>
+          )}
       </div>
 
       <div className="game-grid" style={{gridTemplateColumns: '1fr'}}>
@@ -5711,6 +5826,7 @@ function App() {
         {currentTab === 'mordor' && <TabMordor />}
         {currentTab === 'startups' && <TabStartup />}
         {currentTab === 'polski_lad' && <TabPolskiLad />}
+        {currentTab === 'faza_z' && <TabFazaZ />}
         {currentTab === 'praca' && <TabPraca />}
 
         {/* TAB: BAZAR / CINKCIARZ */}

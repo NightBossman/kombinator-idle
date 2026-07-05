@@ -109,3 +109,8 @@ graph TD
 - **Wymogi widoczności zakładki:** Odblokowana *Faza X (Startupy)*.
 - **Koszt odblokowania:** **50 000 000 PLN** gotówki w PLN.
 - **Efekt:** Odblokowuje zakładkę *Polski Ład (2022-2023)* (podatki Polskiego Ładu, kredyt obrotowy PLN powiązany ze stopami WIBOR, ryzyko Urzędu Skarbowego, amortyzację przez biura rachunkowe oraz zasilanie farmami wiatrowymi obniżającymi potrojone rachunki za prąd w kryzysie energetycznym).
+
+### 🤖 Faza Z: Era AI i KPO (Lata 2024+)
+- **Wymogi widoczności zakładki:** Odblokowana *Faza Y (Polski Ład)*.
+- **Koszt odblokowania:** **500 000 000 PLN** gotówki w PLN.
+- **Efekt:** Odblokowuje zakładkę *Faza Z (2024+)* (Krajowy Plan Odbudowy, usługi AI SaaS generujące przychody w USD i EUR, posiedzenia RPP aktualizujące inflację i oprocentowanie WIBOR, oraz detaliczne obligacje skarbowe chroniące przed inflacją).

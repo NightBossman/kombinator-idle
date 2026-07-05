@@ -1,7 +1,7 @@
 // [Claude] testy wspólnych wzorów (KIERUNEK 1.3) - pilnują, żeby mnożniki
 // nie rozjechały się ponownie między silnikiem, symulacją offline i UI.
 import { describe, it, expect } from 'vitest';
-import { helperSpeedMult, businessProductionMult, queueTimeMs, cinkciarzRate, bazarPlnUnitPrice, bazarUsdUnitPrice, generalProductionMult, chfInstallmentPerSec, vatCarouselRefundPerSec, vatCarouselRiskGainPerSec, mordorIncomePerSec, mordorMoraleDecayPerSec, mordorEmployeeUpkeepPerSec, jdgRiskGainPerSec, seaSmuggleTime, seaSmuggleRisk, cryptoMiningYield, cryptoPowerUpkeepPln, aiTrainSpeed, knfRiskGrowthRate, wiborInstallmentPerSec, polishDealTaxPerSec, usRiskGrowthRate, energyPowerUpkeepPln } from './formulas';
+import { helperSpeedMult, businessProductionMult, queueTimeMs, cinkciarzRate, bazarPlnUnitPrice, bazarUsdUnitPrice, generalProductionMult, chfInstallmentPerSec, vatCarouselRefundPerSec, vatCarouselRiskGainPerSec, mordorIncomePerSec, mordorMoraleDecayPerSec, mordorEmployeeUpkeepPerSec, jdgRiskGainPerSec, seaSmuggleTime, seaSmuggleRisk, cryptoMiningYield, cryptoPowerUpkeepPln, aiTrainSpeed, knfRiskGrowthRate, wiborInstallmentPerSec, polishDealTaxPerSec, usRiskGrowthRate, energyPowerUpkeepPln, nbpInterestRateAffectingWibor, coiBondYieldPerSec, edoBondYieldPerSec, aiSaaSProfitUsdPerSec, aiSaaSProfitEurPerSec } from './formulas';
 import { INITIAL_STATE } from '../hooks/useGameState';
 import type { GameState } from '../hooks/useGameState';
 
@@ -225,6 +225,33 @@ describe('wzory mnożników (formulas.ts)', () => {
     const sTurbine = freshState({ fazaYUnlocked: true, fazaXUnlocked: true, fazaWUnlocked: true, cryptoRigs: { rtx4090: 2 }, mordorEmployees: 10, energyCrisisActive: true, windTurbines: 2 });
     // 463.5 * 0.75 * 0.75 = 260.71875
     expect(energyPowerUpkeepPln(sTurbine)).toBeCloseTo(260.71875, 4);
+  });
+
+  it('nbpInterestRateAffectingWibor: adds 1.5% margin to NBP rate', () => {
+    expect(nbpInterestRateAffectingWibor(5.75)).toBeCloseTo(7.25, 4);
+  });
+
+  it('coiBondYieldPerSec & edoBondYieldPerSec: calculates yield based on inflation', () => {
+    const s = freshState({ fazaZUnlocked: true, inflationPercent: 10, coiBondsPLN: 1000000, edoBondsPLN: 2000000 });
+    
+    // COI = 1,000,000 * ((10 + 1.5) / 100) / 60
+    // 1M * 0.115 / 60 = 1916.666
+    expect(coiBondYieldPerSec(s)).toBeCloseTo(1916.666, 2);
+    
+    // EDO = 2,000,000 * ((10 + 2.0) / 100) / 60
+    // 2M * 0.12 / 60 = 4000
+    expect(edoBondYieldPerSec(s)).toBeCloseTo(4000, 2);
+    
+    // deflation should clamp to 0 inflation base
+    const sDeflation = freshState({ fazaZUnlocked: true, inflationPercent: -5, coiBondsPLN: 1000000, edoBondsPLN: 2000000 });
+    // COI = 1M * (0 + 1.5)/100 / 60 = 250
+    expect(coiBondYieldPerSec(sDeflation)).toBeCloseTo(250, 2);
+  });
+
+  it('aiSaaSProfitUsdPerSec & aiSaaSProfitEurPerSec: calculates SaaS profits', () => {
+    const s = freshState({ fazaZUnlocked: true, aiSaaSActive: true, gpuClusters: 3 });
+    expect(aiSaaSProfitUsdPerSec(s)).toBe(3000);
+    expect(aiSaaSProfitEurPerSec(s)).toBe(1500);
   });
 });
 

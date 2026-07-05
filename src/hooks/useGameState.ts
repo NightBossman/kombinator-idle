@@ -9,7 +9,7 @@ import type { AuctionState } from '../game/items';
 // [Claude] KIERUNEK 2: wersja formatu zapisu. Podbij TYLKO, gdy zmienia sie ZNACZENIE
 // istniejacego pola (i dopisz migracje w mergeSavedState). Samo dodanie nowego pola
 // nie wymaga niczego - glebokie scalenie z INITIAL_STATE uzupelni je automatycznie.
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 
 export interface BlackMarketOffer {
   id: string;
@@ -390,6 +390,17 @@ export interface GameState {
   windTurbines: number;
   creditHolidaysTimer: number;
   creditHolidaysCooldown: number;
+
+  // Faza Z: KPO, GPU Clusters & AI SaaS, Obligacje COI/EDO oraz RPP (Lata 2024-2025)
+  fazaZUnlocked: boolean;
+  kpoLobbyProgress: number;
+  kpoApproved: Record<string, boolean>;
+  gpuClusters: number;
+  aiSaaSActive: boolean;
+  coiBondsPLN: number;
+  edoBondsPLN: number;
+  nbpInterestRate: number;
+  rppMeetingTimer: number;
 }
 
 export const INITIAL_STATE: GameState = {
@@ -724,7 +735,18 @@ export const INITIAL_STATE: GameState = {
   energyCrisisActive: false,
   windTurbines: 0,
   creditHolidaysTimer: 0,
-  creditHolidaysCooldown: 0
+  creditHolidaysCooldown: 0,
+
+  // Faza Z: KPO, GPU Clusters & AI SaaS, Obligacje COI/EDO oraz RPP (Lata 2024-2025)
+  fazaZUnlocked: false,
+  kpoLobbyProgress: 0,
+  kpoApproved: {},
+  gpuClusters: 0,
+  aiSaaSActive: false,
+  coiBondsPLN: 0,
+  edoBondsPLN: 0,
+  nbpInterestRate: 5.75,
+  rppMeetingTimer: 30
 };
 
 const isPlainObject = (v: unknown): v is Record<string, unknown> =>
