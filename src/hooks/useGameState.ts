@@ -1067,6 +1067,9 @@ export function useGameState(isPaused: boolean = false) {
 
   useEffect(() => {
     const saveNow = () => {
+      // [Antigravity] Pomiń autozapis przy twardym resecie gry
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((window as any).__isResetting) return;
       try {
         localStorage.setItem('kombinator-save', JSON.stringify({ ...stateRef.current, lastSave: Date.now() }));
       } catch {
