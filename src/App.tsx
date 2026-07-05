@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { useGameState } from './hooks/useGameState';
-import { QUEUE_ITEMS, HELPERS, PARTY_RANKS, BUSINESSES, SMUGGLING_ROUTES, HISTORY_EVENTS, SEA_SMUGGLING_ROUTES, BALTONA_ITEMS, GPW_STOCKS, NOMENKLATURA_COMPANIES, OFFSHORE_DEPOSITS, COCOM_ITEMS, EXPORT_CONTACTS, SYNDICATE_UPGRADES, ELECTION_REGIONS, CAMPAIGN_MATERIALS, CAMPAIGN_LEADERS, DEBATE_OPTIONS, ELECTION_UPGRADES, COCOM_SMUGGLING_ROUTES, COCOM_VEHICLES, COCOM_PERSONNEL, BAZAR_ITEMS, NFI_COMPANIES, MAFIA_PROTECTIONS, GANGSTER_UNITS, BLACK_MARKET_WEAPONS, BAZAR_LOGISTICS_ROUTES, WAREHOUSE_UPGRADES, MEDIA_STATIONS, MEDIA_PROGRAMS, MEDIA_ANTENNA_REGIONS , EU_PROJECTS, DOTCOM_UPGRADES, REAL_ESTATE_PROJECTS, CRISIS_REAL_ESTATE, CURRENCY_OPTION_PRESETS, LOBBY_BILLS, COMMISSION_QUESTIONS, VAT_UPGRADES, HELPER_UPGRADE_COSTS } from './game/items';
+import { QUEUE_ITEMS, HELPERS, PARTY_RANKS, BUSINESSES, SMUGGLING_ROUTES, HISTORY_EVENTS, SEA_SMUGGLING_ROUTES, BALTONA_ITEMS, GPW_STOCKS, NOMENKLATURA_COMPANIES, OFFSHORE_DEPOSITS, COCOM_ITEMS, EXPORT_CONTACTS, SYNDICATE_UPGRADES, ELECTION_REGIONS, CAMPAIGN_MATERIALS, CAMPAIGN_LEADERS, DEBATE_OPTIONS, ELECTION_UPGRADES, COCOM_SMUGGLING_ROUTES, COCOM_VEHICLES, COCOM_PERSONNEL, BAZAR_ITEMS, NFI_COMPANIES, MAFIA_PROTECTIONS, GANGSTER_UNITS, BLACK_MARKET_WEAPONS, BAZAR_LOGISTICS_ROUTES, WAREHOUSE_UPGRADES, MEDIA_STATIONS, MEDIA_PROGRAMS, MEDIA_ANTENNA_REGIONS, EU_PROJECTS, DOTCOM_UPGRADES, REAL_ESTATE_PROJECTS, CRISIS_REAL_ESTATE, CURRENCY_OPTION_PRESETS, LOBBY_BILLS, COMMISSION_QUESTIONS, VAT_UPGRADES, HELPER_UPGRADE_COSTS } from './game/items';
 import { playClick, playSuccess, playError, playAlert, isSoundEnabled, setSoundEnabled } from './utils/audio';
 // [Claude] fmtNum/pluralPL: polskie formatowanie liczb (przecinek dziesiętny) i odmiana rzeczowników po liczebnikach.
 // Usunięto też martwe "void DEBATE_OPTIONS; void ELECTION_UPGRADES;" - obie stałe są od dawna używane w zakładce Wyborów.
@@ -624,10 +624,14 @@ function App() {
                   
                   setTimeout(() => showAlert(alertMsg, 'SUKCES SZMUGLA', 'success'), 50);
                   
+                  // [Claude] naprawa (niepodłączona funkcja): osiągnięcie 'smug_moskwa' ("Sowiecki
+                  // Łącznik") wymaga w silniku stats.totalMoscowRuns >= 10, ale statystyki nie
+                  // zwiększał żaden kod - osiągnięcie i jego bonus (+2 ruble) były niezdobywalne.
                   const stats = {
                     ...s.stats,
                     totalDollarsEarned: (s.stats.totalDollarsEarned || 0) + dollarsEarned,
-                    totalSmugglesCompleted: (s.stats.totalSmugglesCompleted || 0) + 1
+                    totalSmugglesCompleted: (s.stats.totalSmugglesCompleted || 0) + 1,
+                    ...(route.id === 'moskwa' ? { totalMoscowRuns: (s.stats.totalMoscowRuns || 0) + 1 } : {})
                   };
                   
                   return { 
@@ -868,11 +872,25 @@ function App() {
     }
   };
 
-  const startSmuggle = (id: string, cost: number) => {
+  const startSmuggle = (id: string, _cost: number) => {
+    // [Antigravity] Użycie void _cost dla zapobieżenia błędowi eslint no-unused-vars, zachowując kompatybilność sygnatury z zakładkami
+    void _cost;
     if (activeSmuggle) { playError(); return; }
-    if (state.pln < cost) { playError(); return; }
+    // [Claude] naprawa (bezpieczenstwo transakcji): koszt przychodzil z UI i nie byl weryfikowany,
+    // a nieistniejace id trasy zdejmowalo pieniadze i wieszalo pasek postepu (softlock az do
+    // przeladowania). Zrodlem prawdy jest costPln z danych trasy; parametr zostaje dla zgodnosci
+    // sygnatury z zakladkami. Dodatkowo egzekwujemy obietnice Pewexu: trasa VHS wymaga zakupu
+    // 'Wideo-kasety VHS' (dotad pilnowac tego moglo wylacznie UI).
+    const route = SMUGGLING_ROUTES.find(r => r.id === id);
+    if (!route) { playError(); return; }
+    if (route.id === 'vhs_route' && !state.pewexItems['vhs']) {
+      playError();
+      showAlert('Szmugiel kaset VHS wymaga zakupu "Wideo-kasety VHS" w Pewexie.', 'BRAK DOSTEPU', 'error');
+      return;
+    }
+    if (state.pln < route.costPln) { playError(); return; }
     playClick();
-    updateState(s => ({ ...s, pln: s.pln - cost }));
+    updateState(s => ({ ...s, pln: s.pln - route.costPln }));
     setSmuggleProgress(0);
     setActiveSmuggle(id);
   };
@@ -1533,14 +1551,14 @@ function App() {
     }
 
     playSuccess();
-    updateState(s => {
-      addToast("LIECHTENSTEIN TRUST", "Rejestracja w Vaduz ukończona. Twój majątek krajowy jest teraz chroniony tarczą offshore!");
-      return {
-        ...s,
-        dollars: s.dollars - costUsd,
-        hasLiechtensteinTrust: true
-      };
-    });
+    // [Claude] naprawa: addToast wywolywany WEWNATRZ updatera stanu - w React StrictMode updater
+    // odpala sie dwukrotnie, wiec toast dublowal sie; efekty uboczne musza zyc poza updaterem.
+    addToast("LIECHTENSTEIN TRUST", "Rejestracja w Vaduz ukończona. Twój majątek krajowy jest teraz chroniony tarczą offshore!");
+    updateState(s => ({
+      ...s,
+      dollars: s.dollars - costUsd,
+      hasLiechtensteinTrust: true
+    }));
   };
 
   const washOffshoreMoney = (amount: number) => {
@@ -1696,7 +1714,9 @@ function App() {
     if (!item) { playError(); return; }
 
     if (item.requiredPartyRank && !state.syndicateUpgrades['nuclear_clearance']) {
-      const ranks = ['czlonek', 'sekretarz', 'dyrektor', 'wiceminister', 'minister', 'biuro'];
+      // [Claude] porzadek: kolejnosc rang z jednego zrodla prawdy (PARTY_RANKS) zamiast recznej kopii,
+      // ktora moglaby sie rozjechac przy dodaniu nowej rangi do danych.
+      const ranks = PARTY_RANKS.map(r => r.id);
       const requiredIdx = ranks.indexOf(item.requiredPartyRank);
       const currentIdx = ranks.indexOf(state.partyRank || '');
       if (currentIdx < requiredIdx) { playError(); showAlert(`Ten towar wymaga rangi ${item.requiredPartyRank} lub ulepszenia "Dostęp do towarów klasy A".`, 'BRAK DOSTĘPU', 'error'); return; }
@@ -1718,14 +1738,22 @@ function App() {
     const item = COCOM_ITEMS.find(c => c.id === itemId);
     if (!item) { playError(); return; }
     if ((state.cocomInventory[itemId] || 0) <= 0) { playError(); return; }
-    if (state.activeGeoEvent === 'cocom_audit') { playError(); showAlert('Inspekcja CoCom w toku! Wszystkie przesyłki zablokowane.', '⛔ BLOKADA', 'error'); return; }
+    // [Claude] naprawa: activeGeoEvent bywa ustawiany przez silnik jako id zdarzenia LUB jego efekt,
+    // a tutaj porównywano raz z id ('cocom_audit'), raz z efektami ('stasi_block'/'vienna_block') -
+    // niezależnie od konwencji silnika część blokad nigdy nie działała. Akceptujemy obie formy.
+    const geo = state.activeGeoEvent;
+    if (geo === 'cocom_audit' || geo === 'block_all') { playError(); showAlert('Inspekcja CoCom w toku! Wszystkie przesyłki zablokowane.', '⛔ BLOKADA', 'error'); return; }
 
     const contact = EXPORT_CONTACTS.find(c => c.id === contactId);
     if (!contact) { playError(); return; }
 
+    // [Claude] naprawa (obrona w glebi): wysylka nie sprawdzala, czy kontrahent zostal odblokowany -
+    // funkcja przyjmowala dowolne contactId i naliczala jego premie cenowa.
+    if (contact.unlockRequirement !== 'default' && !state.unlockedContacts[contactId]) { playError(); return; }
+
     // Check contact blocked by geo event
-    if (state.activeGeoEvent === 'stasi_block' && contactId === 'stasi_net') { playError(); return; }
-    if (state.activeGeoEvent === 'vienna_block' && contactId === 'vienna_contact') { playError(); return; }
+    if ((geo === 'stasi_crackdown' || geo === 'stasi_block') && contactId === 'stasi_net') { playError(); return; }
+    if ((geo === 'diplomatic_incident' || geo === 'vienna_block') && contactId === 'vienna_contact') { playError(); return; }
 
     const routeTimes: Record<string, number> = { lad_road: 90, sea_route: 60, air_cargo: 20 };
     const routeLabels: Record<string, string> = { lad_road: 'Kolej lądowa', sea_route: 'Rejs morski', air_cargo: 'Cargo LOT' };
@@ -1869,10 +1897,36 @@ function App() {
     startCocomSmugglingRun(routeId, availableVehicle.id, availablePersonnel.id, itemsToTake);
   };
 
+  // [Claude] naprawa (niepodlaczona funkcja): pole unlockRequirement z EXPORT_CONTACTS nie bylo nigdzie
+  // ewaluowane - kazdy kontrahent (z siecia CIA wlacznie) byl kupowalny od reki za sama gotowke.
+  // Mapowanie wymagan: 'default' -> wolny; 'sekretarz' -> ranga partyjna >= I Sekretarz;
+  // 'liechtenstein' -> fundacja w Vaduz (flaga hasLiechtensteinTrust); pozostale -> id osiagniecia.
+  const meetsContactRequirement = (req?: string): boolean => {
+    if (!req || req === 'default') return true;
+    if (req === 'sekretarz') {
+      const ranks = PARTY_RANKS.map(r => r.id);
+      return ranks.indexOf(state.partyRank || '') >= ranks.indexOf('sekretarz');
+    }
+    if (req === 'liechtenstein') return !!state.hasLiechtensteinTrust;
+    return !!state.unlockedAchievements?.[req];
+  };
+
+  const contactRequirementLabel: Record<string, string> = {
+    sekretarz: 'rangi partyjnej: I Sekretarz',
+    liechtenstein: 'fundacji powierniczej w Liechtensteinie',
+    offshore_zurich: 'osiagniecia "Gnom z Zurychu" ($100 000 na koncie szwajcarskim)',
+    cocom_nsa: 'osiagniecia "Szpieg Bez Paszportu" (sprzedaz szyfratora NSA)',
+  };
+
   const unlockExportContact = (contactId: string) => {
     const contact = EXPORT_CONTACTS.find(c => c.id === contactId);
     if (!contact) { playError(); return; }
     if (state.unlockedContacts[contactId]) { playError(); return; }
+    if (!meetsContactRequirement(contact.unlockRequirement)) {
+      playError();
+      showAlert(`Kontrahent ${contact.name} wymaga: ${contactRequirementLabel[contact.unlockRequirement || ''] || contact.unlockRequirement}.`, 'BRAK DOSTEPU', 'error');
+      return;
+    }
     if ((state.swissBalanceUsd || 0) < contact.costUsd) { playError(); return; }
 
     updateState(s => ({
@@ -4571,7 +4625,9 @@ function App() {
     }
     playClick();
     updateState(s => {
-      const newHelpers = { ...s.helpers, [helperId]: count - 1 };
+      // [Claude] naprawa (stale closure): liczba pomocnikow czytana ze stanu z momentu renderu mogla
+      // nadpisac rownolegla aktualizacje z ticku; wartosc bierzemy z 's' wewnatrz updatera.
+      const newHelpers = { ...s.helpers, [helperId]: Math.max(0, (s.helpers[helperId] || 0) - 1) };
       const newTwList = { ...s.sbTwList };
       const newRevealed = { ...s.sbTwRevealed };
       const newBlackmailed = { ...s.sbTwBlackmailed };
@@ -4602,7 +4658,9 @@ function App() {
     playSuccess();
     updateState(s => ({
       ...s,
-      bibulaPisma: currentPisma - 20,
+      // [Claude] naprawa (stale closure): odejmujemy od wartosci z 's', nie z migawki renderu -
+      // inaczej klikniecie moglo cofnac bibule wyprodukowana przez tick miedzy renderem a akcja.
+      bibulaPisma: Math.max(0, (s.bibulaPisma || 0) - 20),
       sbTwBlackmailed: {
         ...s.sbTwBlackmailed,
         [helperId]: true
@@ -4645,7 +4703,10 @@ function App() {
     const bribeAchMult = (state.unlockedAchievements?.['pol_bribe_1'] ? 0.90 : 1) 
                        * (state.unlockedAchievements?.['pol_bribe_2'] ? 0.75 : 1)
                        * solidarityBribeMult;
-    const cost = Math.floor((state.partyRank === 'czlonek' ? 900 : 1000) * bribeAchMult);
+    // [Claude] naprawa: znizka -10% (opis rangi Czlonek PZPR) znikala po awansie na wyzsze rangi,
+    // bo partyRank trzyma tylko najwyzsza range - awans PODNOSIL koszt lapowki z 900 na 1000 zl.
+    // Rangi sa kumulatywne: kazdy sekretarz/dyrektor/minister jest tez czlonkiem partii.
+    const cost = Math.floor((PARTY_RANKS.some(r => r.id === state.partyRank) ? 900 : 1000) * bribeAchMult);
     if (state.pln >= cost) {
       updateState(s => ({
         ...s,

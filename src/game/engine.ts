@@ -72,11 +72,31 @@ export function tick(s: GameState, deltaSec: number, ctx: TickContext): { state:
   const activeQueue = ctx.activeQueue;
 
   const compute = (): GameState => {
+        // [Claude] naprawa (mutacje stanu zrodlowego): tick zapisywal do kilkunastu zagniezdzonych map
+        // przez wspoldzielona referencje (spread kopiuje tylko poziom najwyzszy). W React StrictMode
+        // updater odpala sie DWUKROTNIE na tym samym 's' - kazda mutacja w miejscu naliczala sie wtedy
+        // podwojnie (np. auto-eksport zdejmowal 2 sztuki towaru). Klonujemy wszystkie mapy, do ktorych
+        // silnik pisze indeksowo; nomenklaturaCompanies i districtControl przez structuredClone,
+        // bo kod mutuje same obiekty wartosci (assetLevel, ctrl.player itd.).
         const nextState = { 
           ...s, 
           inventory: { ...s.inventory },
           stats: { ...s.stats },
-          unlockedAchievements: { ...s.unlockedAchievements }
+          unlockedAchievements: { ...s.unlockedAchievements },
+          bazarInventory: { ...(s.bazarInventory || {}) },
+          bazarMarketSaturation: { ...(s.bazarMarketSaturation || {}) },
+          borderShiftStatus: { ...(s.borderShiftStatus || {}) },
+          campaignMaterials: { ...(s.campaignMaterials || {}) },
+          cocomInventory: { ...(s.cocomInventory || {}) },
+          districtControl: structuredClone(s.districtControl || {}),
+          leaderCooldowns: { ...(s.leaderCooldowns || {}) },
+          mediaTrust: { ...(s.mediaTrust || {}) },
+          nfiCompanyStatus: { ...(s.nfiCompanyStatus || {}) },
+          nomenklaturaCompanies: structuredClone(s.nomenklaturaCompanies || {}),
+          realEstateOwned: { ...(s.realEstateOwned || {}) },
+          regionalVotes: { ...(s.regionalVotes || {}) },
+          stockPriceHistories: { ...(s.stockPriceHistories || {}) },
+          stockPrices: { ...(s.stockPrices || {}) }
         };
         
         nextState.timeInCurrentLoop = (s.timeInCurrentLoop || 0) + deltaSec;
@@ -444,7 +464,18 @@ export function tick(s: GameState, deltaSec: number, ctx: TickContext): { state:
             const item = LUXURY_ITEMS.find(li => li.id === auction!.itemId);
             
             if (winner === 'Gracz') {
-              if (item) {
+              // [Claude] naprawa (bezpieczenstwo transakcji): srodki sprawdzane byly tylko w momencie
+              // przebicia, nie rezerwowane - gracz mogl wydac gotowke w trakcie aukcji, a klamra
+              // Math.max(0, ...) i tak przyznawala przedmiot za "reszte". Przy braku pokrycia w chwili
+              // rozstrzygniecia licytacja zostaje uniewazniona.
+              const canPay = item ? (item.currency === 'dollars' ? nextState.dollars >= finalBid : nextState.pln >= finalBid) : false;
+              if (item && !canPay) {
+                setTimeout(() => {
+                  playError();
+                  showAlert(`Wygrałeś licytację na ${item.name} za ${finalBid} ${item.currency === 'dollars' ? '$' : 'zł'}, ale nie masz pokrycia! Organizatorzy unieważnili transakcję i wpisali Cię na czarną listę tej aukcji.`, 'AUKCJA UNIEWAŻNIONA', 'error');
+                }, 50);
+              }
+              if (item && canPay) {
                 if (item.currency === 'dollars') {
                   nextState.dollars = Math.max(0, nextState.dollars - finalBid);
                 } else {
@@ -900,6 +931,10 @@ export function tick(s: GameState, deltaSec: number, ctx: TickContext): { state:
             if (nextState.unlockedAchievements?.['offshore_trust']) risk *= 0.65;
             if ((nextState.cocomInventory['crypto_device'] || 0) > 0) risk *= 0.70;
             if (nextState.activeGeoEvent === 'cocom_relax') risk *= 0.50;
+            // [Claude] naprawa (niepodlaczona funkcja): zdarzenie 'cia_interest' ("Kontrahent USA pod
+            // obserwacja", efekt 'cia_risk_up') nie mialo zadnej implementacji - bylo czystym komunikatem.
+            // Podczas obserwacji przesylki do siatki CIA niosa +25 p.p. ryzyka.
+            if (nextState.activeGeoEvent === 'cia_interest' && ship.contactId === 'cia_front') risk += 0.25;
             risk = Math.max(0.02, Math.min(0.95, risk));
 
             // Embassy immunity check
@@ -912,14 +947,19 @@ export function tick(s: GameState, deltaSec: number, ctx: TickContext): { state:
             const failed = !immuneUsed && Math.random() < risk;
 
             if (failed) {
-              if (!nextState.syndicateUpgrades['fake_docs']) {
-                // towar przepada
+              // [Claude] naprawa (niepodlaczona funkcja): opis ulepszenia 'Dokumenty Przewozowe' obiecuje
+              // "towar nie przepada przy wpadce", ale galaz byla ODWROCONA i PUSTA (if (!fake_docs) {}),
+              // a towar schodzi z magazynu juz przy wysylce - obietnica nigdy sie nie spelniala.
+              // Z fake_docs przechwycony towar wraca do magazynu syndykatu.
+              const itemSaved = !!nextState.syndicateUpgrades['fake_docs'];
+              if (itemSaved) {
+                nextState.cocomInventory[ship.itemId] = (nextState.cocomInventory[ship.itemId] || 0) + 1;
               }
               nextState.interpolSuspicion = Math.min(100, (nextState.interpolSuspicion || 0) + 25);
               nextState.suspicion = Math.min(100, (nextState.suspicion || 0) + 15);
               setTimeout(() => {
                 playError();
-                showAlert(`Przesyłka towaru COCOM (${item.name}) została przechwycona! Trasa: ${ship.route}. Interpol +25%, Milicja +15%.`, '🚨 WPADKA SYNDYKATU', 'error');
+                showAlert(`Przesyłka towaru COCOM (${item.name}) została przechwycona! Trasa: ${ship.route}. Interpol +25%, Milicja +15%.${itemSaved ? '\n\nSfalszowane dokumenty przewozowe zmyliły śledczych - towar wrócił do Twojego magazynu!' : ''}`, '🚨 WPADKA SYNDYKATU', 'error');
               }, 50);
             } else {
               const priceMult = contact ? (1 + contact.priceBonus) : 1;
@@ -1022,7 +1062,10 @@ export function tick(s: GameState, deltaSec: number, ctx: TickContext): { state:
           if (nextState.borderShiftTimeLeft <= 0) {
             nextState.borderShiftTimeLeft = 60; // 60 seconds per shift
             // Randomize statuses
-            ['Świecko (Drogowe)', 'Cieszyn (Drogowe)', 'Szwajcarska Straż Graniczna', 'Terespol (Kolejowe)', 'Okęcie (Kontrola Lotnicza)'].forEach(border => {
+            // [Claude] porzadek: nazwy przejsc z jednego zrodla prawdy (COCOM_SMUGGLING_ROUTES).
+            // Reczna kopia zgadzala sie dzis co do znaku, ale kazda przyszla zmiana nazwy w danych
+            // (nawet o spacje) po cichu usmiercilaby modyfikatory zmian na tej granicy.
+            Array.from(new Set(COCOM_SMUGGLING_ROUTES.map(r => r.borderPatrolName))).forEach(border => {
               const r = Math.random();
               if (r < 0.1) nextState.borderShiftStatus[border] = 'relaxed';
               else if (r < 0.7) nextState.borderShiftStatus[border] = 'standard';
@@ -1465,9 +1508,9 @@ export function tick(s: GameState, deltaSec: number, ctx: TickContext): { state:
                 setTimeout(() => {
                   playSuccess();
                   if (addedSummary) {
-                    showAlert('Dostawa ze szlaku "' + route.name + '" dotarla na stadion! Rozładowano: ' + addedSummary.slice(0, -2) + '.', '📦 IMPORT ZAKOŃCZONY', 'success');
+                    showAlert('Dostawa ze szlaku "' + route.name + '" dotarła na stadion! Rozładowano: ' + addedSummary.slice(0, -2) + '.', '📦 IMPORT ZAKOŃCZONY', 'success');
                   } else {
-                    showAlert('Dostawa ze szlaku "' + route.name + '" dotarla, ale magazyn jest pelny! Towary ulegly zniszczeniu na deszczu.', '⚠️ MAGAZYN PRZEPEŁNIONY', 'raid');
+                    showAlert('Dostawa ze szlaku "' + route.name + '" dotarła, ale magazyn jest pełny! Towary uległy zniszczeniu na deszczu.', '⚠️ MAGAZYN PRZEPEŁNIONY', 'raid');
                   }
                 }, 50);
               }
@@ -1613,7 +1656,7 @@ export function tick(s: GameState, deltaSec: number, ctx: TickContext): { state:
 
           // 5. Zmywak w Londynie
           if (nextState.zmywakWorkers > 0) {
-            // Powiedzmy 1 GBP = 6 PLN (sztywno na lata 2000 dla uproszczenia), zarabiają 10 GBP na sekundę, bierzemy 10%
+            // [Claude] komentarz urealniony do kodu: 1 GBP = 6 PLN (sztywno), pracownik zarabia 5 GBP/s, agencja bierze 15% prowizji
             const gbpPerSec = nextState.zmywakWorkers * 5; 
             const commissionGbp = gbpPerSec * 0.15; // 15% prowizji agencji
             const plnEarned = Math.floor(commissionGbp * 6 * deltaSec);
@@ -1636,7 +1679,10 @@ export function tick(s: GameState, deltaSec: number, ctx: TickContext): { state:
           if (nextState.realEstateUnderConstruction && nextState.realEstateUnderConstruction.length > 0) {
             const stillBuilding: typeof nextState.realEstateUnderConstruction = [];
             
-            for (const build of nextState.realEstateUnderConstruction) {
+            // [Claude] naprawa (mutacja stanu zrodlowego): build.timeLeft -= modyfikowalo obiekty
+            // wewnatrz tablicy stanu poprzedniego ticku; pracujemy na kopii kazdej budowy.
+            for (const buildRef of nextState.realEstateUnderConstruction) {
+              const build = { ...buildRef };
               build.timeLeft -= deltaSec;
               
               if (build.timeLeft <= 0) {
@@ -1958,8 +2004,13 @@ export function tick(s: GameState, deltaSec: number, ctx: TickContext): { state:
         }
 
         // Milicja - random check if suspicion is above threshold
-        let raidThreshold = 50;
-        if (s.partyRank === 'sekretarz' || s.partyRank === 'dyrektor' || s.partyRank === 'wiceminister') raidThreshold = 150;
+        // [Antigravity] Zmiana let na const, aby zapobiec błędowi eslint prefer-const
+        const raidThreshold = 50;
+        // [Claude] naprawa: prog 150 byl nieosiagalny (podejrzenie jest wszedzie klamrowane do 100),
+        // wiec rangi srodkowe dostawaly PELNY immunitet od Milicji juz za 100 tys. zl - perk ministra
+        // ("Calkowity brak Milicji" za 8 mln) byl bezwartosciowy. Opis rangi sekretarza obiecuje
+        // "Brak Milicji do 50% Podejrzenia" - i dokladnie tyle rangi srodkowe otrzymuja (prog 50,
+        // powyzej niego naloty wracaja); calkowita ochrona pozostaje przywilejem ministra i biura.
         
         if (s.partyRank !== 'minister' && s.partyRank !== 'biuro' && nextState.suspicion > raidThreshold) {
            if (Math.random() < (nextState.suspicion / 1000)) { // rosnąca szansa
