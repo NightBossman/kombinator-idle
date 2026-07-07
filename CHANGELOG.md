@@ -4,6 +4,34 @@ Wszystkie istotne zmiany i wydania projektu będą dokumentowane w tym pliku.
 
 ---
 
+## [4.4.1] - 2026-07-05
+Przegląd nowych faz (W/X/Y/Z) i naprawa błędów — Claude. Zmiany oznaczone `[Claude]`.
+Uwaga porządkowa: `package.json`/README były wciąż na 4.3.0 mimo wydania faz W–Z — wyrównano do 4.4.1.
+
+### Naprawiono
+- **Telegram PAP „cofał się" po ucieczce/prestiżu**: `eventsUnlocked` to odblokowanie NA STAŁE,
+  ale `resetGame` go gubił — po każdej emigracji gracz musiał od nowa trzymać 100 000 zł przez
+  10 minut. Flaga przechodzi teraz przez reset (jak inne odblokowania), a licznik progu jest
+  ustawiany na spełniony. Usunięto też łatę w `mergeSavedState`, która wymuszała odblokowanie
+  przy `pln >= 100000` — omijała wymóg 10 minut przy każdym wczytaniu.
+- **Zdarzenie „Przemówienie Draghi" nie robiło nic**: było zdefiniowane i pokazywało telegram
+  obiecujący korzyści, ale nie miało żadnego efektu w kodzie. Teraz na czas trwania: rentowność
+  rozliczanych obligacji euro +40%, a przyrost ryzyka w Mordorze −50%.
+- **Lobbing KPO był ślepą uliczką**: pasek dochodził do 10 000 (i przekraczał 100%!), a nagroda
+  nie istniała — `kpoApproved` nigdy się nie aktywowało. Po osiągnięciu progu Bruksela wypłaca
+  jednorazową dotację 15 000 000 EUR i zatwierdza KPO na stałe. Naprawiono też skalę postępu:
+  przyciski USD/EUR dodawały surowe 100 000 pkt (10× ponad cel) zamiast punktów wpływu.
+
+### Zmieniono
+- Ticker PAP w stanie spoczynku ma czytelniejszy, estetyczniejszy napis (mniej „szumu"),
+  a treść po odblokowaniu nie sugeruje już błędnie, że trzeba utrzymywać kapitał.
+
+### Usunięto
+- Martwe pole stanu `pipInspectionTimer` (nieczytane i nieustawiane; kontrola PIP działa
+  na podstawie `jdgRiskLevel`).
+
+---
+
 ## [4.4.0] - 2026-07-04
 Wdrożenie Fazy W – Mordor na Domaniewskiej (Lata 2010.).
 

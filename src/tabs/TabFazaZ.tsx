@@ -8,16 +8,30 @@ export default function TabFazaZ() {
   const [bondsAmount, setBondsAmount] = useState<number>(1000);
 
   const renderKpoPanel = () => {
+    // [Claude] panel odzwierciedla domknięcie pętli: po zatwierdzeniu KPO znikają przyciski
+    // lobbingu, a pasek nie przekracza już 100%.
+    const approved = !!s.kpoApproved?.['zatwierdzony'];
+    const progress = Math.min(10000, s.kpoLobbyProgress || 0);
+    const pct = Math.floor((progress / 10000) * 100);
     return (
       <div className="panel">
         <h2>🏛️ KRAJOWY PLAN ODBUDOWY (KPO)</h2>
-        <p>Lobbing w Brukseli wymaga czasu i pieniędzy. Waluty otwierają różne drzwi.</p>
-        <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-          <button onClick={() => api.fundKpoLobby(1000000, 'pln')}>Lobbuj (1M PLN)</button>
-          <button onClick={() => api.fundKpoLobby(100000, 'usd')}>Lobbuj (100k USD)</button>
-          <button onClick={() => api.fundKpoLobby(100000, 'eur')}>Lobbuj (100k EUR)</button>
-        </div>
-        <p>Postęp lobbingu: {fmtNum(s.kpoLobbyProgress || 0)} / 10 000</p>
+        {approved ? (
+          <>
+            <p style={{ color: 'var(--dollar-green)', fontWeight: 'bold' }}>✅ KPO ZATWIERDZONY — dotacja z Brukseli wpłynęła.</p>
+            <p style={{ color: 'var(--prl-gray)' }}>Kamienie milowe odhaczone. Fundusze rozdysponowane.</p>
+          </>
+        ) : (
+          <>
+            <p>Lobbing w Brukseli wymaga czasu i pieniędzy. Waluty otwierają różne drzwi.</p>
+            <div style={{ display: 'flex', gap: '10px', marginTop: '10px', flexWrap: 'wrap' }}>
+              <button onClick={() => api.fundKpoLobby(1000000, 'pln')} disabled={s.pln < 1000000}>Lobbuj (1M PLN)</button>
+              <button onClick={() => api.fundKpoLobby(100000, 'usd')} disabled={s.dollars < 100000}>Lobbuj (100k USD)</button>
+              <button onClick={() => api.fundKpoLobby(100000, 'eur')} disabled={s.euros < 100000}>Lobbuj (100k EUR)</button>
+            </div>
+            <p>Postęp lobbingu: {fmtNum(progress)} / 10 000 ({pct}%)</p>
+          </>
+        )}
       </div>
     );
   };

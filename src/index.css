@@ -191,6 +191,40 @@ button:disabled:hover {
   animation: border-flicker 2s infinite alternate;
 }
 
+/* [Claude] stany spoczynkowe tickera PAP - wydzielone z inline'ów, spójny klimat dalekopisu */
+.pap-ticker.pap-idle {
+  background: rgba(255, 100, 0, 0.05);
+  border-style: dashed;
+  border-color: #7a5a1a;
+  color: #b8923f;
+  box-shadow: none;
+}
+.pap-ticker.pap-idle .pap-badge {
+  background: #3a2a0a;
+  color: #b8923f;
+}
+.pap-ticker.pap-locked {
+  background: rgba(20, 18, 0, 0.4);
+  border-style: dashed;
+  border-color: #3a3a1a;
+  color: #6b6b3a;
+  box-shadow: none;
+}
+.pap-ticker.pap-locked .pap-badge {
+  background: #2a2a0a;
+  color: #5a5a2a;
+  font-style: italic;
+}
+.pap-ticker.pap-idle .pap-text,
+.pap-ticker.pap-locked .pap-text {
+  font-size: 0.92rem;
+  letter-spacing: 0.03em;
+}
+.pap-blink {
+  animation: blink 1.4s infinite;
+  margin-right: 4px;
+}
+
 @keyframes border-flicker {
   0% { border-color: #ff5500; box-shadow: 0 0 10px rgba(255, 85, 0, 0.15); }
   50% { border-color: #ff9900; box-shadow: 0 0 20px rgba(255, 153, 0, 0.35); }

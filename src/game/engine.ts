@@ -1795,7 +1795,10 @@ export function tick(s: GameState, deltaSec: number, ctx: TickContext): { state:
                   }, 50);
                 } else {
                   // Wypłata zysku nominalnego + odsetki
-                  const revenue = Math.floor(bond.nominalAmountEur * (1 + bond.interestRate));
+                  // [Claude] Przemówienie Draghi podbija rentowność obligacji o +40% dla papierów
+                  // rozliczanych w oknie zdarzenia (część efektu ożywionego draghi_speech).
+                  const draghiYieldMult = s.activeEvent === 'draghi_speech' ? 1.4 : 1.0;
+                  const revenue = Math.floor(bond.nominalAmountEur * (1 + bond.interestRate * draghiYieldMult));
                   nextState.euros = (nextState.euros || 0) + revenue;
                   nextState.stats.totalPlnEarned = (nextState.stats.totalPlnEarned || 0) + Math.floor(revenue * nextState.euroExchangeRate);
                   setTimeout(() => {
@@ -1946,6 +1949,24 @@ export function tick(s: GameState, deltaSec: number, ctx: TickContext): { state:
 
         // ===== Faza Z: KPO, AI SaaS, Obligacje COI/EDO (Lata 2024-2025) =====
         if (s.fazaZUnlocked) {
+          // 0. [Claude] Domknięcie lobbingu KPO: wcześniej gracz lał miliony, pasek dochodził do
+          // 10 000 (i przekraczał 100%!), a NIC się nie działo - kpoApproved nigdy nie było ustawiane.
+          // Teraz po osiągnięciu progu Bruksela wypłaca jednorazową dotację i zatwierdza KPO na stałe.
+          if ((s.kpoLobbyProgress || 0) >= 10000 && !s.kpoApproved?.['zatwierdzony']) {
+            nextState.kpoApproved = { ...(s.kpoApproved || {}), zatwierdzony: true };
+            const grantEur = 15000000; // ~dotacja z Krajowego Planu Odbudowy
+            nextState.euros = (nextState.euros || 0) + grantEur;
+            nextState.stats.totalPlnEarned = (nextState.stats.totalPlnEarned || 0) + Math.floor(grantEur * nextState.euroExchangeRate);
+            setTimeout(() => {
+              playSuccess();
+              showAlert(
+                `Komisja Europejska zatwierdziła Twój Krajowy Plan Odbudowy!\n\nPierwsza transza dotacji w wysokości ${grantEur.toLocaleString('pl-PL')} EUR wpłynęła na konto. Kamienie milowe odhaczone, pieczątki przybite.`,
+                '🇪🇺 KPO ZATWIERDZONY',
+                'success'
+              );
+            }, 50);
+          }
+
           // 1. Zyski z Obligacji detalicznych
           const coiYield = coiBondYieldPerSec(nextState) * deltaSec;
           const edoYield = edoBondYieldPerSec(nextState) * deltaSec;

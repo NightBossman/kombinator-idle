@@ -2867,14 +2867,22 @@ function App() {
   };
 
   const fundKpoLobby = (amount: number, currency: 'pln' | 'usd' | 'eur') => {
-    let cost = 0;
-    if (currency === 'pln') cost = amount;
-    else if (currency === 'usd') cost = amount;
-    else cost = amount;
+    // [Claude] domknięcie KPO: gdy postęp osiągnie próg, silnik wypłaca dotację i ustawia
+    // kpoApproved (patrz engine.ts, Faza Z). Bez sensu lobbować dalej po zatwierdzeniu.
+    if (state.kpoApproved?.['zatwierdzony']) { playError(); return; }
 
+    const cost = amount;
     if (currency === 'pln' && state.pln < cost) { playError(); return; }
     if (currency === 'usd' && state.dollars < cost) { playError(); return; }
     if (currency === 'eur' && state.euros < cost) { playError(); return; }
+
+    // [Claude] naprawa skali: dotąd PLN dawał amount/1000 (1 mln → 1000 pkt), ale USD/EUR
+    // dodawały surowe "amount" (100k → 100000 pkt), więc JEDEN klik dewizami przeskakiwał
+    // cel 10 000 dziesięciokrotnie. Ujednolicone na punkty wpływu: EUR "otwiera najlepsze drzwi".
+    const progressGain =
+      currency === 'pln' ? amount / 1000 :   // 1 000 000 PLN -> 1000 pkt
+      currency === 'usd' ? amount / 100  :   // 100 000 USD   -> 1000 pkt
+                           amount / 50;      // 100 000 EUR   -> 2000 pkt
 
     playSuccess();
     updateState(s => ({
@@ -2882,7 +2890,7 @@ function App() {
       pln: currency === 'pln' ? s.pln - cost : s.pln,
       dollars: currency === 'usd' ? s.dollars - cost : s.dollars,
       euros: currency === 'eur' ? s.euros - cost : s.euros,
-      kpoLobbyProgress: (s.kpoLobbyProgress || 0) + (currency === 'pln' ? amount / 1000 : amount)
+      kpoLobbyProgress: Math.min(10000, (s.kpoLobbyProgress || 0) + progressGain)
     }));
   };
 
@@ -5629,14 +5637,24 @@ function App() {
           </div>
         </div>
       ) : (
-        <div className="pap-ticker" style={{borderColor: '#3a3a1a', background: 'rgba(20,18,0,0.4)', color: '#6b6b3a', letterSpacing: '0.04em'}}>
-          <div className="pap-badge" style={{background: '#2a2a0a', color: '#5a5a2a', fontStyle: 'italic'}}>AKTA ZASTRZEŻONE</div>
-          <div className="pap-text" style={{fontSize: '0.88rem', fontStyle: 'italic', opacity: 0.7}}>
-            {state.eventsUnlocked
-              ? '▒▒▒ CZEKA NA SYGNAŁ... ▒▒▒ Następna transmisja zaszyfrowana. Utrzymuj kapitał powyżej progu.'
-              : '▒▒▒ [TREŚĆ UTAJNIONA] ▒▒▒ Dostęp do kanału specjalnego wymaga odpowiedniego statusu majątkowego. Osiągnij próg — a zasłona opadnie.'}
+        // [Claude] upiększenie napisu (na życzenie właściciela): mniej „szumu" (nadmiar ▒▒▒),
+        // dwa spójne stany, i poprawiona treść dla stanu odblokowanego - po zdobyciu PAP zdarzenia
+        // lecą NA STAŁE, niezależnie od bieżącego kapitału, więc znika mylące „utrzymuj kapitał".
+        state.eventsUnlocked ? (
+          <div className="pap-ticker pap-idle">
+            <div className="pap-badge">DALEKOPIS PAP</div>
+            <div className="pap-text">
+              <span className="pap-blink">▓</span> Cisza w eterze. Agencja szykuje kolejny biuletyn — spodziewaj się depeszy lada chwila.
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="pap-ticker pap-locked">
+            <div className="pap-badge">KANAŁ UTAJNIONY</div>
+            <div className="pap-text">
+              <span className="pap-blink">▒</span> Dostęp do depesz specjalnych wymaga statusu majątkowego. Zgromadź <strong>100 000 zł</strong> i utrzymaj przez 10 minut — a zasłona opadnie na stałe.
+            </div>
+          </div>
+        )
       )}
       
       {state.pewexItems['transformacja'] && (

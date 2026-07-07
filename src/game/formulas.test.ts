@@ -126,6 +126,12 @@ describe('wzory mnożników (formulas.ts)', () => {
     expect(jdgRiskGainPerSec(s)).toBeCloseTo(0.25, 4);
   });
 
+  it('jdgRiskGainPerSec: Przemówienie Draghi halves the Mordor risk gain', () => {
+    const base = freshState({ fazaWUnlocked: true, jdgContracts: 5, jdgTaxOptimizationLevel: 2 });
+    const draghi = freshState({ fazaWUnlocked: true, jdgContracts: 5, jdgTaxOptimizationLevel: 2, activeEvent: 'draghi_speech' });
+    expect(jdgRiskGainPerSec(draghi)).toBeCloseTo(jdgRiskGainPerSec(base) * 0.5, 6);
+  });
+
   it('seaSmuggleTime: calculates smuggling time with weather and upgrades', () => {
     const s1 = freshState({ seaState: 'storm' });
     expect(seaSmuggleTime(1000, s1)).toBe(1500);

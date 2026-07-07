@@ -229,7 +229,10 @@ export const jdgRiskGainPerSec = (s: GameState): number => {
   if (!s.fazaWUnlocked || s.jdgContracts <= 0) return 0;
   const level = s.jdgTaxOptimizationLevel || 0;
   const taxLevel = JDG_TAX_LEVELS.find(l => l.level === level) || JDG_TAX_LEVELS[0];
-  return s.jdgContracts * 0.05 * taxLevel.riskFactor;
+  // [Claude] Przemówienie Draghi ("whatever it takes") uspokaja rynek: przyrost ryzyka w Mordorze
+  // spada o połowę na czas trwania zdarzenia (wcześniej zdarzenie było martwe - nie robiło nic).
+  const draghiMult = s.activeEvent === 'draghi_speech' ? 0.5 : 1.0;
+  return s.jdgContracts * 0.05 * taxLevel.riskFactor * draghiMult;
 };
 
 /** 
