@@ -48,4 +48,15 @@ describe('mergeSavedState (wersjonowanie zapisu)', () => {
     expect(s.partyRank).toBeNull();
     expect(s.activeDestination).toBe('usa');
   });
+
+  it('Telegram PAP: sam wysoki kapitał NIE odblokowuje zdarzeń przy wczytaniu (wymóg 10 minut pilnuje silnik)', () => {
+    // [Claude] regresja: dawna łata wymuszała eventsUnlocked=true, gdy pln>=100000, omijając 10-min próg
+    const s = mergeSavedState({ pln: 5000000, eventsUnlocked: false });
+    expect(s.eventsUnlocked).toBe(false);
+  });
+
+  it('Telegram PAP: stary zapis w późnej fazie odzyskuje odblokowanie (siatka bezpieczeństwa)', () => {
+    const s = mergeSavedState({ fazaSUnlocked: true, eventsUnlocked: false });
+    expect(s.eventsUnlocked).toBe(true);
+  });
 });

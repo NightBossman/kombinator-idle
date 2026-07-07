@@ -30,9 +30,31 @@ const TabFazaZ = lazy(() => import('./tabs/TabFazaZ'));
 import { Settings as SettingsIcon, Pause as PauseIcon, Volume2, VolumeX, Tv, Wrench, ShieldAlert, TrendingUp, Coins, DollarSign, Landmark, Package, CheckCircle2, Clock } from 'lucide-react';
 import { GameApiContext } from './tabs/GameApiContext';
 import type { GameApi } from './tabs/GameApiContext';
-import { MORDOR_UPGRADES, JDG_TAX_LEVELS, EURO_BOND_TYPES, AI_UPGRADES } from './game/items';
+import { MORDOR_UPGRADES, JDG_TAX_LEVELS, EURO_BOND_TYPES, AI_UPGRADES, PRODUCED_ITEMS } from './game/items';
+
+// [Claude] estetyka raportu offline: mapowanie id towaru -> ładna nazwa (surowe „papier"/„gozdziki"
+// w raporcie wyglądały biednie). Fallback do id, gdyby coś nie miało wpisu.
+const ITEM_DISPLAY_NAMES: Record<string, string> = {
+  ...Object.fromEntries(QUEUE_ITEMS.map(i => [i.id, i.name])),
+  ...Object.fromEntries(PRODUCED_ITEMS.map(i => [i.id, i.name])),
+  fiat125: 'Fiat 125p „Duży"', polonez: 'FSO Polonez', syrena: 'Syrena 105',
+  predom: 'Odkurzacz „Predom"', kasprzak: 'Radio „Kasprzak"', neptun: 'TV „Neptun"',
+};
+const itemDisplayName = (id: string): string => ITEM_DISPLAY_NAMES[id] || id;
+
+// [Claude] zwięzły zapis czasu nieobecności do raportu offline (np. „2 godz. 5 min", „45 s")
+const formatOfflineDuration = (totalSec: number): string => {
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const sec = Math.floor(totalSec % 60);
+  const parts: string[] = [];
+  if (h > 0) parts.push(`${h} godz.`);
+  if (m > 0) parts.push(`${m} min`);
+  if (h === 0 && m === 0) parts.push(`${sec} s`);
+  return parts.join(' ');
+};
 // [Claude] KIERUNEK 1.3: wspolne wzory - panel Casio i Bazar pokazuja to, co liczy silnik
-import { helperSpeedMult, businessProductionMult, cinkciarzRate, queueTimeMs, bazarPlnUnitPrice, bazarUsdUnitPrice, realEstateCostPln, realEstateBuildTimeSec, chfInstallmentPerSec, vatCarouselRefundPerSec, mordorIncomePerSec, mordorEmployeeUpkeepPerSec, seaSmuggleTime, seaSmuggleRisk, cryptoMiningYield, cryptoPowerUpkeepPln, wiborInstallmentPerSec, polishDealTaxPerSec, energyPowerUpkeepPln, coiBondYieldPerSec, edoBondYieldPerSec, aiSaaSProfitUsdPerSec, aiSaaSProfitEurPerSec } from './game/formulas';
+import { helperSpeedMult, businessProductionMult, cinkciarzRate, queueTimeMs, bazarPlnUnitPrice, bazarUsdUnitPrice, realEstateCostPln, realEstateBuildTimeSec, chfInstallmentPerSec, vatCarouselRefundPerSec, mordorIncomePerSec, mordorEmployeeUpkeepPerSec, seaSmuggleTime, seaSmuggleRisk, cryptoMiningYield, cryptoPowerUpkeepPln, wiborInstallmentPerSec, polishDealTaxPerSec, energyPowerUpkeepPln, coiBondYieldPerSec, edoBondYieldPerSec, aiSaaSProfitUsdPerSec, aiSaaSProfitEurPerSec, milicjaBribeCost } from './game/formulas';
 // [Claude] silnik gry (KIERUNEK.md pkt 1.1) - czysta pętla + zdarzenia; stamtąd też calculateLuxurySuspicionReduction
 import { tick, calculateLuxurySuspicionReduction } from './game/engine';
 import type { GameEvent, SoundId } from './game/engine';
@@ -208,74 +230,67 @@ function App() {
   // Raport offline (wykonywany po wczytaniu save'a i ewentualnej symulacji)
   const offlineShownRef = useRef(false);
   useEffect(() => {
-    console.log('Checking offlineReport:', state.offlineReport);
     if (state.offlineReport && !offlineShownRef.current) {
       offlineShownRef.current = true;
       const rep = state.offlineReport;
       // [Antigravity] Czyszczenie raportu ze stanu natychmiast, aby zapobiec duplikatowi w StrictMode
       updateState(s => ({ ...s, offlineReport: null }));
-      const hours = Math.floor(rep.timeSec / 3600);
-      const mins = Math.floor((rep.timeSec % 3600) / 60);
-      const itemKeys = Object.keys(rep.earnedItems);
+      const itemKeys = Object.keys(rep.earnedItems).filter(k => rep.earnedItems[k] > 0);
+
+      // [Claude] estetyka: nagłówek z zegarem, karty sekcji z lekkim tłem, ładne nazwy towarów,
+      // spójne kolory linii. Wcześniej raport był surowy (id towarów, zbite „0h 5m").
+      const sekcjaStyl: React.CSSProperties = {
+        border: '1px solid var(--crt-text)', borderLeft: '3px solid var(--crt-text)',
+        padding: '10px 12px', background: 'rgba(0, 40, 0, 0.25)', borderRadius: '4px',
+      };
+      const naglowekStyl: React.CSSProperties = {
+        fontWeight: 'bold', marginBottom: '8px', display: 'flex', alignItems: 'center',
+        gap: '6px', color: 'var(--prl-yellow)', letterSpacing: '0.5px',
+      };
+      const liStyl: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: '8px', padding: '2px 0' };
 
       const modalMessage = (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', textAlign: 'left', fontFamily: 'monospace' }}>
-          <p>
-            Towarzyszu Obywatelu, pod Twoją nieobecność (<strong>{hours}h {mins}m</strong>) nasz kombinat pracował pełną parą!
-          </p>
-          <div style={{ border: '1px solid var(--crt-text)', padding: '10px', background: 'rgba(0,0,0,0.3)', borderRadius: '4px' }}>
-            <div style={{ fontWeight: 'bold', marginBottom: '5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <TrendingUp size={16} /> Wyniki produkcyjne:
-            </div>
-            <ul style={{ listStyleType: 'none', paddingLeft: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              {rep.earnedPln > 0 && (
-                <li style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Coins size={14} color="#f1c40f" /> Gotówka (PLN): +{fmtNum(rep.earnedPln)}
-                </li>
-              )}
-              {rep.earnedDollars > 0 && (
-                <li style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <DollarSign size={14} color="#2ecc71" /> Dewizy (USD): +${fmtNum(rep.earnedDollars)}
-                </li>
-              )}
-              {rep.dividends > 0 && (
-                <li style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Landmark size={14} color="#9b59b6" /> Dywidendy GPW/NFI: +{fmtNum(rep.dividends)} PLN
-                </li>
-              )}
-              {rep.interest > 0 && (
-                <li style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <TrendingUp size={14} color="#3498db" /> Odsetki: +{fmtNum(rep.interest)}
-                </li>
-              )}
-            </ul>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', textAlign: 'left', fontFamily: "'VT323', monospace" }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--prl-gray)', borderBottom: '1px dashed var(--crt-dark-text)', paddingBottom: '8px' }}>
+            <Clock size={16} /> Nieobecność: <strong style={{ color: 'var(--crt-text)' }}>{formatOfflineDuration(rep.timeSec)}</strong>
           </div>
-          
-          {itemKeys.some(k => rep.earnedItems[k] > 0) && (
-            <div style={{ border: '1px solid var(--crt-text)', padding: '10px', background: 'rgba(0,0,0,0.3)', borderRadius: '4px' }}>
-              <div style={{ fontWeight: 'bold', marginBottom: '5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Package size={16} /> Wyprodukowane dobra:
-              </div>
+          <p style={{ margin: 0 }}>
+            Towarzyszu Obywatelu, pod Twoją nieobecność kombinat pracował pełną parą. Oto meldunek ze zmiany:
+          </p>
+
+          {(rep.earnedPln > 0 || rep.earnedDollars > 0 || rep.dividends > 0 || rep.interest > 0) && (
+            <div style={sekcjaStyl}>
+              <div style={naglowekStyl}><TrendingUp size={16} /> WPŁYWY DO KASY</div>
               <ul style={{ listStyleType: 'none', paddingLeft: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                {itemKeys.map(k => {
-                  if (rep.earnedItems[k] <= 0) return null;
-                  return (
-                    <li key={k} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <CheckCircle2 size={14} color="#2ecc71" /> {k}: +{fmtNum(rep.earnedItems[k], 2, true)}
-                    </li>
-                  );
-                })}
+                {rep.earnedPln > 0 && <li style={liStyl}><Coins size={14} color="#f1c40f" /> Gotówka: <strong>+{fmtNum(rep.earnedPln)} zł</strong></li>}
+                {rep.earnedDollars > 0 && <li style={liStyl}><DollarSign size={14} color="#2ecc71" /> Dewizy: <strong>+${fmtNum(rep.earnedDollars)}</strong></li>}
+                {rep.dividends > 0 && <li style={liStyl}><Landmark size={14} color="#9b59b6" /> Dywidendy (GPW/NFI): <strong>+{fmtNum(rep.dividends)} zł</strong></li>}
+                {rep.interest > 0 && <li style={liStyl}><TrendingUp size={14} color="#3498db" /> Odsetki: <strong>+{fmtNum(rep.interest)}</strong></li>}
               </ul>
             </div>
           )}
-          <p style={{ textAlign: 'center', fontWeight: 'bold', marginTop: '5px', color: 'var(--prl-yellow)' }}>
-            Ku chwale ojczyzny!
+
+          {itemKeys.length > 0 && (
+            <div style={sekcjaStyl}>
+              <div style={naglowekStyl}><Package size={16} /> WYPRODUKOWANE DOBRA</div>
+              <ul style={{ listStyleType: 'none', paddingLeft: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                {itemKeys.map(k => (
+                  <li key={k} style={liStyl}>
+                    <CheckCircle2 size={14} color="#2ecc71" /> {itemDisplayName(k)}: <strong>+{fmtNum(rep.earnedItems[k], 2, true)}</strong>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <p style={{ textAlign: 'center', fontWeight: 'bold', margin: '2px 0 0', color: 'var(--prl-yellow)', letterSpacing: '1px' }}>
+            ★ KU CHWALE OJCZYZNY! ★
           </p>
         </div>
       );
-      
+
       enqueueModal({
-        title: 'RAPORT ZMIANY (OFFLINE)',
+        title: '📋 RAPORT ZMIANY (OFFLINE)',
         message: modalMessage,
         type: 'info',
         confirmText: 'ZROZUMIANO',
@@ -2867,14 +2882,22 @@ function App() {
   };
 
   const fundKpoLobby = (amount: number, currency: 'pln' | 'usd' | 'eur') => {
-    let cost = 0;
-    if (currency === 'pln') cost = amount;
-    else if (currency === 'usd') cost = amount;
-    else cost = amount;
+    // [Claude] domknięcie KPO: gdy postęp osiągnie próg, silnik wypłaca dotację i ustawia
+    // kpoApproved (patrz engine.ts, Faza Z). Bez sensu lobbować dalej po zatwierdzeniu.
+    if (state.kpoApproved?.['zatwierdzony']) { playError(); return; }
 
+    const cost = amount;
     if (currency === 'pln' && state.pln < cost) { playError(); return; }
     if (currency === 'usd' && state.dollars < cost) { playError(); return; }
     if (currency === 'eur' && state.euros < cost) { playError(); return; }
+
+    // [Claude] naprawa skali: dotąd PLN dawał amount/1000 (1 mln → 1000 pkt), ale USD/EUR
+    // dodawały surowe "amount" (100k → 100000 pkt), więc JEDEN klik dewizami przeskakiwał
+    // cel 10 000 dziesięciokrotnie. Ujednolicone na punkty wpływu: EUR "otwiera najlepsze drzwi".
+    const progressGain =
+      currency === 'pln' ? amount / 1000 :   // 1 000 000 PLN -> 1000 pkt
+      currency === 'usd' ? amount / 100  :   // 100 000 USD   -> 1000 pkt
+                           amount / 50;      // 100 000 EUR   -> 2000 pkt
 
     playSuccess();
     updateState(s => ({
@@ -2882,7 +2905,7 @@ function App() {
       pln: currency === 'pln' ? s.pln - cost : s.pln,
       dollars: currency === 'usd' ? s.dollars - cost : s.dollars,
       euros: currency === 'eur' ? s.euros - cost : s.euros,
-      kpoLobbyProgress: (s.kpoLobbyProgress || 0) + (currency === 'pln' ? amount / 1000 : amount)
+      kpoLobbyProgress: Math.min(10000, (s.kpoLobbyProgress || 0) + progressGain)
     }));
   };
 
@@ -4702,14 +4725,9 @@ function App() {
   };
   
   const bribe = () => {
-    const solidarityBribeMult = state.solidarnos >= 6500 ? 0.85 : 1.0;
-    const bribeAchMult = (state.unlockedAchievements?.['pol_bribe_1'] ? 0.90 : 1) 
-                       * (state.unlockedAchievements?.['pol_bribe_2'] ? 0.75 : 1)
-                       * solidarityBribeMult;
-    // [Claude] naprawa: znizka -10% (opis rangi Czlonek PZPR) znikala po awansie na wyzsze rangi,
-    // bo partyRank trzyma tylko najwyzsza range - awans PODNOSIL koszt lapowki z 900 na 1000 zl.
-    // Rangi sa kumulatywne: kazdy sekretarz/dyrektor/minister jest tez czlonkiem partii.
-    const cost = Math.floor((PARTY_RANKS.some(r => r.id === state.partyRank) ? 900 : 1000) * bribeAchMult);
+    // [Claude] KIERUNEK 1.3: wspólny wzór (formulas.ts) - ten sam, którego używa przycisk w TabPartia.
+    // Wcześniej wzór był tu i w widoku osobno, przez co przycisk pokazywał inną kwotę niż nalicza akcja.
+    const cost = milicjaBribeCost(state);
     if (state.pln >= cost) {
       updateState(s => ({
         ...s,
@@ -5625,18 +5643,29 @@ function App() {
             <strong>{currentEventData.name}:</strong> {currentEventData.desc}
           </div>
           <div className="pap-time">
-            (KOMUNIKAT: {state.eventTimeLeft}s)
+            {/* [Claude] zaokrąglenie tylko przy wyświetlaniu - stan trzyma precyzyjny float, patrz engine.ts */}
+            (KOMUNIKAT: {Math.ceil(state.eventTimeLeft)}s)
           </div>
         </div>
       ) : (
-        <div className="pap-ticker" style={{borderColor: '#3a3a1a', background: 'rgba(20,18,0,0.4)', color: '#6b6b3a', letterSpacing: '0.04em'}}>
-          <div className="pap-badge" style={{background: '#2a2a0a', color: '#5a5a2a', fontStyle: 'italic'}}>AKTA ZASTRZEŻONE</div>
-          <div className="pap-text" style={{fontSize: '0.88rem', fontStyle: 'italic', opacity: 0.7}}>
-            {state.eventsUnlocked
-              ? '▒▒▒ CZEKA NA SYGNAŁ... ▒▒▒ Następna transmisja zaszyfrowana. Utrzymuj kapitał powyżej progu.'
-              : '▒▒▒ [TREŚĆ UTAJNIONA] ▒▒▒ Dostęp do kanału specjalnego wymaga odpowiedniego statusu majątkowego. Osiągnij próg — a zasłona opadnie.'}
+        // [Claude] upiększenie napisu (na życzenie właściciela): mniej „szumu" (nadmiar ▒▒▒),
+        // dwa spójne stany, i poprawiona treść dla stanu odblokowanego - po zdobyciu PAP zdarzenia
+        // lecą NA STAŁE, niezależnie od bieżącego kapitału, więc znika mylące „utrzymuj kapitał".
+        state.eventsUnlocked ? (
+          <div className="pap-ticker pap-idle">
+            <div className="pap-badge">DALEKOPIS PAP</div>
+            <div className="pap-text">
+              <span className="pap-blink">▓</span> Cisza w eterze. Agencja szykuje kolejny biuletyn — spodziewaj się depeszy lada chwila.
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="pap-ticker pap-locked">
+            <div className="pap-badge">KANAŁ UTAJNIONY</div>
+            <div className="pap-text">
+              <span className="pap-blink">▒</span> Dostęp do depesz specjalnych wymaga statusu majątkowego. Zgromadź <strong>100 000 zł</strong> i utrzymaj przez 10 minut — a zasłona opadnie na stałe.
+            </div>
+          </div>
+        )
       )}
       
       {state.pewexItems['transformacja'] && (
@@ -5718,7 +5747,9 @@ function App() {
 
         <div className="flex-col" style={{color: state.suspicion > 50 ? 'var(--prl-red)' : 'var(--crt-text)'}}>
            <span style={{fontSize: '0.8rem', color: 'var(--prl-gray)'}}>MILICJA</span>
-           <span style={{fontSize: '1.2rem'}}>{Math.floor(state.suspicion)}%</span>
+           {/* [Claude] 1 miejsce po przecinku - podejrzenie rośnie ułamkowo; sam Math.floor sprawiał
+               wrażenie, że „czasem rośnie, czasem nie" (liczba stała w miejscu przez kilka ticków) */}
+           <span style={{fontSize: '1.2rem'}}>{fmtNum(state.suspicion, 1)}%</span>
         </div>
         {state.solidarnos > 0 && (
           <div className="flex-col" style={{color: '#e63946'}}>
