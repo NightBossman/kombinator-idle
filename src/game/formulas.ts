@@ -143,6 +143,20 @@ export const calculateLuxuryPrestigeBonus = (ownedLuxuryItems: Record<string, bo
   return bonus;
 };
 
+/** [Claude] Koszt łapówki dla Milicji (zł). JEDNO źródło prawdy dla przycisku i dla akcji -
+ *  wcześniej wzór był skopiowany w App.tsx (handler) i w TabPartia (przycisk) i się rozjechał:
+ *  przycisk gubił zniżkę Członka PZPR po awansie (partyRank === 'czlonek' vs kumulatywne rangi),
+ *  więc pokazywał 1000 zł, a naliczał 900 zł. Zniżki: Członek PZPR i wyżej -10% (rangi są
+ *  kumulatywne), odznaczenia (pol_bribe_1 -10%, pol_bribe_2 -25%), Solidarność ≥6500 -15%. */
+export const milicjaBribeCost = (s: GameState): number => {
+  const isPartyMember = s.partyRank !== null; // każda ranga = też Członek PZPR
+  const rankMult = isPartyMember ? 0.9 : 1.0;
+  const solidarityMult = s.solidarnos >= 6500 ? 0.85 : 1.0;
+  const achMult = (s.unlockedAchievements?.['pol_bribe_1'] ? 0.90 : 1)
+    * (s.unlockedAchievements?.['pol_bribe_2'] ? 0.75 : 1);
+  return Math.floor(1000 * rankMult * achMult * solidarityMult);
+};
+
 
 /** Koszt deweloperki: rośnie o 15% z każdą kolejną inwestycją tego samego typu. */
 export const realEstateCostPln = (baseCost: number, count: number): number => baseCost * Math.pow(1.15, count);

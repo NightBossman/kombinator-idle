@@ -2,9 +2,9 @@
 // Dane i akcje przychodza z kontekstu GameApi - patrz GameApiContext.tsx.
 import { memo } from 'react';
 import { HELPERS, PARTY_RANKS, SOLIDARITY_LEVELS } from '../game/items';
-import { pluralPL } from '../utils/format';
+import { pluralPL, fmtNum } from '../utils/format';
 import { playClick } from '../utils/audio';
-import { calculateLuxuryPrestigeBonus } from '../game/formulas';
+import { calculateLuxuryPrestigeBonus, milicjaBribeCost } from '../game/formulas';
 import { useGameApi } from './GameApiContext';
 
 export const TabPartia = memo(function TabPartia() {
@@ -15,14 +15,12 @@ export const TabPartia = memo(function TabPartia() {
                 <h2 className={state.suspicion > 50 ? 'text-red' : ''}>MILICJA OBYWATELSKA</h2>
                 <div className="flex justify-between items-center">
                   {(() => {
-                    const solidarityBribeMult = state.solidarnos >= 6500 ? 0.85 : 1.0;
-                    const bribeAchMult = (state.unlockedAchievements?.['pol_bribe_1'] ? 0.90 : 1) 
-                                       * (state.unlockedAchievements?.['pol_bribe_2'] ? 0.75 : 1)
-                                       * solidarityBribeMult;
-                    const cost = Math.floor((state.partyRank === 'czlonek' ? 900 : 1000) * bribeAchMult);
+                    // [Claude] wspólny wzór z handlerem (formulas.ts): przycisk pokazuje DOKŁADNIE
+                    // to, co nalicza akcja. Wcześniej zniżka Członka PZPR znikała tu po awansie.
+                    const cost = milicjaBribeCost(state);
                     return (
                       <>
-                        <span>Podejrzenie: {Math.floor(state.suspicion)}%</span>
+                        <span>Podejrzenie: {fmtNum(state.suspicion, 1)}%</span>
                         <button disabled={state.pln < cost} onClick={bribe}>
                           Daj w łapę ({cost} zł)
                         </button>

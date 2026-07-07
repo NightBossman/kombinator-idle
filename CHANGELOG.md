@@ -21,10 +21,25 @@ Uwaga porządkowa: `package.json`/README były wciąż na 4.3.0 mimo wydania faz
   nie istniała — `kpoApproved` nigdy się nie aktywowało. Po osiągnięciu progu Bruksela wypłaca
   jednorazową dotację 15 000 000 EUR i zatwierdza KPO na stałe. Naprawiono też skalę postępu:
   przyciski USD/EUR dodawały surowe 100 000 pkt (10× ponad cel) zamiast punktów wpływu.
+- **Licznik zdarzeń PAP „skakał" / gubił sekundy** (np. 239 → 237): stan trzymał zaokrągloną
+  wartość i odejmował od niej `deltaSec` co tick, więc przy dryfie `setInterval` (delta > 1)
+  `Math.floor` gubił całą sekundę. Stan trzyma teraz precyzyjny float (śledzi realny czas),
+  a zaokrągla dopiero UI — odliczanie idzie równo, 1 s na sekundę.
+- **Koszt łapówki dla Milicji „wracał" z 900 do 1000 zł**: przycisk liczył zniżkę Członka PZPR
+  jako `partyRank === 'czlonek'`, więc po awansie na wyższą rangę pokazywał znów 1000 zł, choć
+  akcja i tak naliczała 900. Koszt jest teraz liczony jednym wspólnym wzorem (`milicjaBribeCost`
+  w `formulas.ts`) używanym przez przycisk i akcję — rangi są kumulatywne, więc zniżka zostaje.
+- **Podejrzenie Milicji „czasem rosło, czasem nie"**: rośnie ułamkowo, a `Math.floor` w podglądzie
+  sprawiał, że liczba stała w miejscu przez kilka ticków i skakała. HUD i panel Partii pokazują
+  teraz 1 miejsce po przecinku, więc ciągły przyrost jest widoczny.
 
 ### Zmieniono
 - Ticker PAP w stanie spoczynku ma czytelniejszy, estetyczniejszy napis (mniej „szumu"),
   a treść po odblokowaniu nie sugeruje już błędnie, że trzeba utrzymywać kapitał.
+- **Ekran raportu offline** upiększony: nagłówek z czasem nieobecności, karty sekcji, ładne
+  nazwy towarów (zamiast surowych id typu „gozdziki"), spójne kolory. Próg pojawiania się
+  podniesiony z 10 s do 60 s (krótkie przełączenie karty nie wyskakuje już raportem), a debugowy
+  `console.log` z pętli raportu usunięty.
 
 ### Usunięto
 - Martwe pole stanu `pipInspectionTimer` (nieczytane i nieustawiane; kontrola PIP działa

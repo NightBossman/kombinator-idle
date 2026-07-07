@@ -377,8 +377,12 @@ export function tick(s: GameState, deltaSec: number, ctx: TickContext): { state:
         }
 
         nextState.activeEvent = activeEvent;
-        nextState.eventTimeLeft = Math.max(0, Math.floor(eventTimeLeft));
-        nextState.nextEventIn = Math.max(0, Math.floor(nextEventIn));
+        // [Claude] naprawa licznika PAP „skaczącego" / gubiącego liczby: wcześniej stan trzymał
+        // ZAOKRĄGLONĄ wartość i odejmował od niej deltaSec co tick. Gdy setInterval dryfował
+        // (deltaSec > 1), Math.floor gubił całą sekundę (np. 239 → 237, z pominięciem 238).
+        // Teraz w stanie jest precyzyjny float (śledzi realny czas), a zaokrągla dopiero UI.
+        nextState.eventTimeLeft = Math.max(0, eventTimeLeft);
+        nextState.nextEventIn = Math.max(0, nextEventIn);
 
         // [Claude] naprawa (Faza T): recessionTimer był ustawiany na 180 przy zdarzeniu 'lehman_recession',
         // ale NIGDZIE nie był odliczany, a recessionActive nigdy nie wracało na false - raz uruchomiona

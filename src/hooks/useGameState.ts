@@ -320,7 +320,7 @@ export interface GameState {
   fazaWUnlocked: boolean;
   jdgContracts: number;
   jdgRiskLevel: number;
-  jdgTaxOptimizationLevel: number;
+  jdgTaxOptimizationLevel: number;
   mordorFloors: number;
   mordorEmployees: number;
   mordorMorale: number;
@@ -613,7 +613,7 @@ export const INITIAL_STATE: GameState = {
   fazaWUnlocked: false,
   jdgContracts: 0,
   jdgRiskLevel: 0,
-  jdgTaxOptimizationLevel: 0,
+  jdgTaxOptimizationLevel: 0,
   mordorFloors: 0,
   mordorEmployees: 0,
   mordorMorale: 100,
@@ -715,7 +715,11 @@ export function useGameState(isPaused: boolean = false) {
         const timeDiffSec = Math.max(0, (Date.now() - merged.lastSave) / 1000);
         const hasPlayTime = (merged.stats?.totalTimePlayed || 0) > 30;
 
-        if (timeDiffSec > 10 && hasPlayTime) {
+        // [Claude] próg podniesiony z 10 s na 60 s: raport offline pojawiał się po krótkim
+        // przełączeniu karty (zapis-przy-ukryciu-karty aktualizuje lastSave), co było natrętne.
+        // Poniżej minuty pasywne zarobki i tak są znikome (efektywność 0,25 bez willi/M3).
+        const OFFLINE_MIN_SEC = 60;
+        if (timeDiffSec > OFFLINE_MIN_SEC && hasPlayTime) {
           const offlineSec = Math.min(86400, timeDiffSec);
           const offlineRep = {
             timeSec: offlineSec,

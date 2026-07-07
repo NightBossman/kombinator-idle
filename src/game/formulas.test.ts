@@ -1,7 +1,7 @@
 // [Claude] testy wspólnych wzorów (KIERUNEK 1.3) - pilnują, żeby mnożniki
 // nie rozjechały się ponownie między silnikiem, symulacją offline i UI.
 import { describe, it, expect } from 'vitest';
-import { helperSpeedMult, businessProductionMult, queueTimeMs, cinkciarzRate, bazarPlnUnitPrice, bazarUsdUnitPrice, generalProductionMult, chfInstallmentPerSec, vatCarouselRefundPerSec, vatCarouselRiskGainPerSec, mordorIncomePerSec, mordorMoraleDecayPerSec, mordorEmployeeUpkeepPerSec, jdgRiskGainPerSec, seaSmuggleTime, seaSmuggleRisk, cryptoMiningYield, cryptoPowerUpkeepPln, aiTrainSpeed, knfRiskGrowthRate, wiborInstallmentPerSec, polishDealTaxPerSec, usRiskGrowthRate, energyPowerUpkeepPln, nbpInterestRateAffectingWibor, coiBondYieldPerSec, edoBondYieldPerSec, aiSaaSProfitUsdPerSec, aiSaaSProfitEurPerSec } from './formulas';
+import { helperSpeedMult, businessProductionMult, queueTimeMs, cinkciarzRate, bazarPlnUnitPrice, bazarUsdUnitPrice, generalProductionMult, chfInstallmentPerSec, vatCarouselRefundPerSec, vatCarouselRiskGainPerSec, mordorIncomePerSec, mordorMoraleDecayPerSec, mordorEmployeeUpkeepPerSec, jdgRiskGainPerSec, seaSmuggleTime, seaSmuggleRisk, cryptoMiningYield, cryptoPowerUpkeepPln, aiTrainSpeed, knfRiskGrowthRate, wiborInstallmentPerSec, polishDealTaxPerSec, usRiskGrowthRate, energyPowerUpkeepPln, nbpInterestRateAffectingWibor, coiBondYieldPerSec, edoBondYieldPerSec, aiSaaSProfitUsdPerSec, aiSaaSProfitEurPerSec, milicjaBribeCost } from './formulas';
 import { INITIAL_STATE } from '../hooks/useGameState';
 import type { GameState } from '../hooks/useGameState';
 
@@ -124,6 +124,23 @@ describe('wzory mnożników (formulas.ts)', () => {
     const s = freshState({ fazaWUnlocked: true, jdgContracts: 5, jdgTaxOptimizationLevel: 2 });
     // 5 * 0.05 * 1.0 = 0.25% per second
     expect(jdgRiskGainPerSec(s)).toBeCloseTo(0.25, 4);
+  });
+
+  it('milicjaBribeCost: zniżka Członka PZPR NIE znika po awansie na wyższą rangę', () => {
+    const brak = freshState({ partyRank: null });
+    const czlonek = freshState({ partyRank: 'czlonek' });
+    const sekretarz = freshState({ partyRank: 'sekretarz' });
+    const minister = freshState({ partyRank: 'minister' });
+    expect(milicjaBribeCost(brak)).toBe(1000);      // bez partii - pełna cena
+    expect(milicjaBribeCost(czlonek)).toBe(900);    // -10%
+    expect(milicjaBribeCost(sekretarz)).toBe(900);  // nadal -10% (rangi kumulatywne) - to był bug
+    expect(milicjaBribeCost(minister)).toBe(900);
+  });
+
+  it('milicjaBribeCost: zniżki się kumulują (ranga + odznaczenia + Solidarność)', () => {
+    const s = freshState({ partyRank: 'czlonek', solidarnos: 6500, unlockedAchievements: { pol_bribe_1: true, pol_bribe_2: true } });
+    // 1000 * 0.9 * 0.9 * 0.75 * 0.85 = 516.375 -> floor 516
+    expect(milicjaBribeCost(s)).toBe(516);
   });
 
   it('jdgRiskGainPerSec: Przemówienie Draghi halves the Mordor risk gain', () => {
